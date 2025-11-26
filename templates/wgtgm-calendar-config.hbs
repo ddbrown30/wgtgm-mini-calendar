@@ -1,0 +1,34 @@
+<div class="form-body scrollable" >
+    <p class="notes">
+        Configure the calendar source. Select a preset, or choose "Custom"
+        to paste your own CalendarData JSON configuration.
+    </p>
+
+    <div class="form-group">
+        <label for="calendar-source">Calendar Source</label>
+        <div class="form-fields">
+            <select name="source" id="calendar-source">
+                {{#each calendarOptions as |option|}}
+                <option value="{{option.value}}" {{#if option.selected}}selected{{/if}}>
+                    {{option.label}}
+                </option>
+                {{/each}}
+            </select>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="time-multiplier">Time Multiplier</label>
+        <div class="form-fields">
+            <input type="number" name="timeMultiplier" id="time-multiplier" value="{{this.timeMultiplier}}" min="0" step="1">
+            <p class="notes">
+                Set game time passage x times real time (e.g., 2 = 2 game seconds per 1 real second).
+            </p>
+        </div>
+    </div>
+
+    <div class="form-group" id="wgtngm-custom-json-area">
+        <label for="calendar-json">Calendar Configuration JSON (Full Format)</label>
+        <textarea name="calendarJson" id="calendar-json" placeholder="Paste full Foundry CalendarData JSON here...">{{this.calendarJson}}</textarea>
+    </div>
+</div>

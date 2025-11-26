@@ -1,0 +1,105 @@
+<div class="wgtngm-calendar">
+    <header class="calendar-header">
+        <button data-action="prev-month" title="Previous Month"><i class="fas fa-chevron-left"></i></button>
+        <h3 data-action="set-year" title="Click to set year">{{monthName}} - {{year}}</h3>
+        <button data-action="next-month" title="Next Month"><i class="fas fa-chevron-right"></i></button>
+    </header>
+
+    <div class="calendar-grid wgtngm-calendar-grid">
+        {{#each weekdays}}
+        <div class="weekday">{{this}}</div>
+        {{/each}}
+
+        {{#each days}}
+        
+            {{#if this.isBlank}}
+                <div class="day blank"></div>
+            {{else}}
+            <div class="day {{#if this.isCurrentDay}}current{{/if}}"
+                data-date="{{json this.date}}"
+                data-has-event="{{this.hasEvent}}"
+                data-action="set-date"> 
+
+                <span class="day-number">{{this.dayNumber}}</span>
+
+                <div class="day-icons">
+                    {{#if ../isGM}}
+                    {{#if this.hasEvent}}
+                        <i class="{{this.noteIcon}} event-icon"><span class="wgtngm-tooltip">{{{this.noteTooltip}}}</span></i>
+                    {{/if}}{{/if}}
+                    {{#each this.moonPhases}}
+                        <div class="moon-phase-wrapper" title="{{this.name}}: {{this.phaseName}}" style="--moon-color: {{this.color}};">
+                            <img src="{{this.image}}" class="moon-base">
+                        <div class="moon-tint" style="-webkit-mask-image: url('{{this.image}}'); mask-image: url('{{this.image}}');"></div>
+                        </div>
+                    {{/each}}
+                    </div>
+                </div>
+            {{/if}}
+        {{/each}}
+    </div>
+
+    <div class="calendar-mini">
+        {{#if isGM}}
+            {{#each currentMoon}}
+                <div class="moon-phase-wrapper" title="{{this.name}}: {{this.phaseName}}" style="--moon-color: {{this.color}};">
+                    <img src="{{this.image}}" class="moon-base">
+                <div class="moon-tint" style="-webkit-mask-image: url('{{this.image}}'); mask-image: url('{{this.image}}');"></div>
+                </div>
+            {{/each}}  
+           <i class="fas fa-calendar-plus" data-action="add-note-mini" data-date="{{json currentDate}}" data-has-event="{{currentHasEvent}}"></i>
+             {{#if currentHasEvent}}<i class="{{currentNoteIcon}} event-icon" data-date="{{json currentDate}}" data-action="add-note" ><span class="wgtngm-tooltip">{{{currentNoteTooltip}}}</span></i>{{/if}}
+            <span class="current-day">{{currentDay}} {{currentMonth}} {{currentYear}}</span> 
+            <i class="fas fa-sun" data-action="set-dawn" title="Set to Dawn (Next Day)"></i> 
+            <i class="fas fa-moon" data-action="set-sunset" title="Set to Sunset (Today)"></i>
+      {{else}}
+        <div class="player">
+            <div>
+               {{#each currentMoon}}
+                 <div class="moon-phase-wrapper" title="{{this.name}}: {{this.phaseName}}" style="--moon-color: {{this.color}};">
+                   <img src="{{this.image}}" class="moon-base">
+                  <div class="moon-tint" style="-webkit-mask-image: url('{{this.image}}'); mask-image: url('{{this.image}}');"></div>
+                  </div>
+                {{/each}}  
+                <span class="current-day">{{currentDay}} {{currentMonth}} {{currentYear}}</span> 
+            </div>
+            <span class="time-display" title="Current Game Time" data-action="set-time">{{currentTime}}</span>
+        </div>
+       {{/if}}
+     </div>
+   {{#if isGM}}
+    <footer class="calendar-mini-footer">
+        <i class="fas fa-backward-fast" data-action="sub-hour" title="Subtract 1 Hour"></i>
+        <i class="fas fa-backward-step" data-action="sub-minute" title="Subtract 10 Minutes"></i>
+                <span class="time-display" title="Current Game Time" data-action="set-time">{{currentTime}}</span>
+
+        <i class="fas {{#if isRunning}}fa-pause{{else}}fa-play{{/if}}" data-action="toggle-play" title="{{#if isRunning}}Pause Time{{else}}Start Time{{/if}}"></i>
+        <i class="fas fa-forward-step" data-action="add-minute" title="Advance 10 Minutes"></i>
+        <i class="fas fa-forward-fast" data-action="add-hour" title="Advance 1 Hour"></i>
+    </footer>
+    <footer class="calendar-footer time-controls">
+    
+    <button data-action="sub-hour" title="Subtract 1 Hour"><i class="fas fa-minus"></i> 1h</button>
+        <button data-action="sub-minute" title="Subtract 10 Minutes"><i class="fas fa-minus"></i> 10m</button>
+
+        <button data-action="toggle-play" title="{{#if isRunning}}Pause Time{{else}}Start Time{{/if}}">
+            <i class="fas {{#if isRunning}}fa-pause{{else}}fa-play{{/if}}"></i>
+        </button>
+        <span class="time-display" title="Current Game Time" data-action="set-time">{{currentTime}}</span>
+
+        <button data-action="add-minute" title="Advance 10 Minutes"><i class="fas fa-plus"></i> 10m</button>
+        <button data-action="add-hour" title="Advance 1 Hour"><i class="fas fa-plus"></i> 1h</button>
+    </footer>
+    <footer class="calendar-footer event-controls">
+        <button data-action="go-today" title="Go to Today"><i class="fas fa-calendar-day"></i> Today</button>
+        <button data-action="set-dawn" title="Set to Dawn (Next Day)"><i class="fas fa-sun"></i> Dawn</button>
+        <button data-action="set-sunset" title="Set to Sunset (Today)"><i class="fas fa-moon"></i> Sunset</button>
+        <button data-action="open-settings" title="Calendar Settings"><i class="fas fa-cog"></i></button>
+    </footer>
+    {{else}}
+     <footer class="calendar-footer time-controls player-view">
+        <button data-action="go-today" title="Go to Today"><i class="fas fa-calendar-day"></i> Today</button>
+        <span class="time-display" title="Current Game Time">{{currentTime}}</span>
+     </footer>
+    {{/if}}
+</div>

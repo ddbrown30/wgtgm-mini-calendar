@@ -1,0 +1,33 @@
+{
+  "id": "wgtgm-mini-calendar",
+  "title": "Mini Calendar",
+  "version": "1.5",
+  "esmodules": ["scripts/main.js"],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13"
+  },
+  "url": "https://wgtngm.com",
+  "manifest": "",
+  "download": "",
+  "readme": "https://campaigncodex.wgtngm.com/minicalendar",
+
+  "authors": [
+    {
+      "name": "Stephen Garrett",
+      "url": "https://www.patreon.com/wgtngm",
+      "flags": {}
+    }
+  ],
+  "styles": ["styles/wgtngm_calendar.css"],
+  "relationships": {
+    "systems": []
+  }
+}
