@@ -26,7 +26,12 @@ export class CalendarConfig extends calendarForm {
         },
         actions: {
             reset: this.#onResetDefaults,
+            importTrigger: function(event, target) {
+                this.element.querySelector("#wgtgm-import-file").click();
+                },
+            exportCalendar: this.#exportJSON
         },
+
     };
 
     /** @override */
@@ -39,6 +44,20 @@ export class CalendarConfig extends calendarForm {
             template: "templates/generic/form-footer.hbs",
         },
     };
+
+  async _renderFrame(options) {
+    const frame = await super._renderFrame(options);
+    if ( !this.hasFrame ) return frame;
+    const copyId = `
+        <button type="button" class="header-control fa-solid fa-file-import icon" data-action="importTrigger"
+                data-tooltip="Import calendar JSON" aria-label="Import calendar from JSON"></button>
+        <button type="button" class="header-control fa-solid fa-file-export icon" data-action="exportCalendar"
+                data-tooltip="Export Calendar to JSON" aria-label="Export Calendar to JSON"></button>
+      `;
+      this.window.close.insertAdjacentHTML("beforebegin", copyId);
+    
+    return frame;
+  }
 
     /**
      * Tries to parse a JSON string.
@@ -201,16 +220,65 @@ export class CalendarConfig extends calendarForm {
 
         setCalendarJSON();
 
-        // if (calendarChanged) {
-        //     ui.notifications.warn("Global calendar configuration changed. A reload (F5) is required for all changes to take effect.");
-        // }
 
         Hooks.callAll("closeCalendarConfig");
+    }
+
+    static #exportJSON() {
+        const data = game.settings.get(MODULE_NAME, "customCalendarDraft");
+        console.log(data);
+        const filename = `mini-calendar-export.json`;
+        foundry.utils.saveDataToFile(data, "text/json", filename);
+        ui.notifications.info("Mini Calendar: Exported successfully.");
+    }
+
+/**
+     * Handles file selection for JSON import.
+     * Parses the file, updates settings, and re-renders the app.
+     */
+    async _handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const jsonString = e.target.result;
+                // Verify it is valid JSON before proceeding
+                const json = JSON.parse(jsonString);
+
+                if (json) {
+                    const formattedJson = JSON.stringify(json, null, 2);
+
+                    // 1. Save the content to the custom draft setting so the renderer picks it up
+                    await game.settings.set(MODULE_NAME, "customCalendarDraft", formattedJson);
+
+                    // 2. Update the source to 'custom' so the text area is displayed/enabled
+                    await game.settings.set(MODULE_NAME, "calendarSource", "custom");
+
+                    ui.notifications.info("Calendar JSON imported. Review settings and click 'Save Changes'.");
+
+                    // 3. Re-render to update the UI with the new data
+                    this.render();
+                }
+
+            } catch (err) {
+                console.error("Mini Calendar | Import Error:", err);
+                ui.notifications.error("Failed to parse JSON file.");
+            }
+            // Clear the input so the same file can be selected again if needed
+            event.target.value = "";
+        };
+        reader.readAsText(file);
     }
 
     /** @override */
     async _onRender(context, options) {
         await super._onRender(context, options);
+        const fileInput = this.element.querySelector("#wgtgm-import-file");
+        if (fileInput) {
+            fileInput.addEventListener("change", (event) => this._handleFileSelect(event));
+        }
         this._activateListeners(this.element);
     }
 

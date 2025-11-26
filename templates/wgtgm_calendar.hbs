@@ -38,7 +38,7 @@
             {{/if}}
         {{/each}}
     </div>
-
+ 
     <div class="calendar-mini">
         {{#if isGM}}
             {{#each currentMoon}}
@@ -71,12 +71,15 @@
     <footer class="calendar-mini-footer">
         <i class="fas fa-backward-fast" data-action="sub-hour" title="Subtract 1 Hour"></i>
         <i class="fas fa-backward-step" data-action="sub-minute" title="Subtract 10 Minutes"></i>
-                <span class="time-display" title="Current Game Time" data-action="set-time">{{currentTime}}</span>
+        <span class="time-display" title="Current Game Time" data-action="set-time">{{currentTime}}</span>
 
         <i class="fas {{#if isRunning}}fa-pause{{else}}fa-play{{/if}}" data-action="toggle-play" title="{{#if isRunning}}Pause Time{{else}}Start Time{{/if}}"></i>
         <i class="fas fa-forward-step" data-action="add-minute" title="Advance 10 Minutes"></i>
         <i class="fas fa-forward-fast" data-action="add-hour" title="Advance 1 Hour"></i>
     </footer>
+    <div class="time-slider-wrapper slider-mini" style="">
+                 <input type="range" class="mini-time-slider" min="0" max="{{maxSeconds}}" value="{{currentSeconds}}" step="10" style="" title="Drag to adjust time">
+    </div>
     <footer class="calendar-footer time-controls">
     
     <button data-action="sub-hour" title="Subtract 1 Hour"><i class="fas fa-minus"></i> 1h</button>

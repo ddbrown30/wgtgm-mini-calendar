@@ -62,6 +62,8 @@ export class wgtngmMiniCalender extends wgtngmcal {
   #isCustomMinimized = false;
   #lastCheckedDate = null;
   // --- Calendar & Time Helpers ---
+  _throttledDarknessUpdate = foundry.utils.throttle(this._updateSceneDarkness.bind(this), 1000);
+  // _debouncedDarknessUpdate = foundry.utils.debounce(this._updateSceneDarkness.bind(this), 500);
   _debouncedRender = foundry.utils.debounce(this.render.bind(this), 100);
 
   /**
@@ -318,7 +320,15 @@ export class wgtngmMiniCalender extends wgtngmcal {
     const currentMonth = calendar.months.values[this.#viewMonth];
     const nowComponents = calendar.timeToComponents(game.time.worldTime);
     const isCurrentGameMonthAndYear = this.#viewYear === nowComponents.year && this.#viewMonth === nowComponents.month;
-
+    const mph = calendar.days.minutesPerHour;
+    const spm = calendar.days.secondsPerMinute;
+    const hpd = calendar.days.hoursPerDay;
+    
+    // Calculate current seconds elapsed in the day
+    const currentSeconds = (nowComponents.hour * mph * spm) + (nowComponents.minute * spm) + nowComponents.second;
+    
+    // Calculate total seconds in a day for the slider max
+    const maxSeconds = (hpd * mph * spm) - 1;
     const days = [];
 
     const journal = game.journal.getName(calendarJournal);
@@ -420,6 +430,9 @@ export class wgtngmMiniCalender extends wgtngmcal {
       currentNoteIcon: currentNoteIcon,
       currentNoteTooltip: currentNoteTooltip,
       currentDate: currentDateObj,
+      currentSeconds: currentSeconds,
+      maxSeconds: maxSeconds
+
     };
   }
 
@@ -441,6 +454,36 @@ export class wgtngmMiniCalender extends wgtngmcal {
       if (gridElement) {
         gridElement.style.gridTemplateColumns = `repeat(${daysInWeek}, 1fr)`;
       }
+    }
+    const slider = this.element.querySelector(".mini-time-slider");
+    if (slider) {
+      slider.addEventListener("change", async (event) => {
+        const newSecondsTotal = parseInt(event.target.value);
+        if (isNaN(newSecondsTotal)) return;
+
+        const calendar = game.time.calendar;
+        const mph = calendar.days.minutesPerHour;
+        const spm = calendar.days.secondsPerMinute;
+
+        const h = Math.floor(newSecondsTotal / (mph * spm));
+        const remainder = newSecondsTotal % (mph * spm);
+        const m = Math.floor(remainder / spm);
+        const s = remainder % spm;
+
+        const currentComps = calendar.timeToComponents(game.time.worldTime);
+        const newTimeComps = {
+          ...currentComps,
+          hour: h,
+          minute: m,
+          second: s
+        };
+
+        try {
+          await game.time.set(newTimeComps);
+        } catch (e) {
+          console.error("Mini Calendar | Slider Error:", e);
+        }
+      });
     }
 
     this._activateListeners(this.element);
@@ -513,8 +556,23 @@ export class wgtngmMiniCalender extends wgtngmcal {
     }
   };
 
-  _onUpdateWorldTime = async (worldTime, dt) => {
+_onUpdateWorldTime = async (worldTime, dt) => {
     await this._checkDailyEvents();
+    
+    if (game.user.isGM && game.settings.get(MODULE_NAME, "enableDarknessControl")) {
+    this._throttledDarknessUpdate(worldTime)
+    }
+    
+    const slider = this.element.querySelector(".mini-time-slider");
+    if (slider && document.activeElement !== slider) {
+        const calendar = game.time.calendar;
+        const c = calendar.timeToComponents(worldTime);
+        const mph = calendar.days.minutesPerHour;
+        const spm = calendar.days.secondsPerMinute;
+        
+        const seconds = (c.hour * mph * spm) + (c.minute * spm) + c.second;
+        slider.value = seconds;
+    }
   };
 
   /**
@@ -1417,6 +1475,60 @@ export class wgtngmMiniCalender extends wgtngmcal {
     } catch (e) {
       console.error("Mini Calendar | Failed to update time of day class", e);
     }
+  }
+async _updateSceneDarkness(worldTime) {
+      if (!canvas.scene || !canvas.scene.active) return;
+
+      const defaultEnabled = game.settings.get(MODULE_NAME, "defaultSceneDarkness");
+      const sceneFlag = canvas.scene.getFlag(MODULE_NAME, "enableDarkness");
+      const isEnabled = sceneFlag !== undefined ? sceneFlag : defaultEnabled;
+
+      if (!isEnabled) return;
+
+      const calendar = game.time.calendar;
+      const comps = calendar.timeToComponents(worldTime);
+      const mph = calendar.days.minutesPerHour;
+      const spm = calendar.days.secondsPerMinute;
+      const currentHour = comps.hour + (comps.minute / mph) + (comps.second / (mph * spm));
+      const { dawn, dusk } = this._getSunTimes(worldTime);
+
+      const levelHigh = game.settings.get(MODULE_NAME, "darknessLevelHigh"); // Night
+      const levelLow = game.settings.get(MODULE_NAME, "darknessLevelLow");   // Day
+      const currentDarkness = canvas.scene.environment.darknessLevel;
+      const transitionHalf = 1.0; 
+
+      let targetDarkness;
+
+      if (currentHour < (dawn - transitionHalf) || currentHour > (dusk + transitionHalf)) {
+          if (Math.abs(currentDarkness - levelHigh) < 0.01) return;
+          targetDarkness = levelHigh;
+      } 
+      else if (currentHour > (dawn + transitionHalf) && currentHour < (dusk - transitionHalf)) {
+          if (Math.abs(currentDarkness - levelLow) < 0.01) return;
+          targetDarkness = levelLow;
+      } 
+      else {
+          if (currentHour <= (dawn + transitionHalf)) {
+              const pct = (currentHour - (dawn - transitionHalf)) / (transitionHalf * 2);
+              targetDarkness = levelHigh - (pct * (levelHigh - levelLow));
+          } else {
+              const pct = (currentHour - (dusk - transitionHalf)) / (transitionHalf * 2);
+              targetDarkness = levelLow + (pct * (levelHigh - levelLow));
+          }
+      }
+
+      targetDarkness = Math.min(Math.max(targetDarkness, 0), 1);
+
+      if (Math.abs(currentDarkness - targetDarkness) > 0.05) {
+          const isToDarkness = targetDarkness > currentDarkness;
+          const transitionBaseMS = isToDarkness ? CONFIG.Canvas.daylightToDarknessAnimationMS : CONFIG.Canvas.darknessToDaylightAnimationMS;
+          const transitionMS = Math.floor(Math.abs(currentDarkness - targetDarkness) * transitionBaseMS);
+
+          await canvas.scene.update(
+              { environment: { darknessLevel: targetDarkness } },
+              { animateDarkness: 1200 }
+          );
+      }
   }
 
   /**

@@ -104,6 +104,46 @@ export default async function minicalendarSettings() {
         default: false,
         requiresReload: false 
     });
+    
+    // --- Darkness Settings ---
+    game.settings.register(MODULE_NAME, "enableDarknessControl", {
+        name: "Enable Scene Darkness Control",
+        hint: "If enabled, the module will adjust scene darkness based on the time of day.",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: false
+    });
+
+    game.settings.register(MODULE_NAME, "defaultSceneDarkness", {
+        name: "Enable Darkness on Scenes by Default",
+        hint: "If checked, all scenes will have darkness control enabled unless specifically disabled in Scene Configuration.",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: false
+    });
+
+    game.settings.register(MODULE_NAME, "darknessLevelHigh", {
+        name: "Darkness Level (Night)",
+        hint: "The darkness level for the scene during the night (0.0 to 1.0).",
+        scope: "world",
+        config: true,
+        type: Number,
+        range: { min: 0, max: 1, step: 0.05 },
+        default: 1.0
+    });
+
+    game.settings.register(MODULE_NAME, "darknessLevelLow", {
+        name: "Darkness Level (Day)",
+        hint: "The darkness level for the scene during the day (0.0 to 1.0).",
+        scope: "world",
+        config: true,
+        type: Number,
+        range: { min: 0, max: 1, step: 0.05 },
+        default: 0.0
+    });
+    // -------------------------
 
     game.settings.register(MODULE_NAME, "customCalendarDraft", {
         scope: "world", 

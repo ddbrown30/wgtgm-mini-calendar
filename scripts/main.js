@@ -40,6 +40,30 @@ export function setCalendarJSON(firstTime = false) {
     }
 }
 
+Hooks.on("renderSceneConfig", (app, html, data) => {
+    if (!game.settings.get(MODULE_NAME, "enableDarknessControl")) return;
+    const defaultEnabled = game.settings.get(MODULE_NAME, "defaultSceneDarkness");
+    const currentFlag = app.document.getFlag(MODULE_NAME, "enableDarkness");
+    const isEnabled = currentFlag !== undefined ? currentFlag : defaultEnabled;
+    const injection = `
+        <fieldset>
+            <legend><i class="fas fa-calendar-alt"></i> Mini Calendar</legend>
+            <div class="form-group">
+                <label>Enable Darkness Control</label>
+                <div class="form-fields">
+                    <input type="checkbox" name="flags.${MODULE_NAME}.enableDarkness" ${isEnabled ? "checked" : ""}>
+                </div>
+                <p class="hint">Allow the Mini Calendar to control the darkness level of this scene based on the time of day.</p>
+            </div>
+        </fieldset>
+    `;
+    const $html = $(html);
+    const $lightingTab = $html.find('div[data-tab="lighting"]');
+    if ($lightingTab.length > 0) {
+        $lightingTab.append(injection);
+        app.setPosition({ height: "auto" });
+    }
+});
 
 Hooks.once("init", async function () {
     console.log("MiniCalendar | Initializing");
