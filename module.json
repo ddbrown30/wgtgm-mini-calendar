@@ -1,7 +1,7 @@
 {
   "id": "wgtgm-mini-calendar",
   "title": "Mini Calendar",
-  "version": "1.5",
+  "version": "",
   "esmodules": ["scripts/main.js"],
   "languages": [
     {
