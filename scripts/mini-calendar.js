@@ -23,6 +23,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
     },
     actions: {
       "add-note-mini": this.#_addNoteMini,
+      "add-note-header":this.#_addNoteHeader,
       "add-note": this.#_addNote,
       "sub-hour": this.#_subhour,
       "sub-minute": this.#_subminute,
@@ -306,6 +307,24 @@ _debouncedSavePosition = foundry.utils.debounce(async () => {
       this._onDayClick_ViewNote(event, date);
     }
   }
+
+
+  /** @inheritDoc */
+  async _renderFrame(options) {
+    const frame = await super._renderFrame(options);
+    if ( !this.hasFrame ) return frame;
+    if (!game.user.isGM) return;
+    const copyId = `
+        <button type="button" class="header-control fa-solid fa-calendar-plus icon" data-action="add-note-header" 
+                data-tooltip="Create Note" aria-label="Create Note"></button>
+      `;
+      this.window.close.insertAdjacentHTML("beforebegin", copyId);
+    return frame;
+  }
+
+
+
+
 
   async _prepareContext(options) {
     const context = await super._prepareContext(options);
@@ -646,6 +665,17 @@ _onUpdateWorldTime = async (worldTime, dt) => {
     const mainGrid = html.querySelector(".wgtngm-calendar-grid");
     if (!mainGrid) return;
   }
+
+  static #_addNoteHeader(event, target) {
+    const nowComponents = game.time.calendar.timeToComponents(game.time.worldTime);
+    const currentDateObj = {
+      year: nowComponents.year,
+      month: nowComponents.month,
+      day: nowComponents.dayOfMonth,
+    };
+    this._showAddNoteDialog(currentDateObj, null, null, false);
+  }
+
 
   static #_addNoteMini(event, target) {
     const dateStr = target.dataset.date;

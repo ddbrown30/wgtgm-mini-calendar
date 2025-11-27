@@ -47,7 +47,6 @@
                 <div class="moon-tint" style="-webkit-mask-image: url('{{this.image}}'); mask-image: url('{{this.image}}');"></div>
                 </div>
             {{/each}}  
-           <i class="fas fa-calendar-plus" data-action="add-note-mini" data-date="{{json currentDate}}" data-has-event="{{currentHasEvent}}"></i>
              {{#if currentHasEvent}}<i class="{{currentNoteIcon}} event-icon" data-date="{{json currentDate}}" data-action="add-note" ><span class="wgtngm-tooltip">{{{currentNoteTooltip}}}</span></i>{{/if}}
             <span class="current-day">{{currentDay}} {{currentMonth}} {{currentYear}}</span> 
             <i class="fas fa-sun" data-action="set-dawn" title="Set to Dawn (Next Day)"></i> 

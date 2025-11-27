@@ -3,6 +3,10 @@
   --wgtgm-primary: #7a6a5a;
 }
 
+#wgtngmMiniCalender.minimized .window-header button.header-control.fa-calendar-plus {
+  display: initial !important;
+}
+
 .application.wgtngmMiniCalender button.header-control:focus,
 .application.wgtngmMiniCalender button.header-control:active {
   outline: none !important;
