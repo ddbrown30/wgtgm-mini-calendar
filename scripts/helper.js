@@ -44,8 +44,17 @@ export function handleMPClick(event) {
     }
 }
 export async function openwgtngmMiniCalendarSheet() {
+    
+    let savedDimensions = game.settings.get(MODULE_NAME, "calSheetDimensions");
+
+
     if (!game.wgtngmMiniCalender.calendarInstance) {
-        game.wgtngmMiniCalender.calendarInstance = new wgtngmMiniCalender({});
+        game.wgtngmMiniCalender.calendarInstance = new wgtngmMiniCalender( {
+        position: {
+            left: savedDimensions?.left ?? 40,
+            top: savedDimensions?.top ?? 40
+        }
+       });
     }
 
     const app = game.wgtngmMiniCalender.calendarInstance;

@@ -104,8 +104,7 @@ export default async function minicalendarSettings() {
         default: false,
         requiresReload: false 
     });
-    
-    // --- Darkness Settings ---
+
     game.settings.register(MODULE_NAME, "enableDarknessControl", {
         name: "Enable Scene Darkness Control",
         hint: "If enabled, the module will adjust scene darkness based on the time of day.",
@@ -113,6 +112,15 @@ export default async function minicalendarSettings() {
         config: true,
         type: Boolean,
         default: false
+    });
+    
+    game.settings.register(MODULE_NAME, "enableDarknessActive", {
+        name: "Adjust Darkness on Active Scenes Only",
+        hint: "If enabled, the module will adjust scene darkness only on active scenes.",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: true
     });
 
     game.settings.register(MODULE_NAME, "defaultSceneDarkness", {
@@ -143,7 +151,6 @@ export default async function minicalendarSettings() {
         range: { min: 0, max: 1, step: 0.05 },
         default: 0.0
     });
-    // -------------------------
 
     game.settings.register(MODULE_NAME, "customCalendarDraft", {
         scope: "world", 

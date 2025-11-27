@@ -61,10 +61,18 @@ export class wgtngmMiniCalender extends wgtngmcal {
   #moonPhaseCache = new Map();
   #isCustomMinimized = false;
   #lastCheckedDate = null;
-  // --- Calendar & Time Helpers ---
   _throttledDarknessUpdate = foundry.utils.throttle(this._updateSceneDarkness.bind(this), 1000);
-  // _debouncedDarknessUpdate = foundry.utils.debounce(this._updateSceneDarkness.bind(this), 500);
   _debouncedRender = foundry.utils.debounce(this.render.bind(this), 100);
+  _positionObserver = null;
+  
+_debouncedSavePosition = foundry.utils.debounce(async () => {
+    if (!this.element || !this.position) return;
+    const { width, height, left, top } = this.position;
+    const saved = game.settings.get(MODULE_NAME, "calSheetDimensions");
+    if (saved.width !== width || saved.height !== height || saved.left !== left || saved.top !== top) {
+       await game.settings.set(MODULE_NAME, "calSheetDimensions", { width, height, left, top });
+    }
+  }, 500);
 
   /**
    * Custom handler for header double-clicks
@@ -130,7 +138,6 @@ export class wgtngmMiniCalender extends wgtngmcal {
       dayOfYear += days;
     }
 
-    // Convert to timestamp
     const components = {
       year: year,
       day: dayOfYear,
@@ -329,6 +336,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
     
     // Calculate total seconds in a day for the slider max
     const maxSeconds = (hpd * mph * spm) - 1;
+    const stepSeconds = (mph / 2) * spm;
     const days = [];
 
     const journal = game.journal.getName(calendarJournal);
@@ -431,7 +439,8 @@ export class wgtngmMiniCalender extends wgtngmcal {
       currentNoteTooltip: currentNoteTooltip,
       currentDate: currentDateObj,
       currentSeconds: currentSeconds,
-      maxSeconds: maxSeconds
+      maxSeconds: maxSeconds,
+      stepSeconds:stepSeconds
 
     };
   }
@@ -455,16 +464,19 @@ export class wgtngmMiniCalender extends wgtngmcal {
         gridElement.style.gridTemplateColumns = `repeat(${daysInWeek}, 1fr)`;
       }
     }
+
     const slider = this.element.querySelector(".mini-time-slider");
     if (slider) {
       slider.addEventListener("change", async (event) => {
         const newSecondsTotal = parseInt(event.target.value);
         if (isNaN(newSecondsTotal)) return;
 
+        // Get dynamic calendar settings
         const calendar = game.time.calendar;
         const mph = calendar.days.minutesPerHour;
         const spm = calendar.days.secondsPerMinute;
 
+        // Convert total seconds back to Hours/Minutes/Seconds
         const h = Math.floor(newSecondsTotal / (mph * spm));
         const remainder = newSecondsTotal % (mph * spm);
         const m = Math.floor(remainder / spm);
@@ -485,6 +497,20 @@ export class wgtngmMiniCalender extends wgtngmcal {
         }
       });
     }
+
+    if (!this._positionObserver) {
+        this._positionObserver = new MutationObserver((mutations) => {
+            for (const mutation of mutations) {
+                if (mutation.attributeName === "style") {
+                    this._debouncedSavePosition();
+                    return; 
+                }
+            }
+        });
+    }
+    
+    this._positionObserver.disconnect(); // Prevent duplicates
+    this._positionObserver.observe(this.element, { attributes: true, attributeFilter: ["style"] });
 
     this._activateListeners(this.element);
   }
@@ -999,8 +1025,11 @@ _onUpdateWorldTime = async (worldTime, dt) => {
     Hooks.off("updateJournalEntryPage", this._onJournalUpdate);
     Hooks.off("updateWorldTime", this._onUpdateWorldTime);
     this._cachedTimeDisplays = null;
-    this._resizeObserver?.disconnect();
-    return super.close(options);
+    if (this._positionObserver) {
+        this._positionObserver.disconnect();
+        this._positionObserver = null;
+    }
+        return super.close(options);
   }
 
   // --- Action Handlers ---
@@ -1477,7 +1506,7 @@ _onUpdateWorldTime = async (worldTime, dt) => {
     }
   }
 async _updateSceneDarkness(worldTime) {
-      if (!canvas.scene || !canvas.scene.active) return;
+      if (!canvas.scene || (!canvas.scene.active && game.settings.get(MODULE_NAME, "enableDarknessActive"))) return;
 
       const defaultEnabled = game.settings.get(MODULE_NAME, "defaultSceneDarkness");
       const sceneFlag = canvas.scene.getFlag(MODULE_NAME, "enableDarkness");
@@ -1615,6 +1644,35 @@ Hooks.on("deleteCombat", (combat, options, userId) => {
     calendarApp._startTime();
     calendarApp.wasPausedForCombat = false;
     console.log("Mini Calendar | Time advancement resumed after combat.");
+    if (calendarApp.rendered) calendarApp.render();
+  }
+});
+
+
+Hooks.on("pauseGame", (paused) => {
+  if (!game.user.isGM) return;
+  
+  const calendarApp =
+    game.wgtngmMiniCalender?.calendarInstance ??
+    Object.values(ui.windows).find((win) => win instanceof wgtngmMiniCalender);
+
+  if (calendarApp instanceof wgtngmMiniCalender) {
+    if (paused) {
+      if (calendarApp.isRunning && !calendarApp.wasPausedForCombat) {
+        calendarApp._stopTime();
+        calendarApp.wasPausedForGame = true;
+        console.log("Mini Calendar | Time advancement paused due to game pause.");
+      }
+    } else {
+      if (calendarApp.wasPausedForGame) {
+        // Double check we aren't in combat before resuming
+        if (!calendarApp.wasPausedForCombat) {
+            calendarApp._startTime();
+        }
+        calendarApp.wasPausedForGame = false;
+        console.log("Mini Calendar | Time advancement resumed after game pause.");
+      }
+    }
     if (calendarApp.rendered) calendarApp.render();
   }
 });

@@ -1,5 +1,13 @@
 # Mini Calendar
-Mini Calendar is a compact, lightweight calendar for Foundry VTT. It provides a streamlined interface for managing time, dates, and notes without taking up valuable screen space. It offers two view modes: an ultra-compact and a month calendar view.
+Mini Calendar is a compact, lightweight calendar for Foundry VTT. It provides a streamlined interface for managing time, dates, and notes without taking up valuable screen space.
+
+Features
+- Dual View Modes: Switch between Compact and Month views.
+- Customization: Create custom calendars (JSON import/export), moon phases, and dawn/dusk times.
+- Scene Lighting: Link the time of day to scene darkness levels.
+- Event Tracking: Add notes to days; notes whisper to chat when the date is reached.
+- Quick Controls: Use the slider on Compact view to quickly change time.
+- Player View: A pared-back interface specifically for players.
 
 Discord: https://discord.gg/fycwH79s2y
 
