@@ -159,8 +159,8 @@ export default async function minicalendarSettings() {
         default: ""
     });
 
-    game.keybindings.register("MODULE_NAME", "MiniCalendar", {
-      name: "Open the Mini Music Player",
+    game.keybindings.register(MODULE_NAME, "MiniCalendar", {
+      name: "Open the Mini Calendar",
       editable: [
         {key: "KeyK", modifiers: [foundry.helpers.interaction.KeyboardManager.MODIFIER_KEYS.CONTROL]}
       ],

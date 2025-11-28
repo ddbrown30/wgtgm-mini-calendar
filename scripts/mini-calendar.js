@@ -255,33 +255,26 @@ _debouncedSavePosition = foundry.utils.debounce(async () => {
     }
   }
 
-  /**
-   * Retrieves notes for a specific day.
-   * OPTIMIZED: Accepts optional pre-fetched journal/map to avoid N+1 lookups.
-   * * @param {object} date - {year, month, day}
-   * @param {JournalEntry|null} [preFetchedJournal=null] - (Optional) The journal instance
-   * @param {Map|null} [preFetchedPageMap=null] - (Optional) Map of page names to page objects
-   */
-  async _getNotesForDay(date, preFetchedJournal = null, preFetchedPageMap = null) {
-    // Use the passed journal or fetch it if missing
+async _getNotesForDay(date, preFetchedJournal = null, preFetchedPageMap = null) {
     const journal = preFetchedJournal ?? game.journal.getName(calendarJournal);
     if (!journal) return [];
 
     const day = date.day + 1;
-    // Format: YYYY-MM-DD
     const pageName = `${date.year}-${String(date.month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-
-    // Use the map if provided, otherwise perform the standard lookup
     const page = preFetchedPageMap ? preFetchedPageMap.get(pageName) : journal.pages.getName(pageName);
+    let notes = page?.flags?.[MODULE_NAME]?.notes || [];
 
-    if (!page) return [];
-
-    const notes = page.flags[MODULE_NAME]?.notes;
-    if (notes && Array.isArray(notes)) {
-      return notes;
+    const recurringPageName = "0000-Recurring";
+    const recurringPage = preFetchedPageMap ? preFetchedPageMap.get(recurringPageName) : journal.pages.getName(recurringPageName);
+    
+    if (recurringPage) {
+        const recurringNotes = recurringPage.flags?.[MODULE_NAME]?.notes || [];
+        const matches = recurringNotes.filter(n => this._checkRecurrence(n, date));
+        matches.forEach(n => n.isRecurringInstance = true);
+        notes = notes.concat(matches);
     }
-    return [];
-  }
+    return notes;
+}
 
   _initializeViewState() {
     if (this.#viewMonth === null || this.#viewYear === null) {
@@ -360,14 +353,17 @@ _debouncedSavePosition = foundry.utils.debounce(async () => {
 
     const journal = game.journal.getName(calendarJournal);
 
+
     const pageMap = new Map();
     if (journal) {
       const currentMonthPrefix = `${this.#viewYear}-${String(this.#viewMonth + 1).padStart(2, "0")}`;
 
       journal.pages.forEach((page) => {
-        if (page.name.startsWith(currentMonthPrefix)) {
+        // --- FIX: Include the Recurring page in the map lookup ---
+        if (page.name === "0000-Recurring" || page.name.startsWith(currentMonthPrefix)) {
           pageMap.set(page.name, page);
         }
+        // ---------------------------------------------------------
       });
     }
 
@@ -399,6 +395,8 @@ _debouncedSavePosition = foundry.utils.debounce(async () => {
         };
 
         const notes = await this._getNotesForDay(date, journal, pageMap);
+        const hasRecurring = notes.some(n => n.isRecurringInstance);
+        console.log(notes);
         const hasEvent = notes.length > 0;
         let noteIcon = "fas fa-book";
         if (notes.length > 1) {
@@ -417,6 +415,7 @@ _debouncedSavePosition = foundry.utils.debounce(async () => {
           noteIcon: noteIcon,
           noteTooltip: noteTooltip,
           moonPhases: moonPhases,
+          hasRecurring: hasRecurring,
         });
       }
     }
@@ -436,6 +435,7 @@ _debouncedSavePosition = foundry.utils.debounce(async () => {
     };
     const currentNotes = await this._getNotesForDay(currentDateObj);
     const currentHasEvent = currentNotes.length > 0;
+    const currentHasRecurring = currentNotes.some(n => n.isRecurringInstance);
     const currentNoteIcon = currentHasEvent ? currentNotes[0].icon : "";
     const currentNoteTooltip = currentHasEvent ? currentNotes.map((n) => `<p>${n.title}</p>`).join("") : "";
 
@@ -459,8 +459,8 @@ _debouncedSavePosition = foundry.utils.debounce(async () => {
       currentDate: currentDateObj,
       currentSeconds: currentSeconds,
       maxSeconds: maxSeconds,
-      stepSeconds:stepSeconds
-
+      stepSeconds:stepSeconds,
+      hasRecurring: currentHasRecurring,
     };
   }
 
@@ -571,6 +571,7 @@ _debouncedSavePosition = foundry.utils.debounce(async () => {
 
     Hooks.on("updateWorldTime", this._onUpdateWorldTime);
     Hooks.on("updateJournalEntryPage", this._onJournalUpdate);
+    Hooks.on("deleteJournalEntry", this._onJournalUpdate);
 
     const startMinimized = game.settings.get(MODULE_NAME, "startMinimized");
     const closedMinimized = game.settings.get(MODULE_NAME, "minimized");
@@ -583,12 +584,21 @@ _debouncedSavePosition = foundry.utils.debounce(async () => {
 
   _onJournalUpdate = (page, changes, options, userId) => {
     const journalName = calendarJournal;
+    const journal = game.journal.getName(journalName);
+    if (!journal){
+        this._debouncedRender();
+        return;
+    }
     if (page.parent?.name !== journalName) return;
+    if (page.name === "0000-Recurring") {
+        this._debouncedRender();
+        return;
+    }
     try {
       const parts = page.name.split("-");
       if (parts.length >= 2) {
         const noteYear = parseInt(parts[0]);
-        const noteMonthIndex = parseInt(parts[1]) - 1; // Convert 1-based "01" to 0-based index
+        const noteMonthIndex = parseInt(parts[1]) - 1; 
         if (noteYear === this.#viewYear && noteMonthIndex === this.#viewMonth) {
           this._debouncedRender();
         }
@@ -740,15 +750,10 @@ _onUpdateWorldTime = async (worldTime, dt) => {
     this.render();
   }
 
-  /**
-   * Saves a full array of notes for a specific day.
-   * Stores the array in flags and a human-readable version in text.content.
-   * @param {object} date - The date object {year, month, day}
-   * @param {Array} notes - The full array of note objects to save.
-   */
-  async _saveNotesForDay(date, notes) {
+async _saveNotesForDay(date, notes) {
     const journalName = calendarJournal;
     let journal = game.journal.getName(journalName);
+
     if (!journal) {
       if (!game.user.isGM) {
         ui.notifications.warn(`The ${journalName} journal doesn't exist.`);
@@ -761,51 +766,62 @@ _onUpdateWorldTime = async (worldTime, dt) => {
         return;
       }
     }
-
-    const day = date.day + 1; // 1-indexed
+    const dailyNotes = notes.filter(n => !n.repeatUnit || n.repeatUnit === 'none');
+    const recurringNotesToSave = notes.filter(n => n.repeatUnit && n.repeatUnit !== 'none');
+    const day = date.day + 1; 
     const pageName = `${date.year}-${String(date.month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     let page = journal.pages.getName(pageName);
 
-    if (!notes || notes.length === 0) {
-      if (page) {
-        await page.delete();
-      }
-      return;
-    }
-
-    let htmlContent = "";
-    for (const note of notes) {
-      htmlContent += `<h2><i class="${note.icon || "fas fa-book"}"></i> ${foundry.utils.escapeHTML(note.title)}</h2>`;
-      // Convert newlines to <br> and wrap in paragraphs
-      const paragraphs = note.content
-        .split("\n")
-        .map((p) => `<p>${foundry.utils.escapeHTML(p)}</p>`)
-        .join("");
-      htmlContent += paragraphs || "<p><em>No content.</em></p>";
-      htmlContent += "<hr>";
-    }
-
-    const pageData = {
-      "text.content": htmlContent,
-      flags: {
-        [MODULE_NAME]: {
-          notes: notes,
-        },
-      },
-    };
-
-    if (page) {
-      await page.update(pageData);
+    if (!dailyNotes || dailyNotes.length === 0) {
+        if (page) await page.delete();
     } else {
-      // Merge our data with the required new page data
-      const newPageData = foundry.utils.mergeObject(pageData, {
-        name: pageName,
-        "text.format": CONST.JOURNAL_ENTRY_PAGE_FORMATS.HTML,
-      });
-      await journal.createEmbeddedDocuments("JournalEntryPage", [newPageData]);
-    }
-  }
+        let htmlContent = "";
+        for (const note of dailyNotes) { 
+             htmlContent += `<h2><i class="${note.icon}"></i> ${note.title}</h2><p>${note.content}</p><hr>`; 
+        }
+        const pageData = {
+            "text.content": htmlContent,
+            flags: { [MODULE_NAME]: { notes: dailyNotes } },
+        };
 
+        if (page) await page.update(pageData);
+        else {
+            const newPageData = foundry.utils.mergeObject(pageData, {
+                name: pageName,
+                "text.format": CONST.JOURNAL_ENTRY_PAGE_FORMATS.HTML,
+            });
+            await journal.createEmbeddedDocuments("JournalEntryPage", [newPageData]);
+        }
+    }
+    if (recurringNotesToSave.length > 0) {
+        const recPageName = "0000-Recurring";
+        let recPage = journal.pages.getName(recPageName);
+        let existingRecNotes = recPage?.flags?.[MODULE_NAME]?.notes || [];
+        for (const newNote of recurringNotesToSave) {
+            const idx = existingRecNotes.findIndex(n => n.id === newNote.id);
+            if (idx > -1) existingRecNotes[idx] = newNote; // Update existing
+            else existingRecNotes.push(newNote); // Add new
+        }
+        let recHtml = "<h1>Recurring Events Index</h1>";
+        existingRecNotes.forEach(n => {
+             recHtml += `<p><strong>${n.title}</strong> (${n.repeatUnit})</p>`;
+        });
+
+        const recData = {
+             "text.content": recHtml,
+             flags: { [MODULE_NAME]: { notes: existingRecNotes } }
+        };
+
+        if (recPage) await recPage.update(recData);
+        else {
+             await journal.createEmbeddedDocuments("JournalEntryPage", [{
+                 name: recPageName,
+                 "text.format": CONST.JOURNAL_ENTRY_PAGE_FORMATS.HTML,
+                 ...recData
+             }]);
+        }
+    }
+}
   /**
    * Helper to perform a safe Read-Modify-Write operation on notes.
    * This minimizes race conditions by applying changes to the latest data immediately before saving.
@@ -853,21 +869,34 @@ _onUpdateWorldTime = async (worldTime, dt) => {
       )
       .join("");
 
-    const content = `
-            <div class="form-group">
-                <label>Title:</label>
-                <input type="text" name="title" value="${foundry.utils.escapeHTML(noteToEdit?.title || "")}" autofocus/>
-            </div>
-            <div class="form-group">
-                <label>Icon:</label>
-                <select name="icon">${pinTypeOptions}</select>
-            </div>
-            <div class="form-group">
-                <label>Note:</label>
-                <textarea name="content" placeholder="Enter note content..." style="width: 100%; height: 100px; resize: vertical;">${foundry.utils.escapeHTML(noteToEdit?.content || "")}</textarea>
-            </div>
+  const content = `
+        <div class="form-group">
+            <label>Title:</label>
+            <input type="text" name="title" value="${foundry.utils.escapeHTML(noteToEdit?.title || "")}" autofocus/>
+        </div>
+        <div class="form-group">
+            <label>Icon:</label>
+            <select name="icon">${pinTypeOptions}</select>
+        </div>
+        
+        <div class="form-group repeat-input">
+            <label style="flex:0;">Repeat:</label>
+            <input type="number" name="repeatCount" value="${noteToEdit?.repeatCount || 0}" min="0" style="" placeholder="∞" title="0 = Infinite">
+            <label style="flex:0; margin-left: 5px;"> every </label>
+            <input type="number" name="repeatInterval" value="${noteToEdit?.repeatInterval || 1}" min="1">
+            <select name="repeatUnit" style="flex: 1;">
+                <option value="none" ${!noteToEdit?.repeatUnit || noteToEdit.repeatUnit === 'none' ? 'selected' : ''}>Never</option>
+                <option value="days" ${noteToEdit?.repeatUnit === 'days' ? 'selected' : ''}>Days</option>
+                <option value="months" ${noteToEdit?.repeatUnit === 'months' ? 'selected' : ''}>Months</option>
+                <option value="years" ${noteToEdit?.repeatUnit === 'years' ? 'selected' : ''}>Years</option>
+            </select>
 
-        `;
+        </div>
+        <div class="form-group">
+            <label>Note:</label>
+            <textarea name="content" placeholder="Enter note content..." style="width: 100%; height: 100px; resize: vertical;">${foundry.utils.escapeHTML(noteToEdit?.content || "")}</textarea>
+        </div>
+    `;
 
     const result = await foundry.applications.api.DialogV2.prompt({
       title: title,
@@ -886,30 +915,63 @@ _onUpdateWorldTime = async (worldTime, dt) => {
             return false;
           }
           return {
-            title: newTitle,
-            icon: form.icon.value,
-            content: form.content.value,
+             title: newTitle,
+              icon: form.icon.value,
+              content: form.content.value,
+              repeatInterval: parseInt(form.repeatInterval.value),
+              repeatUnit: form.repeatUnit.value,
+              repeatCount: parseInt(form.repeatCount.value),
+              startDate: date
           };
         },
       },
     });
 
-    if (!result) return;
+if (!result) return;
+if (isEditing) {
+        const wasRecurring = noteToEdit.repeatUnit && noteToEdit.repeatUnit !== 'none';
+        const isNowRecurring = result.repeatUnit && result.repeatUnit !== 'none';
+
+        if (wasRecurring && !isNowRecurring) {
+            await this._removeRecurringNote(noteToEdit.id);
+        }
+    }
 
     const freshNotes = await this._transactionalNoteUpdate(date, (notes) => {
       if (isEditing) {
-        const index = notes.findIndex((n) => n.id === noteToEdit.id);
+        let index = notes.findIndex((n) => n.id === noteToEdit.id);
+        
+        if (index === -1) {
+             const restoredNote = {
+                 id: noteToEdit.id,
+                 ...noteToEdit
+             };
+             notes.push(restoredNote);
+             index = notes.length - 1;
+        }
+
         if (index > -1) {
           notes[index].title = result.title;
           notes[index].icon = result.icon;
           notes[index].content = result.content;
+          notes[index].repeatInterval = result.repeatInterval;
+          notes[index].repeatUnit = result.repeatUnit;
+          notes[index].repeatCount = result.repeatCount;
+          notes[index].startDate = result.startDate;
+          
+          delete notes[index].isRecurringInstance; 
         }
       } else {
+        // ... [new note creation logic remains same] ...
         const newNote = {
           id: foundry.utils.randomID(),
           title: result.title,
           icon: result.icon,
           content: result.content,
+          repeatInterval: result.repeatInterval,
+          repeatUnit: result.repeatUnit,
+          repeatCount: result.repeatCount,
+          startDate: result.startDate, 
         };
         notes.push(newNote);
       }
@@ -917,37 +979,46 @@ _onUpdateWorldTime = async (worldTime, dt) => {
     });
 
     this.render();
-
+    
     if (openViewNote) {
       this._showViewNotesDialog(date, freshNotes, position);
     }
-  }
-
+}
   /**
    * Shows the "List" dialog for all notes on a given day.
    * @param {object} date - The date object {year, month, day}
    * @param {Array} notes - The array of note objects for that day.
    */
   async _showViewNotesDialog(date, notes, openPosition = null) {
+    if (!notes) {
+        notes = await this._getNotesForDay(date);
+    }
     let position = {};
     if (openPosition) {
       position = openPosition;
     }
-
-    let notesHTML = notes
+  let notesHTML = notes
       .map(
-        (note) => `
+        (note) => {
+            // Check if note repeats
+            const isRepeating = note.repeatUnit && note.repeatUnit !== 'none';
+            // Create the icon HTML if needed
+            const repeatIcon = isRepeating ? '<i class="fas fa-repeat" title="Repeating Event" style="margin-right: 5px; font-size: 0.8em; opacity: 0.7;"></i>' : '<span></span>';
+
+            return `
             <div class="calendar-note-item" data-note-id="${note.id}" data-action="edit-note">
                 <span class="note-title">
                     <i class="${note.icon || "fas fa-book"}"></i>
                     ${foundry.utils.escapeHTML(note.title)}
+                    ${repeatIcon}
                     <i class="fas fa-trash note-control" data-action="delete-note" title="Delete Note"></i>
                 </span>
                 <div class="note-content">
                     ${foundry.utils.escapeHTML(note.content) || "<em>No content.</em>"}
                 </div>
             </div>
-        `,
+        `;
+        }
       )
       .join("");
 
@@ -1016,31 +1087,121 @@ _onUpdateWorldTime = async (worldTime, dt) => {
     }).catch(() => null);
   }
 
-  async _handleDeleteNote(parentDialog, date, notes, noteId) {
-    let updatedNotes = notes;
+  async _removeRecurringNote(noteId) {
+      const journal = game.journal.getName(calendarJournal);
+      if (!journal) return;
+      
+      const recPage = journal.pages.getName("0000-Recurring");
+      if (!recPage) return;
 
-    const confirmed = await confirmationDialog(
-      `<p>Are you sure you want to delete this note?</p><p>This action cannot be undone.</p>`,
-    );
+      let recNotes = recPage.flags[MODULE_NAME]?.notes || [];
+      const initialLength = recNotes.length;
+      
+      recNotes = recNotes.filter(n => n.id !== noteId);
 
-    if (confirmed) {
-      updatedNotes = await this._transactionalNoteUpdate(date, (currentNotes) => {
-        return currentNotes.filter((n) => n.id !== noteId);
-      });
+      if (recNotes.length !== initialLength) {
+          await recPage.update({
+              flags: { [MODULE_NAME]: { notes: recNotes } }
+          });
+          console.log(`Mini Calendar | Removed recurring note ${noteId}`);
+      }
+  }
 
-      this.render();
+
+async _handleDeleteNote(parentDialog, date, notes, noteId) {
+    const noteToDelete = notes.find(n => n.id === noteId);
+    
+    if (noteToDelete && noteToDelete.repeatUnit && noteToDelete.repeatUnit !== 'none') {
+        await this._removeRecurringNote(noteId);
+    } else {
+        await this._transactionalNoteUpdate(date, (currentNotes) => {
+            return currentNotes.filter((n) => n.id !== noteId);
+        });
     }
-
+    
+    this.render();
     if (parentDialog) {
-      this._showViewNotesDialog(date, updatedNotes, parentDialog);
+      this._showViewNotesDialog(date, null, parentDialog);
     }
   }
+
+
+  _checkRecurrence(note, targetDate) {
+    if (!note.repeatUnit || note.repeatUnit === 'none') return false;
+    
+    const start = note.startDate;
+    const interval = parseInt(note.repeatInterval) || 1;
+    const count = parseInt(note.repeatCount) || 0;
+    
+    const unit = String(note.repeatUnit).toLowerCase();
+    const calendar = game.time.calendar;
+    
+    if (targetDate.year < start.year) return false;
+    if (targetDate.year === start.year && targetDate.month < start.month) return false;
+    if (targetDate.year === start.year && targetDate.month === start.month && targetDate.day < start.day) return false;
+
+    let isMatch = false;
+    let occurrenceIndex = 0;
+
+    if (unit === 'years') {
+        const yearDiff = targetDate.year - start.year;
+        if (yearDiff >= 0 && yearDiff % interval === 0) {
+            if (targetDate.month === start.month && targetDate.day === start.day) {
+                isMatch = true;
+                occurrenceIndex = yearDiff / interval;
+            }
+        }
+    } else if (unit === 'months') {
+        // Calculate total month difference
+        const monthDiff = (targetDate.year - start.year) * calendar.months.values.length + (targetDate.month - start.month);
+        if (monthDiff >= 0 && monthDiff % interval === 0) {
+             if (targetDate.day === start.day) { 
+                 isMatch = true;
+                 occurrenceIndex = monthDiff / interval;
+             }
+        }
+    } else {
+        const getTimestamp = (d) => {
+            let dayOfYear = 0;
+            for (let i = 0; i < d.month; i++) {
+                const m = calendar.months.values[i];
+                const isLeap = calendar.isLeapYear(d.year);
+                const mDays = isLeap && m.leapDays != null ? m.leapDays : m.days;
+                dayOfYear += mDays;
+            }
+            dayOfYear += d.day;
+            return calendar.componentsToTime({
+                year: d.year,
+                day: dayOfYear, 
+                hour: 0, minute: 0, second: 0
+            });
+        };
+
+        const startTime = getTimestamp(start);
+        const targetTime = getTimestamp(targetDate);
+        
+        const secondsPerDay = calendar.days.hoursPerDay * calendar.days.minutesPerHour * calendar.days.secondsPerMinute;
+        
+        const diffSeconds = targetTime - startTime;
+        const diffDays = Math.round(diffSeconds / secondsPerDay);
+        
+        if (diffDays >= 0 && diffDays % interval === 0) {
+            isMatch = true;
+            occurrenceIndex = diffDays / interval;
+        }
+    }
+
+    if (isMatch && count > 0 && occurrenceIndex >= count) {
+        return false;
+    }
+
+    return isMatch;
+}
 
   async close(options) {
     this.#lastTimeState = null;
     if (this.#clockInterval) clearInterval(this.#clockInterval);
     if (this.#gameClockInterval) clearTimeout(this.#gameClockInterval);
-    // if (this.#gameClockInterval) clearInterval(this.#gameClockInterval);
     this.#clockInterval = null;
     this.#gameClockInterval = null;
     if (this.position) {
@@ -1051,7 +1212,7 @@ _onUpdateWorldTime = async (worldTime, dt) => {
       }
     }
     game.settings.set(MODULE_NAME, "calSheetOpened", false);
-
+    Hooks.off("deleteJournalEntry", this._onJournalUpdate);
     Hooks.off("updateJournalEntryPage", this._onJournalUpdate);
     Hooks.off("updateWorldTime", this._onUpdateWorldTime);
     this._cachedTimeDisplays = null;
@@ -1062,10 +1223,6 @@ _onUpdateWorldTime = async (worldTime, dt) => {
         return super.close(options);
   }
 
-  // --- Action Handlers ---
-  /** * Handle single-clicking a day.
-   * This function now acts as a router, opening the "Add" or "View" dialog.
-   */
   async _onDayClick_ViewNote(event, date) {
     const notes = await this._getNotesForDay(date);
 
@@ -1216,7 +1373,6 @@ _onUpdateWorldTime = async (worldTime, dt) => {
 
         newTimeComps.dayOfMonth = Math.min(newTimeComps.dayOfMonth, Math.max(0, daysInMonth - 1));
 
-        // Use game.time.set() with components
         await game.time.set(newTimeComps);
 
         ui.notifications.info(`Viewing year ${newYear} and world time updated.`);
@@ -1288,7 +1444,6 @@ _onUpdateWorldTime = async (worldTime, dt) => {
       const newTimeComps = {
         year: currentComps.year,
         day: currentComps.day,
-        // --- FIX: Use dynamic limits instead of hardcoded 23/59 ---
         hour: Math.max(0, Math.min(maxHour, hour)),
         minute: Math.max(0, Math.min(maxMinute, minute)),
         second: Math.max(0, Math.min(maxSecond, second)),
@@ -1413,11 +1568,7 @@ _onUpdateWorldTime = async (worldTime, dt) => {
     try {
       const currentTime = game.time.worldTime;
       const newTime = currentTime + seconds;
-
-      // Use game.time.set() with timestamp
       await game.time.set(newTime);
-
-      // Update view to current time
       const calendar = game.time.calendar;
       const comps = calendar.timeToComponents(game.time.worldTime);
       this.#viewYear = comps.year;
@@ -1438,11 +1589,7 @@ _onUpdateWorldTime = async (worldTime, dt) => {
     app.render(true);
 
     Hooks.once("closeCalendarConfig", () => {
-      // ui.notifications.warn("Calendar settings changed. A reload (F5) is required to apply changes.", {
-      //   permanent: true,
-      // });
       if (this.rendered) {
-        // Reset view to current time after config change
         const calendar = game.time.calendar;
         const comps = calendar.timeToComponents(game.time.worldTime);
         this.#viewYear = comps.year;
@@ -1535,6 +1682,7 @@ _onUpdateWorldTime = async (worldTime, dt) => {
       console.error("Mini Calendar | Failed to update time of day class", e);
     }
   }
+
 async _updateSceneDarkness(worldTime) {
       if (!canvas.scene || (!canvas.scene.active && game.settings.get(MODULE_NAME, "enableDarknessActive"))) return;
 

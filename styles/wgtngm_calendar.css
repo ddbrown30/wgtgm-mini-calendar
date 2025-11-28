@@ -273,9 +273,14 @@
   justify-content: flex-end;
 }
 
+
+
+
 .wgtngmMiniCalender .calendar-grid .day .event-icon {
   color: var(--color-text-primary);
 }
+
+
 .wgtngmMiniCalender .calendar-mini .moon-icon,
 .wgtngmMiniCalender .calendar-grid .day .moon-icon {
   width: 12px;
@@ -287,6 +292,11 @@
 .wgtngmMiniCalender .calendar-mini i,
 .wgtngmMiniCalender .calendar-mini-footer i {
   cursor: pointer;
+}
+
+.wgtngmMiniCalender .calendar-mini i.recurring-note,
+.wgtngmMiniCalender .calendar-grid .day .event-icon.recurring-note {
+  color: var(--color-level-success-border);
 }
 
 .wgtngmMiniCalender .calendar-footer.player-view {
@@ -405,7 +415,7 @@
   font-weight: bold;
   color: var(--color-text-primary);
   font-size: 14px;
-  grid-template-columns: 16px 1fr 16px;
+  grid-template-columns: 16px 1fr 16px 16px;
 }
 .wgtngmMiniCalender-dialog.dialog.add-note .note-title i {
   color: var(--color-text-primary);
@@ -446,6 +456,26 @@
   height: 300px;
 }
 
+
+.application.wgtngmMiniCalender-dialog .repeat-input {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.application.wgtngmMiniCalender-dialog .repeat-input input[name="repeatCount"]{
+    width: 50px;
+    text-align: center;
+    max-width: 50px;
+}
+
+.application.wgtngmMiniCalender-dialog .repeat-input input[name="repeatInterval"]{
+    width: 50px;
+    text-align: center;
+    max-width: 50px;
+}
+
 .wgtngmMiniCalender .wgtngm-tooltip {
   visibility: hidden;
   opacity: 0;
@@ -467,6 +497,7 @@
   pointer-events: none;
   font-family: sans-serif;
   white-space: pre-wrap;
+  color: var(--color-text-primary);
   transition:
     opacity 0.2s ease-in-out,
     visibility 0.2s;
