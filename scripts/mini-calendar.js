@@ -396,7 +396,6 @@ async _getNotesForDay(date, preFetchedJournal = null, preFetchedPageMap = null) 
 
         const notes = await this._getNotesForDay(date, journal, pageMap);
         const hasRecurring = notes.some(n => n.isRecurringInstance);
-        console.log(notes);
         const hasEvent = notes.length > 0;
         let noteIcon = "fas fa-book";
         if (notes.length > 1) {
