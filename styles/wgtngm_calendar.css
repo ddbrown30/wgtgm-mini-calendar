@@ -26,6 +26,8 @@
   flex-direction: row;
   justify-content: space-around;
   margin-bottom: 4px;
+  align-items: center;
+      margin-top: -1px;
 }
 
 .application.wgtngmMiniCalender.minimized .slider-mini {
@@ -260,17 +262,18 @@
 }
 
 .wgtngmMiniCalender .calendar-grid .day .day-icons {
-  position: absolute;
-  bottom: 4px;
-  right: 2px;
-  display: flex;
-  gap: 2px;
-  font-size: 1em;
-  column-count: 2;
-  justify-items: end;
-  align-items: end;
-  flex-wrap: wrap-reverse;
-  justify-content: flex-end;
+    position: absolute;
+    bottom: 4px;
+    display: flex;
+    font-size: 10px;
+    column-count: 2;
+    justify-items: center;
+    align-items: center;
+    flex-wrap: wrap-reverse;
+    justify-content: flex-end;
+    width: 100%;
+    padding: 0px 4px 0px 0px;
+    gap: 2px;
 }
 
 
@@ -491,7 +494,7 @@
   background-color: rgba(0, 0, 0, 0.9);
   text-align: center;
   border-radius: 4px;
-  font-size: 0.85em;
+  font-size: 11px;
   border: 1px solid #7a6a5a;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
   pointer-events: none;
@@ -561,12 +564,17 @@
 }
 
 .wgtngmMiniCalender .moon-phase-wrapper {
-  position: relative;
-  width: 12px;
-  height: 12px;
-  display: inline-block;
-  vertical-align: middle;
-  opacity: 0.9;
+    position: relative;
+    width: 11px;
+    height: 11px;
+    display: inline-block;
+    vertical-align: middle;
+    opacity: 0.9;
+}
+
+.wgtngmMiniCalender .calendar-mini .moon-phase-wrapper {
+    width: 12px;
+    height: 12px;
 }
 
 .wgtngmMiniCalender .moon-phase-wrapper .moon-base {

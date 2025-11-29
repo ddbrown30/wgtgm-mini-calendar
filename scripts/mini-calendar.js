@@ -359,11 +359,9 @@ async _getNotesForDay(date, preFetchedJournal = null, preFetchedPageMap = null) 
       const currentMonthPrefix = `${this.#viewYear}-${String(this.#viewMonth + 1).padStart(2, "0")}`;
 
       journal.pages.forEach((page) => {
-        // --- FIX: Include the Recurring page in the map lookup ---
         if (page.name === "0000-Recurring" || page.name.startsWith(currentMonthPrefix)) {
           pageMap.set(page.name, page);
         }
-        // ---------------------------------------------------------
       });
     }
 
@@ -485,16 +483,48 @@ async _getNotesForDay(date, preFetchedJournal = null, preFetchedPageMap = null) 
 
     const slider = this.element.querySelector(".mini-time-slider");
     if (slider) {
-      slider.addEventListener("change", async (event) => {
-        const newSecondsTotal = parseInt(event.target.value);
-        if (isNaN(newSecondsTotal)) return;
+      
 
-        // Get dynamic calendar settings
-        const calendar = game.time.calendar;
+      slider.addEventListener("input", (event) => {
+        const val = parseInt(event.target.value);
+        if (isNaN(val)) return;
+
         const mph = calendar.days.minutesPerHour;
         const spm = calendar.days.secondsPerMinute;
 
-        // Convert total seconds back to Hours/Minutes/Seconds
+        const h = Math.floor(val / (mph * spm));
+        const remainder = val % (mph * spm);
+        const m = Math.floor(remainder / spm);
+        const s = remainder % spm;
+
+
+        const currentComps = calendar.timeToComponents(game.time.worldTime);
+        const previewComps = {
+            ...currentComps,
+            hour: h,
+            minute: m,
+            second: s
+        };
+        const previewTimestamp = calendar.componentsToTime(previewComps);
+
+        const timeString = this._formatTime(previewTimestamp);
+        if (this._cachedTimeDisplays) {
+            this._cachedTimeDisplays.forEach((el) => {
+                el.textContent = timeString;
+            });
+        }
+
+        this._updateTimeOfDayClass(previewTimestamp);
+      });
+
+      slider.addEventListener("change", async (event) => {
+        event.target.blur();
+        const newSecondsTotal = parseInt(event.target.value);
+        if (isNaN(newSecondsTotal)) return;
+
+        const mph = calendar.days.minutesPerHour;
+        const spm = calendar.days.secondsPerMinute;
+
         const h = Math.floor(newSecondsTotal / (mph * spm));
         const remainder = newSecondsTotal % (mph * spm);
         const m = Math.floor(remainder / spm);
@@ -543,6 +573,8 @@ async _getNotesForDay(date, preFetchedJournal = null, preFetchedPageMap = null) 
 
     if (!this.#clockInterval) {
       this.#clockInterval = setInterval(() => {
+        const slider = this.element.querySelector(".mini-time-slider");
+        if (slider && document.activeElement === slider) return;
         const timeString = this._formatTime(game.time.worldTime);
         if (this._cachedTimeDisplays) {
           this._cachedTimeDisplays.forEach((el) => {
@@ -844,7 +876,6 @@ async _saveNotesForDay(date, notes) {
     const isEditing = noteToEdit !== null;
     const title = isEditing ? "Edit Note" : "Add Note";
 
-    // Use the icon list from your map widget example
     const pinTypes = [
       { key: "fas fa-book", label: "Note" },
       { key: "fas fa-map-pin", label: "Pin" },
@@ -901,7 +932,6 @@ async _saveNotesForDay(date, notes) {
       title: title,
       content: content,
       classes: ["wgtngmMiniCalender-dialog", "dialog", "edit-note"],
-      // rejectClose: false,
       modal: false,
       ok: {
         label: "Save",
@@ -961,7 +991,6 @@ if (isEditing) {
           delete notes[index].isRecurringInstance; 
         }
       } else {
-        // ... [new note creation logic remains same] ...
         const newNote = {
           id: foundry.utils.randomID(),
           title: result.title,
@@ -1198,6 +1227,10 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
 }
 
   async close(options) {
+     if ( options.closeKey ) {
+      return;
+    }
+
     this.#lastTimeState = null;
     if (this.#clockInterval) clearInterval(this.#clockInterval);
     if (this.#gameClockInterval) clearTimeout(this.#gameClockInterval);
