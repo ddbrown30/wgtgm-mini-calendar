@@ -775,9 +775,9 @@ export function harptos() {
 
 export function pf2e() {
         return {
-            name: "Imperial Calendar",
-            id: "Imperial Calendar PF2E",
-            description: "Imperial Calendar for PF2E (Golarion)",
+            name: "Absalom Reckoning",
+            id: "Absalom Reckoning PF2E",
+            description: "Absalom Reckoning for PF2E (Golarion)",
             years: {
                 yearZero: 0,
                 firstWeekday: 0,
@@ -824,7 +824,7 @@ export function pf2e() {
                         cycleLength: 29.5,
                         offset: 0,
                         color: "#e0e0e0",
-                        firstNewMoon: { year: -2499, month: 1, day: 26 },
+                        firstNewMoon: { year: 0, month: 1, day: 26 },
                         phases: [
                             { name: "New Moon", length: 3.6875, icon: "fa-moon" },
                             { name: "Waxing Crescent", length: 3.6875, icon: "fa-moon" },

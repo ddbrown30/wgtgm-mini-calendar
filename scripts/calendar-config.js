@@ -94,7 +94,7 @@ export class CalendarConfig extends calendarForm {
             { value: "world", label: "Default (World's Calendar)", selected: source === "world" },
             { value: "gregorian", label: "Preset: Gregorian (Full Format)", selected: source === "gregorian" },
             { value: "harptos", label: "Preset: Harptos (Full Format)", selected: source === "harptos" },
-            { value: "pf2e", label: "Preset: PF2E Golarion", selected: source === "pf2e" },
+            { value: "pf2e", label: "Preset: PF2E Absalom Reckoning (Golarion)", selected: source === "pf2e" },
             { value: "warhammer", label: "Preset: Warhammer Imperial Calendar", selected: source === "warhammer" },
             { value: "custom", label: "Custom JSON (Full Format)", selected: source === "custom" },
         ];
