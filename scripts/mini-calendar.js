@@ -241,6 +241,7 @@ _debouncedSavePosition = foundry.utils.debounce(async () => {
       return {
         name: moonConfig.name,
         phaseName: currentPhase.name,
+        phaseDisplayName: currentPhase.display || currentPhase.name,
         image: imagePath,
         color: moonConfig.color || "#ffffff",
         daysIntoPhase: Math.floor(daysIntoPhase),
@@ -306,11 +307,10 @@ async _getNotesForDay(date, preFetchedJournal = null, preFetchedPageMap = null) 
   async _renderFrame(options) {
     const frame = await super._renderFrame(options);
     if ( !this.hasFrame ) return frame;
-    if (!game.user.isGM) return;
-    const copyId = `
+    const copyId = game.user.isGM ? `
         <button type="button" class="header-control fa-solid fa-calendar-plus icon" data-action="add-note-header" 
                 data-tooltip="Create Note" aria-label="Create Note"></button>
-      `;
+      `: ``;
       this.window.close.insertAdjacentHTML("beforebegin", copyId);
     return frame;
   }
@@ -872,7 +872,7 @@ async _saveNotesForDay(date, notes) {
    * @param {object} date - The date object {year, month, day}
    * @param {object | null} noteToEdit - If editing, the note object to pre-fill.
    */
-  async _showAddNoteDialog(date, noteToEdit = null, position = null, openViewNote = true) {
+  async _showAddNoteDialog(date, noteToEdit = null, position = null, openViewNote = false) {
     const isEditing = noteToEdit !== null;
     const title = isEditing ? "Edit Note" : "Add Note";
 
@@ -1084,7 +1084,7 @@ if (isEditing) {
           icon: "fas fa-calendar-plus",
           default: true,
           callback: (event, button, data) => {
-            this._showAddNoteDialog(date, null, data?.position);
+            this._showAddNoteDialog(date, null, data?.position, true);
           },
         },
       ],
@@ -1097,7 +1097,7 @@ if (isEditing) {
             const noteId = event.target.closest("[data-note-id]")?.dataset.noteId;
             const note = notes.find((n) => n.id === noteId);
             if (note) {
-              this._showAddNoteDialog(date, note, dialog.target?.position);
+              this._showAddNoteDialog(date, note, dialog.target?.position, true);
             }
           });
         });
@@ -1226,7 +1226,8 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
     return isMatch;
 }
 
-  async close(options) {
+  async close(options= {}) {
+    console.log(options);
      if ( options.closeKey ) {
       return;
     }
@@ -1627,6 +1628,9 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
         this.#viewYear = comps.year;
         this.#viewMonth = comps.month;
         this.render();
+        if (game.system.id === "dnd5e" && dnd5e?.ui?.calendar) {
+          dnd5e.ui.calendar.render();
+      }
       }
     });
   }

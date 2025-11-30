@@ -27,6 +27,7 @@
   justify-content: space-around;
   margin-bottom: 4px;
   align-items: center;
+      gap: 2px;
       margin-top: -1px;
 }
 
@@ -705,4 +706,9 @@
 }
 
 
-
+.calendar-mini span.current-month {
+      text-overflow: ellipsis;
+    white-space: nowrap;
+    /* width: calc(100% - 60px); */
+    overflow: hidden;
+}

@@ -2,7 +2,8 @@ import minicalendarSettings, { MODULE_NAME } from "./settings.js";
 import { wgtngmMiniCalender } from "./mini-calendar.js";
 import { handleMPClick, localize, openwgtngmMiniCalendarSheet } from "./helper.js";
 import { CalendarConfig } from "./calendar-config.js";
-import { MiniCalendarClass } from "./CalendarClass.js";
+// import { MiniCalendarClass } from "./CalendarClass.js";
+import { createMiniCalendarClass } from "./CalendarClass.js";
 
 let DEFAULT_CALENDAR;
 
@@ -71,8 +72,8 @@ Hooks.once("init", async function () {
     await minicalendarSettings();
 
     DEFAULT_CALENDAR = foundry.utils.deepClone(CONFIG.time.worldCalendarConfig);
-    CONFIG.time.worldCalendarClass = MiniCalendarClass;
-
+    // CONFIG.time.worldCalendarClass = MiniCalendarClass;
+    CONFIG.time.worldCalendarClass = createMiniCalendarClass();
 
         Handlebars.registerHelper('json', function(context) {
         return JSON.stringify(context);

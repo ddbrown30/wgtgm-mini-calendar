@@ -172,41 +172,49 @@ export function warhammer() {
                     phases: [
                         {
                             name: "New Moon",
+                            display: "New Moon",
                             length: 1,
                             icon: "fa-moon"
                         },
                         {
                             name: "Waxing Crescent",
+                            display: "Waxing Crescent",
                             length: 5,
                             icon: "fa-moon"
                         },
                         {
                             name: "First Quarter",
+                            display: "First Quarter",
                             length: 1,
-                            icon: "fa-adjust"
+                            icon: "fa-moon"
                         },
                         {
                             name: "Waxing Gibbous",
+                            display: "Waxing Gibbous",
                             length: 5,
                             icon: "fa-moon"
                         },
                         {
                             name: "Full Moon",
+                            display: "Full Moon",
                             length: 1,
-                            icon: "fa-circle"
+                            icon: "fa-moon"
                         },
                         {
                             name: "Waning Gibbous",
+                            display: "Waning Gibbous",
                             length: 5,
                             icon: "fa-moon"
                         },
                         {
                             name: "Last Quarter",
+                            display: "Last Quarter",
                             length: 1,
-                            icon: "fa-adjust fa-flip-horizontal"
+                            icon: "fa-moon"
                         },
                         {
                             name: "Waning Crescent",
+                            display: "Waning Crescent",
                             length: 6,
                             icon: "fa-moon"
                         }
@@ -521,41 +529,49 @@ export function harptos() {
                         phases: [
                             {
                                 name: "New Moon",
+                                display: "New Moon",
                                 length: 3.8,
                                 icon: "fa-moon",
                             },
                             {
                                 name: "Waxing Crescent",
+                                display: "Waxing Crescent",
                                 length: 3.8,
                                 icon: "fa-moon",
                             },
                             {
                                 name: "First Quarter",
+                                display: "First Quarter",
                                 length: 3.8,
                                 icon: "fa-adjust",
                             },
                             {
                                 name: "Waxing Gibbous",
+                                display: "Waxing Gibbous",
                                 length: 3.8,
                                 icon: "fa-moon",
                             },
                             {
                                 name: "Full Moon",
+                                display: "Full Moon",
                                 length: 3.8,
                                 icon: "fa-circle",
                             },
                             {
                                 name: "Waning Gibbous",
+                                display: "Waning Gibbous",
                                 length: 3.8,
                                 icon: "fa-moon",
                             },
                             {
                                 name: "Last Quarter",
+                                display: "Last Quarter",
                                 length: 3.8,
                                 icon: "fa-adjust fa-flip-horizontal",
                             },
                             {
                                 name: "Waning Crescent",
+                                display: "Waning Crescent",
                                 length: 3.8,
                                 icon: "fa-moon",
                             },
@@ -826,14 +842,14 @@ export function pf2e() {
                         color: "#e0e0e0",
                         firstNewMoon: { year: 0, month: 1, day: 26 },
                         phases: [
-                            { name: "New Moon", length: 3.6875, icon: "fa-moon" },
-                            { name: "Waxing Crescent", length: 3.6875, icon: "fa-moon" },
-                            { name: "First Quarter", length: 3.6875, icon: "fa-adjust" },
-                            { name: "Waxing Gibbous", length: 3.6875, icon: "fa-moon" },
-                            { name: "Full Moon", length: 3.6875, icon: "fa-circle" },
-                            { name: "Waning Gibbous", length: 3.6875, icon: "fa-moon" },
-                            { name: "Last Quarter", length: 3.6875, icon: "fa-adjust fa-flip-horizontal" },
-                            { name: "Waning Crescent", length: 3.6875, icon: "fa-moon" }
+                            { name: "New Moon", display: "New Moon", length: 3.6875, icon: "fa-moon" },
+                            { name: "Waxing Crescent", display: "Waxing Crescent", length: 3.6875, icon: "fa-moon" },
+                            { name: "First Quarter", display: "First Quarter", length: 3.6875, icon: "fa-moon" },
+                            { name: "Waxing Gibbous", display: "Waxing Gibbous", length: 3.6875, icon: "fa-moon" },
+                            { name: "Full Moon", display: "Full Moon", length: 3.6875, icon: "fa-moon" },
+                            { name: "Waning Gibbous", display: "Waning Gibbous", length: 3.6875, icon: "fa-moon" },
+                            { name: "Last Quarter", display: "Last Quarter", length: 3.6875, icon: "fa-moon" },
+                            { name: "Waning Crescent", display: "Waning Crescent", length: 3.6875, icon: "fa-moon" }
                         ]
                     }
                 ]
@@ -1008,14 +1024,14 @@ export function gregorian() {
                         cycleLength: 29.53,
                         offset: 4,
                         phases: [
-                            { name: "New Moon", length: 3.69, icon: "fa-moon" },
-                            { name: "Waxing Crescent", length: 3.69, icon: "fa-moon" },
-                            { name: "First Quarter", length: 3.69, icon: "fa-adjust" },
-                            { name: "Waxing Gibbous", length: 3.69, icon: "fa-moon" },
-                            { name: "Full Moon", length: 3.69, icon: "fa-circle" },
-                            { name: "Waning Gibbous", length: 3.69, icon: "fa-moon" },
-                            { name: "Last Quarter", length: 3.69, icon: "fa-adjust fa-flip-horizontal" },
-                            { name: "Waning Crescent", length: 3.69, icon: "fa-moon" },
+                            { name: "New Moon", display: "New Moon", length: 3.69, icon: "fa-moon" },
+                            { name: "Waxing Crescent", display: "Waxing Crescent", length: 3.69, icon: "fa-moon" },
+                            { name: "First Quarter", display: "First Quarter", length: 3.69, icon: "fa-moon" },
+                            { name: "Waxing Gibbous", display: "Waxing Gibbous", length: 3.69, icon: "fa-moon" },
+                            { name: "Full Moon", display: "Full Moon", length: 3.69, icon: "fa-moon" },
+                            { name: "Waning Gibbous", display: "Waning Gibbous", length: 3.69, icon: "fa-moon" },
+                            { name: "Last Quarter", display: "Last Quarter", length: 3.69, icon: "fa-moon" },
+                            { name: "Waning Crescent", display: "Waning Crescent", length: 3.69, icon: "fa-moon" },
                         ],
                         color: "#f4f4f4",
                         firstNewMoon: { year: 0, month: 1, day: 1 },

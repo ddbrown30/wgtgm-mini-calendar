@@ -28,7 +28,7 @@
                         <i class="{{this.noteIcon}} event-icon {{#if this.hasRecurring}}recurring-note{{/if}}"><span class="wgtngm-tooltip">{{{this.noteTooltip}}}</span></i>
                     {{/if}}{{/if}}
                     {{#each this.moonPhases}}
-                        <div class="moon-phase-wrapper" title="{{this.name}}: {{this.phaseName}}" style="--moon-color: {{this.color}};">
+                        <div class="moon-phase-wrapper" title="{{this.name}}: {{this.phaseDisplayName}}" style="--moon-color: {{this.color}};">
                             <img src="{{this.image}}" class="moon-base">
                         <div class="moon-tint" style="-webkit-mask-image: url('{{this.image}}'); mask-image: url('{{this.image}}');"></div>
                         </div>
@@ -42,25 +42,25 @@
     <div class="calendar-mini">
         {{#if isGM}}
             {{#each currentMoon}}
-                <div class="moon-phase-wrapper" title="{{this.name}}: {{this.phaseName}}" style="--moon-color: {{this.color}};">
+                <div class="moon-phase-wrapper" title="{{this.name}}: {{this.phaseDisplayName}}" style="--moon-color: {{this.color}};">
                     <img src="{{this.image}}" class="moon-base">
                 <div class="moon-tint" style="-webkit-mask-image: url('{{this.image}}'); mask-image: url('{{this.image}}');"></div>
                 </div>
             {{/each}}  
              {{#if currentHasEvent}}<i class="{{currentNoteIcon}} event-icon {{#if this.hasRecurring}}recurring-note{{/if}}" data-date="{{json currentDate}}" data-action="add-note" ><span class="wgtngm-tooltip">{{{currentNoteTooltip}}}</span></i>{{/if}}
-            <span class="current-day">{{currentDay}} {{currentMonth}} {{currentYear}}</span> 
+            <span class="current-day">{{currentDay}}</span> <span class="current-month">{{currentMonth}}</span> <span class="current-year">{{currentYear}}</span> 
             <i class="fas fa-sun" data-action="set-dawn" title="Set to Dawn (Next Day)"></i> 
             <i class="fas fa-moon" data-action="set-sunset" title="Set to Sunset (Today)"></i>
       {{else}}
         <div class="player">
             <div>
                {{#each currentMoon}}
-                 <div class="moon-phase-wrapper" title="{{this.name}}: {{this.phaseName}}" style="--moon-color: {{this.color}};">
+                 <div class="moon-phase-wrapper" title="{{this.name}}: {{this.phaseDisplayName}}" style="--moon-color: {{this.color}};">
                    <img src="{{this.image}}" class="moon-base">
                   <div class="moon-tint" style="-webkit-mask-image: url('{{this.image}}'); mask-image: url('{{this.image}}');"></div>
                   </div>
                 {{/each}}  
-                <span class="current-day">{{currentDay}} {{currentMonth}} {{currentYear}}</span> 
+            <span class="current-day">{{currentDay}}</span> <span class="current-month">{{currentMonth}}</span> <span class="current-year">{{currentYear}}</span> 
             </div>
             <span class="time-display" title="Current Game Time" data-action="set-time">{{currentTime}}</span>
         </div>

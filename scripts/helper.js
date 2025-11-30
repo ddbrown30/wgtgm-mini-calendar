@@ -44,7 +44,11 @@ export function handleMPClick(event) {
     }
 }
 export async function openwgtngmMiniCalendarSheet() {
-    
+    if (game.wgtngmMiniCalender.calendarInstance && game.wgtngmMiniCalender.calendarInstance.rendered) {
+        game.wgtngmMiniCalender.calendarInstance.close();
+        return;
+    }
+
     let savedDimensions = game.settings.get(MODULE_NAME, "calSheetDimensions");
 
 
@@ -56,16 +60,14 @@ export async function openwgtngmMiniCalendarSheet() {
         }
        });
     }
+    // console.log(  game.wgtngmMiniCalender.calendarInstance);
+   
+    game.wgtngmMiniCalender.calendarInstance.render(true);
 
-    const app = game.wgtngmMiniCalender.calendarInstance;
-
-    if (app.rendered) {
-        app.close();
-    } else {
-        app.render(true);
-    }
 
 }
+
+
 
 export async function whisperChat(content = "") {
     ChatMessage.create({
