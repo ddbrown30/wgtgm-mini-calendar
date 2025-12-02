@@ -101,7 +101,6 @@ Hooks.once("ready", async function () {
     }
     if (game.user.isGM) {
         if (game.settings.get(MODULE_NAME, "runonlyonce") === false) {
-            console.log("HERE");
             await ChatMessage.create(
                 {
                     user: game.user.id,
@@ -113,7 +112,6 @@ Hooks.once("ready", async function () {
             await game.settings.set(MODULE_NAME, "runonlyonce", true);
         }
     }
-
 });
 
 Hooks.on("renderChatMessageHTML", (app, html, data) => {

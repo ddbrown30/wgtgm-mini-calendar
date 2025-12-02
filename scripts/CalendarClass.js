@@ -1,33 +1,34 @@
-
-/**
- * Generates the MiniCalendarClass extending the current worldCalendarClass.
- * This ensures we inherit from any system-specific calendar logic (like DnD5e's formatters).
- */
 export function createMiniCalendarClass() {
     return class MiniCalendarClass extends CONFIG.time.worldCalendarClass {
         /**
          * @override
-         * Overrides timeToComponents to inject custom month starting weekdays.
+         * Overrides timeToComponents to apply Year Zero, First Weekday, and Month Start offsets.
          */
         timeToComponents(...args) {
             const components = super.timeToComponents(...args);
-            
-            // Get the configuration for the current month
-            // Note: CONFIG.time.worldCalendarConfig is set in main.js
-            const monthConfig = CONFIG.time.worldCalendarConfig?.months?.values?.[components.month];
-            
-            const startingWeekday = monthConfig?.startingWeekday ?? null;
+            const config = CONFIG.time.worldCalendarConfig;
 
-            // If this month defines a specific starting weekday, recalculate dayOfWeek
-            if (Number.isFinite(startingWeekday)) {
-                /**
-                 * Calculate the day of the week based on:
-                 * (day of month (0-indexed) + configured starting weekday) % number of weekdays
-                 */
-                components.dayOfWeek = (components.dayOfMonth + startingWeekday) % this.days.values.length;
+            if (config) {
+                if (config.years?.yearZero) {
+                    components.year += config.years.yearZero;
+                }
+
+                if (Number.isFinite(config.years?.firstWeekday)) {
+                    const daysInWeek = this.days?.values?.length || 7;
+                    components.dayOfWeek = (components.dayOfWeek + config.years.firstWeekday) % daysInWeek;
+                }
+
+                const monthConfig = config.months?.values?.[components.month];
+                const startingWeekday = monthConfig?.startingWeekday ?? null;
+
+                if (Number.isFinite(startingWeekday)) {
+                    const daysInWeek = this.days?.values?.length || 7;
+                    components.dayOfWeek = (components.dayOfMonth + startingWeekday) % daysInWeek;
+                }
             }
             
             return components;
         }
     }
 }
+

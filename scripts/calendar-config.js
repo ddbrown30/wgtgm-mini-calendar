@@ -227,7 +227,6 @@ export class CalendarConfig extends calendarForm {
                     const configToSave = foundry.utils.deepClone(calendarData);
                     delete configToSave.notes;
                     if (notesToImport && Array.isArray(notesToImport)) {
-                               console.log("NOTESHERE");
                         await this._importPresetEvents(notesToImport);
                     }
                     await game.settings.set(MODULE_NAME, "calendarConfiguration", configToSave);
@@ -254,7 +253,6 @@ export class CalendarConfig extends calendarForm {
      * Helper to import preset notes (both recurring and single) into the journal.
      */
     async _importPresetEvents(notes) {
-       console.log("NOTESHERE");
         if (!notes || !notes.length) return;
 
         let journal = game.journal.getName(calendarJournal);
@@ -392,7 +390,6 @@ export class CalendarConfig extends calendarForm {
                 const jsonString = e.target.result;
                 const json = JSON.parse(jsonString);
                 let notes = [];
-                console.log(reader);
                 if (Array.isArray(json)) {
                     notes = json;
                 } 

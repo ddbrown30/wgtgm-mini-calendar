@@ -1,3 +1,8 @@
+#1.5
+- Implemented the year0 offset
+- Added a player visible setting for notes
+- Fixed tool tip on light theme
+
 #1.4
 - Added display to the moon phase config to add a custom moon phase name.
                     {

@@ -23,9 +23,9 @@
                 <span class="day-number">{{this.dayNumber}}</span>
 
                 <div class="day-icons">
-                    {{#if ../isGM}}
+                    {{#if (or ../isGM this.hasVisible)}}
                     {{#if this.hasEvent}}
-                        <i class="{{this.noteIcon}} event-icon {{#if this.hasRecurring}}recurring-note{{/if}}"><span class="wgtngm-tooltip">{{{this.noteTooltip}}}</span></i>
+                        <i class="{{this.noteIcon}} event-icon {{#if this.hasRecurring}}recurring-note{{/if}}"><span class="wgtngm-tooltip">{{#if ../isGM}}{{{this.noteTooltip}}}{{else}}{{{noteTooltipPlayerVisible}}}{{/if}}</span></i>
                     {{/if}}{{/if}}
                     {{#each this.moonPhases}}
                         <div class="moon-phase-wrapper" title="{{this.name}}: {{this.phaseDisplayName}}" style="--moon-color: {{this.color}};">
@@ -49,8 +49,9 @@
             {{/each}}  
              {{#if currentHasEvent}}<i class="{{currentNoteIcon}} event-icon {{#if this.hasRecurring}}recurring-note{{/if}}" data-date="{{json currentDate}}" data-action="add-note" ><span class="wgtngm-tooltip">{{{currentNoteTooltip}}}</span></i>{{/if}}
             <span class="current-day">{{currentDay}}</span> <span class="current-month">{{currentMonth}}</span> <span class="current-year">{{currentYear}}</span> 
-            <i class="fas fa-sun" data-action="set-dawn" title="Set to Dawn (Next Day)"></i> 
-            <i class="fas fa-moon" data-action="set-sunset" title="Set to Sunset (Today)"></i>
+            <i class="fas fa-sunrise" data-action="set-dawn" title="Set to Dawn"></i> 
+            <i class="fas fa-sunset" data-action="set-sunset" title="Set to Dusk"></i> 
+            <i class="fas fa-moon-stars" data-action="set-midnight" title="Set to Midnight"></i>
       {{else}}
         <div class="player">
             <div>
@@ -60,6 +61,7 @@
                   <div class="moon-tint" style="-webkit-mask-image: url('{{this.image}}'); mask-image: url('{{this.image}}');"></div>
                   </div>
                 {{/each}}  
+               {{#if (and currentHasEvent currenthasVisible)}}<i class="{{currentNoteIcon}} event-icon {{#if (and this.hasRecurring this.hasVisible)}}recurring-note{{/if}}" data-date="{{json currentDate}}" data-action="add-note" ><span class="wgtngm-tooltip">{{{currentNoteTooltipPlayerVisible}}}</span></i>{{/if}}  
             <span class="current-day">{{currentDay}}</span> <span class="current-month">{{currentMonth}}</span> <span class="current-year">{{currentYear}}</span> 
             </div>
             <span class="time-display" title="Current Game Time" data-action="set-time">{{currentTime}}</span>
@@ -93,9 +95,12 @@
         <button data-action="add-hour" title="Advance 1 Hour"><i class="fas fa-plus"></i> 1h</button>
     </footer>
     <footer class="calendar-footer event-controls">
-        <button data-action="go-today" title="Go to Today"><i class="fas fa-calendar-day"></i> Today</button>
-        <button data-action="set-dawn" title="Set to Dawn (Next Day)"><i class="fas fa-sun"></i> Dawn</button>
-        <button data-action="set-sunset" title="Set to Sunset (Today)"><i class="fas fa-moon"></i> Sunset</button>
+        <button data-action="go-today" title="Go to Today"><i class="fas fa-calendar-day"></i></button>
+        <button data-action="set-dawn" title="Set to Dawn (Today)"><i class="fas fa-sunrise"></i></button>
+        <button data-action="set-noon" title="Set to Noon (Today)"><i class="fas fa-sun"></i></button>
+        <button data-action="set-sunset" title="Set to Dusk (Today)"><i class="fas fa-sunset"></i></button>
+        <button data-action="set-midnight" title="Set to Midnight (Today)"><i class="fas fa-moon-stars"></i></button>
+        <button data-action="set-dawn-next" title="Set to Dawn (Next Day)"><i class="fas fa-sunrise"></i>+</button>
         <button data-action="open-settings" title="Calendar Settings"><i class="fas fa-cog"></i></button>
     </footer>
     {{else}}

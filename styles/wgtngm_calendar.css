@@ -402,10 +402,15 @@
 }
 
 .wgtngmMiniCalender-dialog.dialog.add-note .calendar-note-item {
-  padding: 8px;
-  border: 1px dotted var(--wgtgm-primary);
+padding: 8px;
+    border: 1px dotted var(--wgtgm-primary);
+    max-height: 150px;
+    overflow: hidden;
 }
 
+.wgtngmMiniCalender-dialog.dialog.add-note .calendar-note-item:hover {
+  border: 1px solid var(--wgtgm-primary);
+}
 .wgtngmMiniCalender-dialog.dialog.add-note .no-notes {
   text-align: center;
   font-style: italic;
@@ -419,7 +424,7 @@
   font-weight: bold;
   color: var(--color-text-primary);
   font-size: 14px;
-  grid-template-columns: 16px 1fr 16px 16px;
+  grid-template-columns: 16px 1fr 16px 16px 16px;
 }
 .wgtngmMiniCalender-dialog.dialog.add-note .note-title i {
   color: var(--color-text-primary);
@@ -445,9 +450,15 @@
 }
 
 .wgtngmMiniCalender-dialog.dialog.add-note .note-content {
-  font-size: 0.9em;
-  word-break: break-word;
-  color: var(--color-text-primary);
+    font-size: 0.9em;
+    white-space: pre-line;
+    word-break: break-word;
+    color: var(--color-text-primary);
+    max-height: 100px;
+    overflow-y: auto;
+    margin-right: -5px;
+    scroll-margin: revert;
+    margin-top: 0px;
 }
 
 .wgtngmMiniCalender-dialog.dialog.add-note .add-note-btn {
@@ -480,6 +491,7 @@
     max-width: 50px;
 }
 
+
 .wgtngmMiniCalender .wgtngm-tooltip {
   visibility: hidden;
   opacity: 0;
@@ -505,6 +517,11 @@
   transition:
     opacity 0.2s ease-in-out,
     visibility 0.2s;
+}
+
+body.theme-light .wgtngmMiniCalender .wgtngm-tooltip {
+    background-color: #f7f3e8;
+
 }
 
 .wgtngmMiniCalender .calendar-mini .wgtngm-tooltip {
@@ -648,6 +665,7 @@
     margin: 0;
     cursor: pointer;
     --range-track-color: none;
+    --range-track-border-color: none;
     border-radius: 0px 0px 4px 4px;
 }
 

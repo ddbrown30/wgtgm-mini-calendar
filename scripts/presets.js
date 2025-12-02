@@ -836,7 +836,7 @@ export function pf2e() {
             moons: {
                 values: [
                     {
-                        name: "Moon",
+                        name: "Somal",
                         cycleLength: 29.5,
                         offset: 0,
                         color: "#e0e0e0",
