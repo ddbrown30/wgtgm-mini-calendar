@@ -15,7 +15,7 @@
 
 .application.wgtngmMiniCalender:not(.minimized, .minimizing, .maximizing) {
   max-width: 340px;
-  max-height: 550px;
+/*  max-height: 550px;*/
   min-width: 340px;
   min-height: 250px;
   height: auto !important;
@@ -267,7 +267,7 @@
     bottom: 4px;
     display: flex;
     font-size: 10px;
-    column-count: 2;
+    column-count: 3;
     justify-items: center;
     align-items: center;
     flex-wrap: wrap-reverse;
