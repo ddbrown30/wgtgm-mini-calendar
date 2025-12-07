@@ -1,7 +1,8 @@
 import { localize, openwgtngmMiniCalendarSheet } from "./helper.js";
 export const MODULE_NAME = "wgtgm-mini-calendar";
 import { CalendarConfig } from "./calendar-config.js";
-
+import { WeatherEngine } from "./weather.js";
+import { WeatherConfig } from "./weather-config.js";
 export default async function minicalendarSettings() {
     game.settings.register(MODULE_NAME, "runonlyonce", {
         name: "Welcome message",
@@ -76,6 +77,21 @@ export default async function minicalendarSettings() {
         config: false, 
         type: Number,
         default: 1
+    });
+
+game.settings.register(MODULE_NAME, "use12hour", {
+        name: "Use 12-Hour Clock",
+        hint: "Display time in 12-hour format (AM/PM) instead of 24-hour format.",
+        scope: "client",
+        config: true,
+        type: Boolean,
+        default: false, // Default to 24h to match existing behavior
+        onChange: () => {
+             // Re-render calendar if open to show change immediately
+             if (game.wgtngmMiniCalender?.calendarInstance?.rendered) {
+                 game.wgtngmMiniCalender.calendarInstance.render();
+             }
+        }
     });
 
     game.settings.register(MODULE_NAME, "timeIsRunning", {
@@ -159,6 +175,83 @@ export default async function minicalendarSettings() {
         default: ""
     });
 
+    
+    // WEATHER
+    game.settings.register(MODULE_NAME, "useCelsius", {
+        name: "Use Celsius",
+        hint: "Display temperatures in Celsius instead of Fahrenheit.",
+        scope: "client",
+        config: false,
+        type: Boolean,
+        default: false
+    });
+
+    // Internal setting to store the calculated forecast data
+    game.settings.register(MODULE_NAME, "weatherForecast", {
+        scope: "world",
+        config: false,
+        type: Object,
+        default: {}
+    });
+
+// --- WEATHER SETTINGS MENU ---
+    game.settings.registerMenu(MODULE_NAME, "weatherConfigMenu", {
+        name: "Weather Configuration",
+        label: "Configure Weather",
+        hint: "Set biomes, toggle effects, and manage forecasts.",
+        icon: "fas fa-cloud-sun",
+        type: WeatherConfig,
+        restricted: true
+    });
+
+    // --- UNDERLYING WEATHER SETTINGS ---
+    game.settings.register(MODULE_NAME, "biome", {
+        name: "Current Biome",
+        scope: "world",
+        config: false, 
+        type: String,
+        default: "temperate"
+    });
+
+    game.settings.register(MODULE_NAME, "enableWeatherEffects", {
+        name: "Enable Visual Effects",
+        scope: "world",
+        config: false, 
+        type: Boolean,
+        default: true,
+        onChange: (value) => {
+            import("./weather.js").then(({WeatherEngine}) => {
+                if (!value) WeatherEngine.applyWeatherEffect("none");
+                else WeatherEngine.updateForecasts(); 
+            });
+        }
+    });
+
+    game.settings.register(MODULE_NAME, "enableWeatherForecast", {
+        name: "Enable Forecasting",
+        scope: "world",
+        config: false,
+        type: Boolean,
+        default: true
+    });
+
+game.settings.register(MODULE_NAME, "enableWeatherSound", {
+        name: "Enable Weather Sounds",
+        hint: "Play ambient sound effects matching the current weather.",
+        scope: "client", 
+        config: true,
+        type: Boolean,
+        default: true,
+        onChange: (value) => {
+             if (!value) {
+                 import("./weather.js").then(({WeatherEngine}) => {
+                    WeatherEngine.stopWeatherSounds();
+                 });
+             }
+        }
+    });
+
+// KEY BINDS
     game.keybindings.register(MODULE_NAME, "MiniCalendar", {
       name: "Open the Mini Calendar",
       editable: [

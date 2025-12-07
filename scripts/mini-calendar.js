@@ -1,6 +1,8 @@
 import { MODULE_NAME } from "./settings.js";
 import { localize, calendarJournal, confirmationDialog, whisperChat } from "./helper.js";
 import { CalendarConfig } from "./calendar-config.js";
+import { WeatherEngine } from "./weather.js";
+import { WeatherConfig  } from "./weather-config.js";
 
 var ApplicationV2 = foundry.applications.api.ApplicationV2;
 var HandlebarsApplicationMixin = foundry.applications.api.HandlebarsApplicationMixin;
@@ -41,10 +43,14 @@ export class wgtngmMiniCalender extends wgtngmcal {
       "set-sunset": this.#_setSunset,
       "set-midnight": this.#_setMidnight,
       "open-settings": this.#_openSettings,
-      "set-date": {
-        handler: this.#_dayClickContext,
-        buttons: [0, 2],
-      },
+      "open-weather-settings": this.#_weatherConfig,
+      "set-date": this.#_dayClickContext,
+      "toggle-weather-sound": this.#_toggleWeatherSound,
+      // "set-date": {
+      //   handler: this.#_dayClickContext,
+      //   buttons: [0, 2],
+      // },
+      "toggle-weather-fx": this.#_toggleWeatherFX,
     },
   };
 
@@ -94,15 +100,24 @@ _debouncedSavePosition = foundry.utils.debounce(async () => {
     this.setPosition({ height: "auto", width: "auto" });
   }
 
-  /** Formats seconds into HH:MM:SS */
   _formatTime(seconds) {
     const calendar = game.time.calendar;
     try {
       const comps = calendar.timeToComponents(seconds);
-      const h = String(comps.hour).padStart(2, "0");
+      let h = comps.hour;
       const m = String(comps.minute).padStart(2, "0");
       const s = String(comps.second).padStart(2, "0");
-      return `${h}:${m}:${s}`;
+      
+      if (game.settings.get(MODULE_NAME, "use12hour")) {
+          const ampm = h >= 12 ? "PM" : "AM";
+          h = h % 12;
+          h = h ? h : 12; // the hour '0' should be '12'
+          return `${h}:${m}:${s} ${ampm}`;
+      }
+
+      const hString = String(h).padStart(2, "0");
+      return `${hString}:${m}:${s}`;
+      
     } catch (e) {
       console.error("Mini Calendar | Error formatting time:", e, { seconds });
       return "--:--:--";
@@ -132,6 +147,56 @@ _debouncedSavePosition = foundry.utils.debounce(async () => {
     this.#moonPhaseCache.clear();
     console.log("Mini Calendar | Moon phase cache cleared.");
   }
+
+ /**
+   * Register context menu entries and fire hooks.
+   * @protected
+   */
+  _createContextMenus() {
+    this._createContextMenu(this._getEntryContextOptions, ".day", {
+      fixed: true,
+      hookName: `get${this.documentName}ContextOptions`,
+      parentClassHooks: false
+    });
+  }
+
+
+_getEntryContextOptions() {
+  return [{
+    name: "Set Date",
+    icon: '<i class="fa-solid fa-calendar"></i>',
+    condition: li => game.user.isGM && li.dataset.date,
+    callback: li => {
+      const dateStr = li.dataset.date;
+      if (!dateStr) return;
+      let date;
+      try {
+        date = JSON.parse(dateStr);
+      } catch (e) {
+        console.error("Mini Calendar | Failed to parse date data for context menu:", dateStr, e);
+      return [];
+    }
+      this._contextSetTime(date);
+    }
+  }, {
+    name: "Send to Chat",
+    icon: '<i class="fa-solid fa-comment"></i>',
+    condition: li => game.user.isGM && li.dataset.hasEvent === "true",
+    callback: li => {
+      const dateStr = li.dataset.date;
+      if (!dateStr) return;
+      let date;
+      try {
+        date = JSON.parse(dateStr);
+      } catch (e) {
+        console.error("Mini Calendar | Failed to parse date data for context menu:", dateStr, e);
+      return [];
+    }
+      this._whisperToChat(date);
+    }
+  }].concat();
+}
+
 
   _getFirstDayOfMonth(year, monthIndex) {
     const calendar = game.time.calendar;
@@ -291,6 +356,7 @@ async _getNotesForDay(date, preFetchedJournal = null, preFetchedPageMap = null) 
   }
 
   static #_dayClickContext(event, target) {
+
     const dateStr = target.dataset.date;
     let date;
     try {
@@ -299,29 +365,75 @@ async _getNotesForDay(date, preFetchedJournal = null, preFetchedPageMap = null) 
       console.error("Mini Calendar | Failed to parse date data for context menu:", dateStr, e);
       return [];
     }
-    if (event.button && event.button === 2 && game.user.isGM) {
-      this._onDayCtrlClick_SetTime(event, date);
-    } else {
+
       this._onDayClick_ViewNote(event, date);
-    }
+
+
   }
-
-
+  
   /** @inheritDoc */
   async _renderFrame(options) {
     const frame = await super._renderFrame(options);
     if ( !this.hasFrame ) return frame;
-    const copyId = game.user.isGM ? `
+    
+    if (!game.user.isGM) return frame;
+
+    const weatherEnabled = game.settings.get(MODULE_NAME, "enableWeatherEffects");
+    const weatherTooltip = weatherEnabled ? "Disable Weather FX" : "Enable Weather FX";
+    const currentState = game.settings.get(MODULE_NAME, "enableWeatherEffects");
+    const soundEnabled = game.settings.get(MODULE_NAME, "enableWeatherSound");
+    
+    const soundTooltip = soundEnabled ? "Disable Weather Sounds" : "Enable Weather Sounds";
+    const soundIcon = soundEnabled ? "fa-volume-high" : "fa-volume-xmark";
+
+    const copyId = `
         <button type="button" class="header-control fa-solid fa-calendar-plus icon" data-action="add-note-header" 
                 data-tooltip="Create Note" aria-label="Create Note"></button>
-      `: ``;
+        <button type="button" class="header-control fa-solid ${soundIcon} icon" data-action="toggle-weather-sound"
+                data-tooltip="Stop Sound Effects" aria-label="Stop Sound Effects"></button>        
+        <button type="button" class="header-control fa-solid fa-cloud-sun-rain icon ${currentState}" data-action="toggle-weather-fx"
+                data-tooltip="${weatherTooltip}" aria-label="Toggle Weather"></button>
+      `;
       this.window.close.insertAdjacentHTML("beforebegin", copyId);
     return frame;
   }
 
+  static async #_toggleWeatherFX(event, target) {
+      const currentState = game.settings.get(MODULE_NAME, "enableWeatherEffects");
+      const newState = !currentState;
+      
+      await game.settings.set(MODULE_NAME, "enableWeatherEffects", newState);
+      target.classList.toggle('true', newState);      
+      if (newState) {
+          ui.notifications.info("Weather Effects Enabled");
+      } else {
+          ui.notifications.info("Weather Effects Disabled");
+      }
+      this.render();
 
+  }
 
+static async #_toggleWeatherSound(event, target) {
+      const currentState = game.settings.get(MODULE_NAME, "enableWeatherSound");
+      const newState = !currentState;
 
+      target.classList.toggle('fa-volume-high', newState);      
+      target.classList.toggle('fa-volume-xmark', !newState);
+      await game.settings.set(MODULE_NAME, "enableWeatherSound", newState);
+      
+      if (newState) {
+          ui.notifications.info("Weather Sounds Enabled");
+          await WeatherEngine.refreshWeather();
+      } else {
+          ui.notifications.info("Weather Sounds Disabled");
+          // Stop immediately
+          await WeatherEngine.stopWeatherSounds();
+      }
+
+      if (game.wgtngmMiniCalender.calendarInstance) {
+          game.wgtngmMiniCalender.calendarInstance.render();
+      }
+  }
 
   async _prepareContext(options) {
     const context = await super._prepareContext(options);
@@ -332,6 +444,11 @@ async _getNotesForDay(date, preFetchedJournal = null, preFetchedPageMap = null) 
     }
 
     this._initializeViewState();
+
+    let weatherHistory = {};
+        const showWeather = game.settings.get(MODULE_NAME, "enableWeatherForecast");
+         const page = game.journal.getName(calendarJournal)?.pages.getName("Weather History");
+         weatherHistory = page?.flags?.[MODULE_NAME]?.history || {};
 
     if (this.#viewMonth < 0 || this.#viewMonth >= calendar.months.values.length) {
       console.warn(`Mini Calendar | Invalid view month index (${this.#viewMonth}). Resetting.`);
@@ -408,6 +525,11 @@ async _getNotesForDay(date, preFetchedJournal = null, preFetchedPageMap = null) 
         }
         const noteTooltip = hasEvent ? notes.map((n) => `<p>${n.title}</p>`).join("") : "";
         const noteTooltipPlayerVisible = hasEvent ? notes.filter(n => n.playerVisible).map((n) => `<p>${n.title}</p>`).join("") : "";
+    
+        const key = `${this.#viewYear}-${this.#viewMonth}-${dayOfMonth}`;
+        const weather = weatherHistory[key] || null;
+        const weatherIcon = weather ? weather.icon : "";
+        const weatherTooltip = weather ? `${weather.label} (${WeatherEngine.getTempDisplay(weather.temp)})` : "";
 
         days.push({
           isBlank: false,
@@ -421,6 +543,9 @@ async _getNotesForDay(date, preFetchedJournal = null, preFetchedPageMap = null) 
           noteTooltipPlayerVisible:noteTooltipPlayerVisible,
           moonPhases: moonPhases,
           hasRecurring: hasRecurring,
+          weatherIcon: weatherIcon,
+          weatherTooltip: weatherTooltip,
+          showWeather:showWeather
         });
       }
     }
@@ -446,6 +571,13 @@ async _getNotesForDay(date, preFetchedJournal = null, preFetchedPageMap = null) 
     const currentNoteTooltip = currentHasEvent ? currentNotes.map((n) => `<p>${n.title}</p>`).join("") : "";
     const currentNoteTooltipPlayerVisible = currentHasEvent ? currentNotes.filter(n => n.playerVisible).map((n) => `<p>${n.title}</p>`).join("") : "";
 
+
+    const key = `${nowComponents.year}-${nowComponents.month}-${nowComponents.dayOfMonth}`;
+    const currentWeather = weatherHistory[key] || null;
+    const currentWeatherIcon = currentWeather ? currentWeather.icon : "";
+    const currentWeatherTooltip = currentWeather ? `${currentWeather.label} (${WeatherEngine.getTempDisplay(currentWeather.temp)})` : "";
+
+
     return {
       ...context,
       monthName: game.i18n.localize(currentMonth.name),
@@ -470,6 +602,9 @@ async _getNotesForDay(date, preFetchedJournal = null, preFetchedPageMap = null) 
       maxSeconds: maxSeconds,
       stepSeconds:stepSeconds,
       hasRecurring: currentHasRecurring,
+      currentWeatherIcon:currentWeatherIcon,
+      currentWeatherTooltip:currentWeatherTooltip,
+      showWeather:showWeather
     };
   }
 
@@ -577,6 +712,7 @@ async _getNotesForDay(date, preFetchedJournal = null, preFetchedPageMap = null) 
 
   async _onFirstRender(context, options) {
     game.settings.set(MODULE_NAME, "calSheetOpened", true);
+      this._createContextMenus();
 
     this.#isRunning = game.settings.get(MODULE_NAME, "timeIsRunning");
     this.#timeMultiplier = game.settings.get(MODULE_NAME, "timeMultiplier");
@@ -616,30 +752,6 @@ async _getNotesForDay(date, preFetchedJournal = null, preFetchedPageMap = null) 
         this.lastRenderedDay = currentComps.dayOfMonth;
       }, 1000);
     }
-    // if (!this.#clockInterval) {
-    //   this.#clockInterval = setInterval(() => {
-    //     const slider = this.element.querySelector(".mini-time-slider");
-    //     if (slider && document.activeElement === slider) return;
-    //     const timeString = this._formatTime(game.time.worldTime);
-    //     if (this._cachedTimeDisplays) {
-    //       this._cachedTimeDisplays.forEach((el) => {
-    //         if (el.textContent !== timeString) el.textContent = timeString;
-    //       });
-    //     }
-    //     this._updateTimeOfDayClass(game.time.worldTime);
-    //     const calendar = game.time.calendar;
-    //     if (!calendar) return;
-    //     const currentComps = calendar.timeToComponents(game.time.worldTime);
-    //     if (
-    //       this.#viewYear === currentComps.year &&
-    //       this.#viewMonth === currentComps.month &&
-    //       this.lastRenderedDay !== currentComps.dayOfMonth
-    //     ) {
-    //       this.render();
-    //     }
-    //     this.lastRenderedDay = currentComps.dayOfMonth;
-    //   }, 1000);
-    // }
 
     if (this.#isRunning && game.user.isGM) {
       this._startTime();
@@ -648,6 +760,8 @@ async _getNotesForDay(date, preFetchedJournal = null, preFetchedPageMap = null) 
     Hooks.on("updateWorldTime", this._onUpdateWorldTime);
     Hooks.on("updateJournalEntryPage", this._onJournalUpdate);
     Hooks.on("deleteJournalEntry", this._onJournalUpdate);
+    Hooks.on("deleteJournalEntryPage", this._onJournalUpdate);
+
 
     const startMinimized = game.settings.get(MODULE_NAME, "startMinimized");
     const closedMinimized = game.settings.get(MODULE_NAME, "minimized");
@@ -693,7 +807,9 @@ _onUpdateWorldTime = async (worldTime, dt) => {
     if (game.user.isGM && game.settings.get(MODULE_NAME, "enableDarknessControl")) {
     this._throttledDarknessUpdate(worldTime)
     }
-    
+    if (game.user.isGM) {
+        await WeatherEngine.updateForecasts();
+    }
     const slider = this.element.querySelector(".mini-time-slider");
     if (slider && document.activeElement !== slider) {
         const calendar = game.time.calendar;
@@ -705,6 +821,30 @@ _onUpdateWorldTime = async (worldTime, dt) => {
         slider.value = seconds;
     }
   };
+
+  /**
+   * Checks the current game date for any unwhispered events and sends them to chat.
+   */
+  async _whisperToChat(date) {
+    const notes = await this._getNotesForDay(date);
+    if (!notes || notes.length === 0) return;
+    const calendar = game.time.calendar;
+
+    const newNotes = notes;
+    if (newNotes.length === 0) return;
+
+    const monthName = game.i18n.localize(calendar.months.values[date.month].name);
+    const dayNum = date.day + 1;
+    let content = `<h4>Events for ${monthName} ${dayNum}, ${date.year}</h4>`;
+
+    newNotes.forEach((n) => {
+      content += `<p><strong>${n.title}</strong><br/>${n.content}</p>`;
+    });
+
+    whisperChat(content);
+
+  }
+
 
   /**
    * Checks the current game date for any unwhispered events and sends them to chat.
@@ -750,6 +890,11 @@ _onUpdateWorldTime = async (worldTime, dt) => {
     if (!html) return;
     const mainGrid = html.querySelector(".wgtngm-calendar-grid");
     if (!mainGrid) return;
+  }
+
+  static #_weatherConfig(event){
+    const WeatherConfigDialog = new WeatherConfig();
+    WeatherConfigDialog.render(true);
   }
 
   static #_addNoteHeader(event, target) {
@@ -1374,7 +1519,6 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
             }
         }
     } else if (unit === 'months') {
-        // Calculate total month difference
         const monthDiff = (targetDate.year - start.year) * calendar.months.values.length + (targetDate.month - start.month);
         if (monthDiff >= 0 && monthDiff % interval === 0) {
              if (targetDate.day === start.day) { 
@@ -1421,7 +1565,6 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
 }
 
   async close(options= {}) {
-    console.log(options);
      if ( options.closeKey ) {
       return;
     }
@@ -1465,8 +1608,7 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
     }
   }
 
-  /** Handle Ctrl+Clicking a day (GM ONLY): Set Game Time - FIXED */
-  async _onDayCtrlClick_SetTime(event, date) {
+  async _contextSetTime(date) {
     if (!game.user.isGM) return;
 
     const calendar = game.time.calendar;
@@ -1507,6 +1649,7 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
       ui.notifications.error("Failed to set world time.");
     }
   }
+
   /** Navigate months */
   async _browseMonth(delta) {
     const calendar = game.time.calendar;
@@ -1904,7 +2047,7 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
       this.#lastTimeState = newState;
 
       const icon = this.element.querySelector(".window-header i.window-icon");
-
+    
       const stateConfig = {
         dawn: { class: "dawn", icon: "fa-sun", colorClass: "icon-dawn" },
         midday: { class: "midday", icon: "fa-sun", colorClass: "icon-midday" },

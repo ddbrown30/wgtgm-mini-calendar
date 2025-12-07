@@ -52,6 +52,7 @@
   display: flex;
   flex-direction: row;
   justify-content: space-around;
+  align-items: center;
 }
 
 .application.wgtngmMiniCalender.minimized {
@@ -175,6 +176,18 @@
   font-size: 0.9em;
   align-self: flex-start;
 }
+.wgtngmMiniCalender .calendar-grid .day .weather-icon {
+    position: absolute;
+    top: 4px;
+    right: 2px;
+    font-size: 9px;
+}
+
+.wgtngmMiniCalender .calendar-grid .day .weather-icon .fa-cloud-sun,
+.wgtngmMiniCalender .calendar-grid .day .weather-icon .fa-sun{
+/*  color: yellow;*/
+}
+
 
 .wgtngmMiniCalender .calendar-grid .day.has-event {
   font-style: italic;
@@ -270,7 +283,7 @@
     column-count: 3;
     justify-items: center;
     align-items: center;
-    flex-wrap: wrap-reverse;
+    flex-wrap: nowrap;
     justify-content: flex-end;
     width: 100%;
     padding: 0px 4px 0px 0px;
@@ -315,11 +328,17 @@
 }
 
 .wgtngmMiniCalender .calendar-mini .player {
-  display: flex;
-  justify-content: center !important;
-  align-items: center;
-  flex-direction: column !important;
-  padding-top: 5px;
+    display: flex;
+    justify-content: center !important;
+    align-items: center;
+    flex-direction: column !important;
+    padding-top: 4px;
+    gap: 4px;
+}
+
+.wgtngmMiniCalender .calendar-mini .player .calendar-mini-footer {
+      gap: 4px;
+    align-items: center;
 }
 
 /*
@@ -523,16 +542,33 @@ body.theme-light .wgtngmMiniCalender .wgtngm-tooltip {
     background-color: #f7f3e8;
 
 }
+.wgtngmMiniCalender .calendar-mini-footer .wgtngm-tooltip {
+  bottom: unset;
+  top: 70%;
+}
 
 .wgtngmMiniCalender .calendar-mini .wgtngm-tooltip {
   bottom: unset;
   top: 50%;
 }
 
-.wgtngmMiniCalender .calendar-mini i:hover .wgtngm-tooltip,
-.wgtngmMiniCalender .calendar-grid .day:hover .wgtngm-tooltip {
+.wgtngmMiniCalender .calendar-mini .player .calendar-mini-footer .wgtngm-tooltip{
+  bottom: unset;
+  top: 90%;
+}
+.wgtngmMiniCalender .calendar-mini .player .wgtngm-tooltip {
+  bottom: unset;
+  top: 70%;
+}
+/*.wgtngmMiniCalender .calendar-grid .day:hover .wgtngm-tooltip*/
+.wgtngmMiniCalender .calendar-mini-footer .weather-icon:hover .wgtngm-tooltip,
+.wgtngmMiniCalender .calendar-grid .weather-icon:hover .wgtngm-tooltip,
+.wgtngmMiniCalender .calendar-grid .event-icon:hover .wgtngm-tooltip,
+/*.wgtngmMiniCalender .calendar-grid .day-icons:hover .wgtngm-tooltip,*/
+.wgtngmMiniCalender .calendar-mini i:hover .wgtngm-tooltip {
   visibility: visible;
   opacity: 1;
+  z-index: 199;
 }
 
 .wgtngmMiniCalender .wgtngm-tooltip p {
@@ -729,4 +765,43 @@ body.theme-light .wgtngmMiniCalender .wgtngm-tooltip {
     white-space: nowrap;
     /* width: calc(100% - 60px); */
     overflow: hidden;
+}
+
+.wgtngmMiniCalender .window-header .fa-cloud-sun-rain:not(.true) {
+    opacity: 0.5;
+}
+
+.wgtngmWeatherConfig .form-group:not(.biomes){
+  display: flex;
+    gap: 8px;
+        margin-bottom: 15px;
+    flex-direction: row;
+    align-items: center;
+}
+
+.wgtngmWeatherConfig .form-footer {
+  display:flex;
+
+}
+.wgtngmWeatherConfig .form-footer button {
+  flex-grow:1;
+
+}
+.wgtngmMiniCalender .calendar-mini .player .wgtgm-date{
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.wgtngmMiniCalender .calendar-mini .player .wgtgm-date i.event-icon{
+  font-size: 12px;
+}
+
+
+.wgtngmMiniCalender .calendar-footer.time-controls {
+  gap: 2px;
+}
+
+.wgtngmMiniCalender .calendar-footer.time-controls button{
+  padding: 0;
 }

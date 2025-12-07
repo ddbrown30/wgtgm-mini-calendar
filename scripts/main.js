@@ -2,9 +2,9 @@ import minicalendarSettings, { MODULE_NAME } from "./settings.js";
 import { wgtngmMiniCalender } from "./mini-calendar.js";
 import { handleMPClick, localize, openwgtngmMiniCalendarSheet } from "./helper.js";
 import { CalendarConfig } from "./calendar-config.js";
-// import { MiniCalendarClass } from "./CalendarClass.js";
 import { createMiniCalendarClass } from "./CalendarClass.js";
-
+import { weatherEffects, WeatherEngine } from "./weather.js"; 
+import { PlaylistImporter } from "./playlist-importer.js"; // <--- New Import
 let DEFAULT_CALENDAR;
 
 export function setCalendarJSON(firstTime = false) {
@@ -42,19 +42,27 @@ export function setCalendarJSON(firstTime = false) {
 }
 
 Hooks.on("renderSceneConfig", (app, html, data) => {
-    if (!game.settings.get(MODULE_NAME, "enableDarknessControl")) return;
+    const darknessEnabled = game.settings.get(MODULE_NAME, "enableDarknessControl") ? '':`disabled`;
     const defaultEnabled = game.settings.get(MODULE_NAME, "defaultSceneDarkness");
+    const defaultWeatherEnabled = game.settings.get(MODULE_NAME, "enableWeatherEffects");
     const currentFlag = app.document.getFlag(MODULE_NAME, "enableDarkness");
+    const weatherFlag = app.document.getFlag(MODULE_NAME, "enableWeather");
     const isEnabled = currentFlag !== undefined ? currentFlag : defaultEnabled;
+    const isWeatherEnabled = weatherFlag !== undefined ? weatherFlag : defaultWeatherEnabled;
     const injection = `
         <fieldset>
             <legend><i class="fas fa-calendar-alt"></i> Mini Calendar</legend>
             <div class="form-group">
                 <label>Enable Darkness Control</label>
                 <div class="form-fields">
-                    <input type="checkbox" name="flags.${MODULE_NAME}.enableDarkness" ${isEnabled ? "checked" : ""}>
+                    <input type="checkbox" name="flags.${MODULE_NAME}.enableDarkness" ${isEnabled ? "checked" : ""} ${darknessEnabled}>
                 </div>
                 <p class="hint">Allow the Mini Calendar to control the darkness level of this scene based on the time of day.</p>
+                <label>Enable Weather on Scene</label>
+                <div class="form-fields">
+                    <input type="checkbox" name="flags.${MODULE_NAME}.enableWeather" ${isWeatherEnabled ? "checked" : ""}>
+                </div>
+                <p class="hint">Allow the Mini Calendar apply weather effect overlays on this scene.</p>
             </div>
         </fieldset>
     `;
@@ -68,11 +76,28 @@ Hooks.on("renderSceneConfig", (app, html, data) => {
 
 Hooks.once("init", async function () {
     console.log("MiniCalendar | Initializing");
-
     await minicalendarSettings();
 
+    if (weatherEffects) {
+        for (const [key, config] of Object.entries(weatherEffects)) {
+            CONFIG.weatherEffects[key] = config;
+        }
+        console.log("MiniCalendar | Registered custom weather effects.");
+    }
+
+    game.modules.get(MODULE_NAME).api = {
+        /**
+         * Sets the weather for the current day immediately.
+         * @param {string} type - The weather type (e.g. "rain", "snow", "none")
+         * @param {number} temp - Temperature value
+         */
+        overrideWeather: async (type, temp) => {
+            await WeatherEngine.setWeatherOverride(type, temp);
+        },
+    };
+
+
     DEFAULT_CALENDAR = foundry.utils.deepClone(CONFIG.time.worldCalendarConfig);
-    // CONFIG.time.worldCalendarClass = MiniCalendarClass;
     CONFIG.time.worldCalendarClass = createMiniCalendarClass();
 
         Handlebars.registerHelper('json', function(context) {
@@ -94,11 +119,17 @@ Hooks.once("i18nInit", async function () {
 
 
 Hooks.once("ready", async function () {
+
     game.wgtngmMiniCalender = new wgtngmMiniCalender();
     game.wgtngmMiniCalender.calendarInstance = null; 
     if (game.settings.get(MODULE_NAME, "calSheetOpened")) {
         openwgtngmMiniCalendarSheet();
     }
+    if (game.user.isGM) {
+        const importer = new PlaylistImporter();
+        await importer.importFromDirectory();
+    }
+    await WeatherEngine.updateForecasts();
     if (game.user.isGM) {
         if (game.settings.get(MODULE_NAME, "runonlyonce") === false) {
             await ChatMessage.create(
@@ -113,6 +144,9 @@ Hooks.once("ready", async function () {
         }
     }
 });
+
+
+
 
 Hooks.on("renderChatMessageHTML", (app, html, data) => {
     const handlers = html.querySelectorAll(`[data-wgtngm^="${MODULE_NAME}|"]`);

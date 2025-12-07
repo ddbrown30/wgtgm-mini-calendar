@@ -1,0 +1,44 @@
+<div class="form-body">
+    <div class="form-group biomes">
+        <label>Current Biome</label>
+        <div class="form-fields">
+            <select name="biome">
+                {{#each biomes}}
+                    <option value="{{@key}}" {{#if (eq ../biome @key)}}selected{{/if}}>{{this}}</option>
+                {{/each}}
+            </select>
+        </div>
+        <p class="notes">Determines weather patterns and temperature ranges.</p>
+    </div>
+<hr>
+    <label>Enable Visual Effects</label>
+    <div class="form-group">
+        <div class="form-fields">
+            <input type="checkbox" name="enableWeatherEffects" {{#if enableWeatherEffects}}checked{{/if}}>
+        </div>
+        <p class="notes">Show rain, snow, and cloud effects on the canvas.</p>
+    </div>
+    <label>Enable Sound Effects</label>
+    <div class="form-group">
+        <div class="form-fields">
+            <input type="checkbox" name="enableWeatherSound" {{#if enableWeatherSound}}checked{{/if}}>
+        </div>
+        <p class="notes">Play weather sound effects on the environment channel.</p>
+    </div>
+<label>Enable Forecasts</label>
+    <div class="form-group">
+        <div class="form-fields">
+            <input type="checkbox" name="enableWeatherForecast" {{#if enableWeatherForecast}}checked{{/if}}>
+        </div>
+        <p class="notes">Generate and display weather for upcoming days.</p>
+    </div>
+    <label>Use Celsius</label>
+    <div class="form-group">
+        <div class="form-fields">
+            <input type="checkbox" name="useCelsius" {{#if useCelsius}}checked{{/if}}>
+        </div>
+        <p class="notes">Display temperatures in Celsius instead of Fahrenheit..</p>
+    </div>
+</div>
+
+

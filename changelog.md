@@ -1,3 +1,11 @@
+#2.0
+- updated hooks
+- added macro compendium with weather override macro
+- added sound effects
+
+#1.7
+- Added weather and weather fx
+
 #1.5
 - Implemented the year0 offset
 - Added a player visible setting for notes

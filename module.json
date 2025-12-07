@@ -29,5 +29,25 @@
   "styles": ["styles/wgtngm_calendar.css"],
   "relationships": {
     "systems": []
+  },
+  "packs": [
+    {
+      "name": "macros",
+      "label": "macros",
+      "path": "packs/macros",
+      "type": "Macro",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    }
+  ],
+  "packFolders": [
+  {
+    "name": "MiniCalendar",
+    "sorting": "m",
+    "color": "#205d9e",
+    "packs": ["macros"]
   }
+  ]
 }

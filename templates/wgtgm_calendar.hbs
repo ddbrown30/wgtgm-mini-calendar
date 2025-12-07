@@ -21,9 +21,14 @@
                 data-action="set-date"> 
 
                 <span class="day-number">{{this.dayNumber}}</span>
-
+                    {{#if (and this.weatherIcon this.showWeather)}}
+                    <div class="weather-icon" title="" >
+                        <i class="{{this.weatherIcon}}"><span class="wgtngm-tooltip"><p>{{this.weatherTooltip}}</p></span></i>
+                    </div>
+                    {{/if}}
                 <div class="day-icons">
                     {{#if (or ../isGM this.hasVisible)}}
+
                     {{#if this.hasEvent}}
                         <i class="{{this.noteIcon}} event-icon {{#if this.hasRecurring}}recurring-note{{/if}}"><span class="wgtngm-tooltip">{{#if ../isGM}}{{{this.noteTooltip}}}{{else}}{{{noteTooltipPlayerVisible}}}{{/if}}</span></i>
                     {{/if}}{{/if}}
@@ -54,7 +59,7 @@
             <i class="fas fa-moon-stars" data-action="set-midnight" title="Set to Midnight"></i>
       {{else}}
         <div class="player">
-            <div>
+            <div class="wgtgm-date">
                {{#each currentMoon}}
                  <div class="moon-phase-wrapper" title="{{this.name}}: {{this.phaseDisplayName}}" style="--moon-color: {{this.color}};">
                    <img src="{{this.image}}" class="moon-base">
@@ -64,14 +69,26 @@
                {{#if (and currentHasEvent currenthasVisible)}}<i class="{{currentNoteIcon}} event-icon {{#if (and this.hasRecurring this.hasVisible)}}recurring-note{{/if}}" data-date="{{json currentDate}}" data-action="add-note" ><span class="wgtngm-tooltip">{{{currentNoteTooltipPlayerVisible}}}</span></i>{{/if}}  
             <span class="current-day">{{currentDay}}</span> <span class="current-month">{{currentMonth}}</span> <span class="current-year">{{currentYear}}</span> 
             </div>
+    <footer class="calendar-mini-footer">            
+        {{#if (and currentWeatherIcon showWeather)}}
+            <div class="weather-icon" title="" >
+                <i class="{{this.currentWeatherIcon}}"><span class="wgtngm-tooltip"><p>{{this.currentWeatherTooltip}}</p></span></i>
+            </div>
+        {{/if}}
             <span class="time-display" title="Current Game Time" data-action="set-time">{{currentTime}}</span>
         </div>
        {{/if}}
      </div>
+ </footer>
    {{#if isGM}}
     <footer class="calendar-mini-footer">
         <i class="fas fa-backward-fast" data-action="sub-hour" title="Subtract 1 Hour"></i>
         <i class="fas fa-backward-step" data-action="sub-minute" title="Subtract 10 Minutes"></i>
+        {{#if (and currentWeatherIcon showWeather)}}
+                    <div class="weather-icon" title="" >
+                <i class="{{this.currentWeatherIcon}}"><span class="wgtngm-tooltip"><p>{{this.currentWeatherTooltip}}</p></span></i>
+            </div>
+        {{/if}}
         <span class="time-display" title="Current Game Time" data-action="set-time">{{currentTime}}</span>
 
         <i class="fas {{#if isRunning}}fa-pause{{else}}fa-play{{/if}}" data-action="toggle-play" title="{{#if isRunning}}Pause Time{{else}}Start Time{{/if}}"></i>
@@ -102,6 +119,7 @@
         <button data-action="set-midnight" title="Set to Midnight (Today)"><i class="fas fa-moon-stars"></i></button>
         <button data-action="set-dawn-next" title="Set to Dawn (Next Day)"><i class="fas fa-sunrise"></i>+</button>
         <button data-action="open-settings" title="Calendar Settings"><i class="fas fa-cog"></i></button>
+        <button data-action="open-weather-settings" title="Weather Settings"><i class="fas fa-cloud-sun-rain"></i></button>
     </footer>
     {{else}}
      <footer class="calendar-footer time-controls player-view">

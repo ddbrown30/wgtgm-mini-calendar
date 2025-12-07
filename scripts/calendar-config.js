@@ -1,7 +1,7 @@
 import { MODULE_NAME } from "./settings.js";
 import { confirmationDialog, calendarJournal } from "./helper.js";
 import { setCalendarJSON } from "./main.js";
-import { pf2e, harptos, gregorian, warhammer } from "./presets.js";
+import { pf2e, harptos, gregorian, warhammer, galifar } from "./presets.js";
 
 var ApplicationV2 = foundry.applications.api.ApplicationV2;
 var HandlebarsApplicationMixin = foundry.applications.api.HandlebarsApplicationMixin;
@@ -83,6 +83,61 @@ export class CalendarConfig extends calendarForm {
         }
     }
 
+/**
+     * Manually validates custom fields that Foundry's CalendarData ignores or rejects.
+     * @param {object} data - The full calendar configuration object
+     * @throws {Error} - If validation fails
+     */
+    _validateCustomData(data) {
+        if (data.seasons?.values) {
+            const validOrdinals = data.months.values.map(m => m.ordinal);
+            data.seasons.values.forEach((s, i) => {
+                if (typeof s.monthStart !== "number" || typeof s.monthEnd !== "number") {
+                    throw new Error(`Season ${i} (${s.name}) is missing 'monthStart' or 'monthEnd'.`);
+                }
+                // Check if the season refers to a valid month ordinal
+                const startValid = validOrdinals.includes(s.monthStart);
+                const endValid = validOrdinals.includes(s.monthEnd);
+                
+                // Note: Logic allows wrap-around (Winter: Dec -> Feb), so we just check existence
+                if (!startValid || !endValid) {
+                     throw new Error(`Season "${s.name}" references invalid month ordinals (${s.monthStart}-${s.monthEnd}). Check your Month configuration.`);
+                }
+            });
+        }
+
+        if (data.moons?.values) {
+            data.moons.values.forEach((m, i) => {
+                if (!m.name) throw new Error(`Moon ${i} is missing a name.`);
+                if (typeof m.cycleLength !== "number" || m.cycleLength <= 0) {
+                    throw new Error(`Moon "${m.name}" has an invalid cycle length.`);
+                }
+                if (!m.firstNewMoon || typeof m.firstNewMoon.year !== "number" || typeof m.firstNewMoon.month !== "number" || typeof m.firstNewMoon.day !== "number") {
+                    throw new Error(`Moon "${m.name}" has an invalid 'firstNewMoon' definition.`);
+                }
+            });
+        }
+
+        if (data.sun?.values) {
+            data.sun.values.forEach((s, i) => {
+                if (typeof s.dawn !== "number" || typeof s.dusk !== "number") {
+                    throw new Error(`Sun config entry ${i} has invalid dawn/dusk values.`);
+                }
+                if (s.dawn >= s.dusk) {
+                    console.warn(`Mini Calendar | Sun config ${i}: Dawn is after Dusk. This might be intentional (polar night), but is unusual.`);
+                }
+            });
+        }
+
+        if (data.weather?.values) {
+             data.weather.values.forEach((w, i) => {
+                if (typeof w.tempOffset !== "number") {
+                    throw new Error(`Weather entry ${i} (${w.name}) has an invalid tempOffset.`);
+                }
+             });
+        }
+    }
+
     /** @override */
     async _prepareContext(options) {
         const context = await super._prepareContext(options);
@@ -95,6 +150,7 @@ export class CalendarConfig extends calendarForm {
             { value: "gregorian", label: "Preset: Gregorian (Full Format)", selected: source === "gregorian" },
             { value: "harptos", label: "Preset: Harptos (Full Format)", selected: source === "harptos" },
             { value: "pf2e", label: "Preset: PF2E Absalom Reckoning (Golarion)", selected: source === "pf2e" },
+            { value: "galifar", label: "Preset: Galifar Calendar (Eberron)", selected: source === "galifar" },
             { value: "warhammer", label: "Preset: Warhammer Imperial Calendar", selected: source === "warhammer" },
             { value: "custom", label: "Custom JSON (Full Format)", selected: source === "custom" },
         ];
@@ -107,6 +163,9 @@ export class CalendarConfig extends calendarForm {
             calendarJsonString = JSON.stringify(calendarData, null, 2);
         } else if (source === "pf2e") {
             calendarData = pf2e();
+            calendarJsonString = JSON.stringify(calendarData, null, 2);
+        } else if (source === "galifar") {
+            calendarData = galifar();
             calendarJsonString = JSON.stringify(calendarData, null, 2);
         } else if (source === "harptos") {
             calendarData = harptos();
@@ -191,6 +250,8 @@ export class CalendarConfig extends calendarForm {
         } else {
             if (source === "warhammer") {
                 calendarData = warhammer();
+            } else if (source === "galifar") {
+                calendarData = galifar();
             } else if (source === "pf2e") {
                 calendarData = pf2e();
             } else if (source === "harptos") {
@@ -208,9 +269,11 @@ export class CalendarConfig extends calendarForm {
                 try {
                     const validationData = foundry.utils.deepClone(calendarData);
                     if (validationData.moons) delete validationData.moons;
+                    if (validationData.weather) delete validationData.weather;
                     if (validationData.sun) delete validationData.sun;
                     if (validationData.notes) delete validationData.notes;
                     new foundry.data.CalendarData(validationData);
+                    this._validateCustomData(calendarData);
                 } catch (validationError) {
                     console.error("Mini Calendar | Calendar validation failed:", validationError);
                     ui.notifications.error(

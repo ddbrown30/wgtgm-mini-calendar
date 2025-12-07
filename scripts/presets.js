@@ -1,3 +1,124 @@
+export function galifar() {
+    return {
+        name: "Galifar Calendar",
+        id: "galifar-calendar",
+        description: "The primary calendar system used on the continent of Khorvaire (Eberron).",
+        years: {
+            yearZero: 0,
+            firstWeekday: 0,
+            leapYear: {
+                leapStart: 0,
+                leapInterval: 0
+            }
+        },
+        months: {
+            values: [
+                { name: "Zarantyr", abbreviation: "Zar", ordinal: 1, days: 28 },
+                { name: "Olarune", abbreviation: "Ola", ordinal: 2, days: 28 },
+                { name: "Therendor", abbreviation: "The", ordinal: 3, days: 28 },
+                { name: "Eyre", abbreviation: "Eyr", ordinal: 4, days: 28 },
+                { name: "Dravago", abbreviation: "Dra", ordinal: 5, days: 28 },
+                { name: "Nymm", abbreviation: "Nym", ordinal: 6, days: 28 },
+                { name: "Lharvion", abbreviation: "Lha", ordinal: 7, days: 28 },
+                { name: "Barrakas", abbreviation: "Bar", ordinal: 8, days: 28 },
+                { name: "Rhaan", abbreviation: "Rha", ordinal: 9, days: 28 },
+                { name: "Sypheros", abbreviation: "Syp", ordinal: 10, days: 28 },
+                { name: "Aryth", abbreviation: "Ary", ordinal: 11, days: 28 },
+                { name: "Vult", abbreviation: "Vul", ordinal: 12, days: 28 }
+            ]
+        },
+        days: {
+            values: [
+                { name: "Sul", abbreviation: "Su", ordinal: 1 },
+                { name: "Mol", abbreviation: "Mo", ordinal: 2 },
+                { name: "Zol", abbreviation: "Zo", ordinal: 3 },
+                { name: "Wir", abbreviation: "Wi", ordinal: 4 },
+                { name: "Zor", abbreviation: "Zr", ordinal: 5 },
+                { name: "Far", abbreviation: "Fa", ordinal: 6 },
+                { name: "Sar", abbreviation: "Sa", ordinal: 7 }
+            ],
+            daysPerYear: 336,
+            hoursPerDay: 24,
+            minutesPerHour: 60,
+            secondsPerMinute: 60
+        },
+        seasons: {
+            values: [
+                { name: "Winter", monthStart: 12, monthEnd: 2 },
+                { name: "Spring", monthStart: 3, monthEnd: 5 },
+                { name: "Summer", monthStart: 6, monthEnd: 8 },
+                { name: "Autumn", monthStart: 9, monthEnd: 11 }
+            ]
+        },
+        weather: {
+            values: [
+                { name: "Winter", monthStart: 12, monthEnd: 2, tempOffset: -15 },
+                { name: "Spring", monthStart: 3, monthEnd: 5, tempOffset: 0 },
+                { name: "Summer", monthStart: 6, monthEnd: 8, tempOffset: 20 },
+                { name: "Autumn", monthStart: 9, monthEnd: 11, tempOffset: 5 }
+            ]
+        },
+        notes: [
+            {
+                title: "Founding of Galifar",
+                content: "The founding of the kingdom of Galifar by Galifar ir'Wynarn I.",
+                icon: "fas fa-crown",
+                date: {
+                    year: 1,
+                    month: 0, // Zarantyr
+                    day: 0    // 1st
+                },
+                repeatUnit: "none",
+                repeatInterval: 0,
+                repeatCount: 0,
+                isPreset: true
+            },
+            {
+                title: "Start of the Last War",
+                content: "The start of the Last War, ending the kingdom of Galifar.",
+                icon: "fas fa-shield-alt",
+                date: {
+                    year: 894,
+                    month: 0, // Zarantyr (Default if unknown)
+                    day: 0    // 1st
+                },
+                repeatUnit: "none",
+                repeatInterval: 0,
+                repeatCount: 0,
+                isPreset: true
+            },
+            {
+                title: "Day of Mourning",
+                content: "The year the Day of Mourning occurred, destroying Cyre.",
+                icon: "fas fa-skull",
+                date: {
+                    year: 994,
+                    month: 1, // Olarune (Month 2)
+                    day: 19   // 20th
+                },
+                repeatUnit: "none",
+                repeatInterval: 0,
+                repeatCount: 0,
+                isPreset: true
+            },
+            {
+                title: "Present Day",
+                content: "The default starting year for Eberron campaigns.",
+                icon: "fas fa-flag",
+                date: {
+                    year: 998,
+                    month: 0, // Zarantyr
+                    day: 0    // 1st
+                },
+                repeatUnit: "none",
+                repeatInterval: 0,
+                repeatCount: 0,
+                isPreset: true
+            }
+        ]
+    };
+}
+
 export function warhammer() {
     return {
         name: "Imperial Calendar",
@@ -221,7 +342,7 @@ export function warhammer() {
                     ],
                     color: "#e0e0e0",
                     firstNewMoon: {
-                        year: 2522,
+                        year: 1,
                         month: 1,
                         day: 12
                     }
@@ -785,6 +906,15 @@ export function harptos() {
                     },
                 ],
             },
+            weather: {
+            values: [
+                { name: "Winter", monthStart: 1, monthEnd: 2, tempOffset: -10 },
+                { name: "Spring", monthStart: 3, monthEnd: 5, tempOffset: 0 },
+                { name: "Summer", monthStart: 6, monthEnd: 8, tempOffset: 15 },
+                { name: "Autumn", monthStart: 9, monthEnd: 11, tempOffset: 5 },
+                { name: "Winter", monthStart: 12, monthEnd: 12, tempOffset: -10 }
+            ]
+        }
         };
     }
 
