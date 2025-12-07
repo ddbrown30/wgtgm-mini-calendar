@@ -1,4 +1,4 @@
-import { localize, openwgtngmMiniCalendarSheet } from "./helper.js";
+import { localize, openwgtngmMiniCalendarSheet,renderCalendarIfOpen } from "./helper.js";
 export const MODULE_NAME = "wgtgm-mini-calendar";
 import { CalendarConfig } from "./calendar-config.js";
 import { WeatherEngine } from "./weather.js";
@@ -222,8 +222,12 @@ game.settings.register(MODULE_NAME, "use12hour", {
         onChange: (value) => {
             import("./weather.js").then(({WeatherEngine}) => {
                 if (!value) WeatherEngine.applyWeatherEffect("none");
-                else WeatherEngine.updateForecasts(); 
+                else WeatherEngine.refreshWeather(); 
             });
+            if (game.wgtngmMiniCalender.calendarInstance) {
+                const fxIcon = game.wgtngmMiniCalender.calendarInstance.element.querySelector('[data-action="toggle-weather-fx"]');
+                fxIcon.classList.toggle('true', value);
+            }
         }
     });
 
@@ -235,11 +239,11 @@ game.settings.register(MODULE_NAME, "use12hour", {
         default: true
     });
 
-game.settings.register(MODULE_NAME, "enableWeatherSound", {
+    game.settings.register(MODULE_NAME, "enableWeatherSound", {
         name: "Enable Weather Sounds",
         hint: "Play ambient sound effects matching the current weather.",
         scope: "client", 
-        config: true,
+        config: false,
         type: Boolean,
         default: true,
         onChange: (value) => {
@@ -248,6 +252,11 @@ game.settings.register(MODULE_NAME, "enableWeatherSound", {
                     WeatherEngine.stopWeatherSounds();
                  });
              }
+            if (game.wgtngmMiniCalender.calendarInstance) {
+                const soundIcon = game.wgtngmMiniCalender.calendarInstance.element.querySelector('[data-action="toggle-weather-sound"]');
+                soundIcon.classList.toggle('fa-volume-high', value);      
+                soundIcon.classList.toggle('fa-volume-xmark', !value);
+            }
         }
     });
 

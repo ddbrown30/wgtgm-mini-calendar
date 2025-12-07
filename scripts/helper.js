@@ -27,7 +27,7 @@ export function handleMPClick(event) {
     if (module !== MODULE_NAME) {
         return;
     }
-    // console.log(module);
+    console.log(module);
     switch (action) {
         case "openMenu":
             if (args[0]) {
@@ -60,10 +60,16 @@ export async function openwgtngmMiniCalendarSheet() {
         }
        });
     }
-    // console.log(  game.wgtngmMiniCalender.calendarInstance);
    
     game.wgtngmMiniCalender.calendarInstance.render(true);
 
+
+}
+
+export async function renderCalendarIfOpen() {
+    if (game.wgtngmMiniCalender.calendarInstance && game.wgtngmMiniCalender.calendarInstance.rendered) {
+        game.wgtngmMiniCalender.calendarInstance.render(true);
+    }
 
 }
 

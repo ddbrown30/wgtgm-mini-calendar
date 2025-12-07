@@ -155,7 +155,6 @@ Hooks.on("renderChatMessageHTML", (app, html, data) => {
     });
 });
 
-
 Hooks.on("getSceneControlButtons", (controls) => {
     controls["wgtngmMiniCalendar"] = {
         name: "wgtngmMiniCalendar",

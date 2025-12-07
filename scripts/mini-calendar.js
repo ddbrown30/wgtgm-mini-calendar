@@ -2070,6 +2070,7 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
     }
   }
 
+
 async _updateSceneDarkness(worldTime) {
       if (!canvas.scene || (!canvas.scene.active && game.settings.get(MODULE_NAME, "enableDarknessActive"))) return;
 
@@ -2213,6 +2214,28 @@ Hooks.on("deleteCombat", (combat, options, userId) => {
   }
 });
 
+
+Hooks.on("updateScene", async (scene, changes, options, userId) => {
+    if (foundry.utils.hasProperty(changes, "flags.wgtgm-mini-calendar")) {
+        const myFlags = changes.flags["wgtgm-mini-calendar"];
+        console.log("Mini Calendar flags were updated:", myFlags);
+        if (myFlags.enableDarkness !== undefined){ 
+          if (game.wgtngmMiniCalender) {
+                    await game.wgtngmMiniCalender._updateSceneDarkness(game.time.worldTime);
+                 } else {
+            await canvas.scene.update(
+              { environment: { darknessLevel: 0 } },
+              { animateDarkness: 1200 }
+          );
+          }
+
+          }
+        if (myFlags.enableWeather !== undefined) {
+          if (!myFlags.enableWeather) WeatherEngine.applyWeatherEffect("none");
+                else WeatherEngine.refreshWeather(); 
+          }
+    }
+});
 
 Hooks.on("pauseGame", (paused) => {
   if (!game.user.isGM) return;
