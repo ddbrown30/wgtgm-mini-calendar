@@ -250,7 +250,7 @@ export class WeatherEngine {
         const season = this.getWeatherSeason(date, calendarConfig);
         const biomeKey = game.settings.get(MODULE_NAME, "biome") || "temperate";
         const biomeData = this.BIOMES[biomeKey] || this.BIOMES["temperate"];
-
+        // console.log(season);
         let newCellId;
 
         if (!previousWeather) {

@@ -468,8 +468,16 @@ static async #_toggleWeatherSound(event, target) {
     const currentSeconds = (nowComponents.hour * mph * spm) + (nowComponents.minute * spm) + nowComponents.second;
     
     // Calculate total seconds in a day for the slider max
-    const maxSeconds = (hpd * mph * spm) - 1;
-    const stepSeconds = (mph / 2) * spm;
+    // const maxSeconds = (hpd * mph * spm) - 1;
+    // const stepSeconds = (mph / 2) * spm;
+    const validHpd = Number.isFinite(hpd) ? hpd : 24;
+    const validMph = Number.isFinite(mph) ? mph : 60;
+    const validSpm = Number.isFinite(spm) ? spm : 60;
+
+    // Calculate total seconds in a day for the slider max
+    const maxSeconds = (validHpd * validMph * validSpm) - 1;
+    const stepSeconds = (validMph / 2) * validSpm;
+
     const days = [];
 
     const journal = game.journal.getName(calendarJournal);
@@ -672,6 +680,11 @@ static async #_toggleWeatherSound(event, target) {
         const mph = calendar.days.minutesPerHour;
         const spm = calendar.days.secondsPerMinute;
 
+        if (!Number.isFinite(mph) || !Number.isFinite(spm) || mph <= 0 || spm <= 0) {
+              console.error("Mini Calendar | Invalid mph/spm config:", { mph, spm });
+              return;
+          }
+
         const h = Math.floor(newSecondsTotal / (mph * spm));
         const remainder = newSecondsTotal % (mph * spm);
         const m = Math.floor(remainder / spm);
@@ -684,6 +697,12 @@ static async #_toggleWeatherSound(event, target) {
           minute: m,
           second: s
         };
+  
+        if (isNaN(h) || isNaN(m) || isNaN(s)) {
+            console.error("Mini Calendar | Attempted to set NaN time:", { h, m, s });
+            ui.notifications.error("Mini Calendar: Calculation Error. Time not set.");
+            return;
+        }
 
         try {
           await game.time.set(newTimeComps);
@@ -1951,7 +1970,19 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
     if (!game.user.isGM) return;
     try {
       const currentTime = game.time.worldTime;
+     
+      if (typeof seconds !== "number" || isNaN(seconds)) {
+        console.warn("Mini Calendar | Invalid time advancement amount:", seconds);
+        return;
+      }
+     
       const newTime = currentTime + seconds;
+
+      if (isNaN(newTime)) {
+        console.error("Mini Calendar | Resulting time would be NaN. Aborting.");
+        return;
+      }
+
       await game.time.set(newTime);
       const calendar = game.time.calendar;
       const comps = calendar.timeToComponents(game.time.worldTime);

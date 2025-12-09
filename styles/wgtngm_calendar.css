@@ -267,6 +267,7 @@
 .wgtngmMiniCalender .calendar-grid .day.current {
   font-weight: bold;
   border: 1px solid;
+  background: #c0a08044;
 }
 
 .wgtngmMiniCalender .calendar-footer.event-controls {
