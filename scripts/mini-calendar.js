@@ -1691,6 +1691,18 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
     this.#viewMonth = newMonth;
     this.#viewYear = newYear;
 
+    const currentMonthData = calendar.months.values[this.#viewMonth];
+    const isLeap = calendar.isLeapYear(this.#viewYear);
+    const daysInMonth = isLeap && currentMonthData.leapDays != null 
+        ? currentMonthData.leapDays 
+        : currentMonthData.days;
+
+    if (daysInMonth === 0) {
+        await this._browseMonth(delta);
+        return;
+    }
+
+
     console.log(
       `Mini Calendar | Browsing to month ${newMonth} (${calendar.months.values[newMonth].name}), year ${newYear}`,
     );
