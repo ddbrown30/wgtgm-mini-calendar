@@ -1,3 +1,4 @@
+
 export class HailWeatherEffect extends foundry.canvas.containers.ParticleEffect {
 
   /** @inheritdoc */
@@ -8,13 +9,19 @@ export class HailWeatherEffect extends foundry.canvas.containers.ParticleEffect 
    * @type {PIXI.particles.EmitterConfigV3}
    */
   static HAIL_CONFIG = {
-    lifetime: {min: 0.1, max: 0.5}, // Hail falls very fast
+    lifetime: { min: 1.5, max: 2.0 }, // Constant lifetime
+    frequency: 0.004, 
+    spawnChance: 1,
+    particlesPerWave: 1,
+    emitterLifetime: -1,
+    pos: { x: 0, y: 0 },
+    addAtBack: false,
     behaviors: [
       {
         type: "alpha",
         config: {
           alpha: {
-            list: [{time: 0, value: 0.75}, {time: 1, value: 0.1}]
+            list: [{time: 0, value: 0.5}, {time: 1, value: 0.3}]
           }
         }
       },
@@ -22,18 +29,25 @@ export class HailWeatherEffect extends foundry.canvas.containers.ParticleEffect 
         type: "moveSpeed",
         config: {
           speed: {
-            list: [{time: 0, value: 25}, {time: 1, value: -20}]
+            list: [{time: 0, value: 1}, {time: 1, value: 5}]
           },
           minMult: 0.8
+        }
+      },
+      {
+        type: "rotationStatic", 
+        config: {
+          min: 90,
+          max: 90
         }
       },
       {
         type: "scale",
         config: {
           scale: {
-            list: [{time: 0, value: 0.25}, {time: 1, value: 0.05}]
+            list: [{time: 0, value: 0.35}, {time: 1, value: 0.15}]
           },
-          minMult: 0.5
+          minMult: 0.3
         }
       },
       {
@@ -51,9 +65,9 @@ export class HailWeatherEffect extends foundry.canvas.containers.ParticleEffect 
         }
       },
       {
-        type: "textureSingle",
+        type: "textureRandom",
         config: {
-          texture: "ui/particles/snow.png"
+          textures: ["ui/particles/drop.png", "ui/particles/snow.png"]
         }
       }
     ]
@@ -65,7 +79,7 @@ export class HailWeatherEffect extends foundry.canvas.containers.ParticleEffect 
   getParticleEmitters() {
     const d = canvas.dimensions;
     
-    const maxParticles = (d.width / d.size) * (d.height / d.size) * 0.45;
+    const maxParticles = (d.width / d.size) * (d.height / d.size) * 1.5;
     
     const config = foundry.utils.deepClone(this.constructor.HAIL_CONFIG);
     config.maxParticles = maxParticles;

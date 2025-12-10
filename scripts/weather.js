@@ -305,16 +305,65 @@ export class WeatherEngine {
         };
     }
     
-    static getWeatherSeason(date, config) {
-        const ordinal = date.ordinal
+    // static getWeatherSeason(date, config) {
+    //     const ordinal = date.ordinal
+    //     if (config.weather?.values?.length > 0) {
+    //         return config.weather.values.find(s => ordinal >= s.monthStart && ordinal <= s.monthEnd) 
+    //             || { name: "Spring", tempOffset: 0 };
+    //     }
+
+    //     if (config.seasons?.values?.length > 0) {
+
+
+    //         const currentSeason = config.seasons.values.find(s => {
+    //             if (s.monthStart <= s.monthEnd) {
+    //                 return ordinal >= s.monthStart && ordinal <= s.monthEnd;
+    //             } else {
+    //                 return ordinal >= s.monthStart || ordinal <= s.monthEnd;
+    //             }
+    //         });
+
+    //         if (currentSeason) {
+    //             const name = currentSeason.name.toLowerCase();
+    //             // console.log(name);
+    //             if (name.includes("winter")) return { name: "Winter", tempOffset: -10 };
+    //             if (name.includes("spring")) return { name: "Spring", tempOffset: 0 };
+    //             if (name.includes("summer")) return { name: "Summer", tempOffset: 15 };
+    //             if (name.includes("autumn") || name.includes("fall")) return { name: "Autumn", tempOffset: 5 };
+    //         }
+    //     }
+
+    //     const totalMonths = config.months?.values?.length || 12;
+    //     const monthIndex = date.month; // 0-based
+    //     const seasonLength = totalMonths / 4;
+        
+    //     const seasonIndex = Math.floor(monthIndex / seasonLength) % 4;
+        
+    //     switch (seasonIndex) {
+    //         case 0: return { name: "Winter", tempOffset: -10 };
+    //         case 1: return { name: "Spring", tempOffset: 0 };
+    //         case 2: return { name: "Summer", tempOffset: 15 };
+    //         case 3: return { name: "Autumn", tempOffset: 5 };
+    //     }
+        
+    //     return { name: "Spring", tempOffset: 0 };
+    // }
+
+static getWeatherSeason(date, config) {
+        const ordinal = date.ordinal;
+
         if (config.weather?.values?.length > 0) {
-            return config.weather.values.find(s => ordinal >= s.monthStart && ordinal <= s.monthEnd) 
-                || { name: "Spring", tempOffset: 0 };
+            return config.weather.values.find(s => {
+                if (s.monthStart <= s.monthEnd) {
+                    return ordinal >= s.monthStart && ordinal <= s.monthEnd;
+                } 
+                else {
+                    return ordinal >= s.monthStart || ordinal <= s.monthEnd;
+                }
+            }) || { name: "Spring", tempOffset: 0 };
         }
 
         if (config.seasons?.values?.length > 0) {
-
-
             const currentSeason = config.seasons.values.find(s => {
                 if (s.monthStart <= s.monthEnd) {
                     return ordinal >= s.monthStart && ordinal <= s.monthEnd;
@@ -325,7 +374,6 @@ export class WeatherEngine {
 
             if (currentSeason) {
                 const name = currentSeason.name.toLowerCase();
-                // console.log(name);
                 if (name.includes("winter")) return { name: "Winter", tempOffset: -10 };
                 if (name.includes("spring")) return { name: "Spring", tempOffset: 0 };
                 if (name.includes("summer")) return { name: "Summer", tempOffset: 15 };
@@ -348,8 +396,6 @@ export class WeatherEngine {
         
         return { name: "Spring", tempOffset: 0 };
     }
-
-
     static calculateTemp(season, cellId, biomeOffset = 0) {
         const base = 50; 
         const variance = Math.floor(Math.random() * 10) - 5;
@@ -382,7 +428,6 @@ export class WeatherEngine {
 
     static async playWeatherSound(type) {
         if (!game.settings.get(MODULE_NAME, "enableWeatherSound")) return;
-
         const playlist = game.playlists.contents.find(
             p => p.getFlag(MODULE_NAME, "isWeatherPlaylist") === true || p.name === WEATHER_PLAYLIST_NAME
         );
@@ -415,7 +460,6 @@ export class WeatherEngine {
         }
 
         const sound = candidates[Math.floor(Math.random() * candidates.length)];
-        
         if (!sound.playing) {
             await playlist.stopAll(); 
             await playlist.playSound(sound);
@@ -461,8 +505,9 @@ static async applyWeatherEffect(type) {
      */
     static async refreshWeather() {
         if (!game.user.isGM) return;
+        const defaultWeatherEnabled = game.settings.get(MODULE_NAME, "enableWeatherEffects");
         const sceneFlag = canvas.scene.getFlag(MODULE_NAME, "enableWeather");
-        const isEnabled = sceneFlag !== undefined ? sceneFlag : defaultEnabled;
+        const isEnabled = sceneFlag !== undefined ? sceneFlag : defaultWeatherEnabled;
 
         const enabled = game.settings.get(MODULE_NAME, "enableWeatherEffects");
         

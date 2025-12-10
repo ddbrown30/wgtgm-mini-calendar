@@ -85,9 +85,8 @@ game.settings.register(MODULE_NAME, "use12hour", {
         scope: "client",
         config: true,
         type: Boolean,
-        default: false, // Default to 24h to match existing behavior
+        default: false, 
         onChange: () => {
-             // Re-render calendar if open to show change immediately
              if (game.wgtngmMiniCalender?.calendarInstance?.rendered) {
                  game.wgtngmMiniCalender.calendarInstance.render();
              }
@@ -242,7 +241,7 @@ game.settings.register(MODULE_NAME, "use12hour", {
     game.settings.register(MODULE_NAME, "enableWeatherSound", {
         name: "Enable Weather Sounds",
         hint: "Play ambient sound effects matching the current weather.",
-        scope: "client", 
+        scope: "world", 
         config: false,
         type: Boolean,
         default: true,
@@ -253,6 +252,7 @@ game.settings.register(MODULE_NAME, "use12hour", {
                  });
              }
             if (game.wgtngmMiniCalender.calendarInstance) {
+                WeatherEngine.refreshWeather();
                 const soundIcon = game.wgtngmMiniCalender.calendarInstance.element.querySelector('[data-action="toggle-weather-sound"]');
                 soundIcon.classList.toggle('fa-volume-high', value);      
                 soundIcon.classList.toggle('fa-volume-xmark', !value);

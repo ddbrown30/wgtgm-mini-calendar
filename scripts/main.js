@@ -94,6 +94,14 @@ Hooks.once("init", async function () {
         overrideWeather: async (type, temp) => {
             await WeatherEngine.setWeatherOverride(type, temp);
         },
+        /**
+       * Sets the game time to a specific hour of the current (or offset) day.
+       * @param {number} [day=0] - The day offset (0 = today, 1 = tomorrow).
+       * @param {number|string} [hour=0] - The hour (0-23) OR a keyword: "dawn", "dusk", "noon", "midnight".
+       */
+        setTime: async (day, hour) => {
+            await wgtngmMiniCalender.setDayHour(day, hour);
+        }
     };
 
 

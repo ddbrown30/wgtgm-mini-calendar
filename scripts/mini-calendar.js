@@ -1,5 +1,5 @@
 import { MODULE_NAME } from "./settings.js";
-import { localize, calendarJournal, confirmationDialog, whisperChat } from "./helper.js";
+import { localize, calendarJournal, confirmationDialog, whisperChat, renderCalendarIfOpen } from "./helper.js";
 import { CalendarConfig } from "./calendar-config.js";
 import { WeatherEngine } from "./weather.js";
 import { WeatherConfig  } from "./weather-config.js";
@@ -1867,6 +1867,35 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
     }
   }
 
+/**
+   * Sets the game time to a specific hour of the current (or offset) day.
+   * @param {number} [day=0] - The day offset (0 = today, 1 = tomorrow).
+   * @param {number|string} [hour=0] - The hour (0-23) OR a keyword: "dawn", "dusk", "noon", "midnight".
+   */
+  static async setDayHour(day = 0, hour = 0) {
+      const instance = game.wgtngmMiniCalender;
+      if (!instance) {
+          console.warn("Mini Calendar | Instance not ready.");
+          return;
+      }
+
+      let targetHour = hour;
+
+      if (typeof hour === "string") {
+          const { dawn, dusk } = instance._getSunTimes();
+          const mode = hour.toLowerCase();
+
+          if (mode === "dawn") targetHour = dawn;
+          else if (mode === "dusk") targetHour = dusk;
+          else if (mode === "noon") targetHour = Math.floor(game.time.calendar.days.hoursPerDay / 2);
+          else if (mode === "midnight") targetHour = 0; 
+          else targetHour = parseFloat(hour) || 0; 
+      }
+
+      await instance._onSetTimeOfDay(targetHour, day);
+      renderCalendarIfOpen();
+  }
+
   /** Set specific time of day (e.g., Dawn/Sunset) */
   async _onSetTimeOfDay(hour, dayDelta = 0) {
     if (!game.user.isGM) return;
@@ -2267,6 +2296,12 @@ Hooks.on("updateScene", async (scene, changes, options, userId) => {
           }
     }
 });
+
+Hooks.on("canvasReady", async (canvas) => {
+      WeatherEngine.refreshWeather(); 
+      // await WeatherEngine.playWeatherSound(canvas.scene.weather);
+  });
+
 
 Hooks.on("pauseGame", (paused) => {
   if (!game.user.isGM) return;
