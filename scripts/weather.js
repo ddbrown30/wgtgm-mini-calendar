@@ -199,7 +199,7 @@ export class WeatherEngine {
         5:  { type: "rainStorm", label: "Storm",             icon: "fas fa-bolt",                neighbors: [3, 6, 6, 5, 5, 3] },
         6:  { type: "heavyRain",      label: "Heavy Rain",        icon: "fas fa-cloud-showers-heavy", neighbors: [3, 4, 4, 6, 5, 3] }
     };
-
+    static _soundQueue = Promise.resolve();
     // Biome Configurations
     // Directions: 0=N, 1=NE, 2=SE, 3=S, 4=SW, 5=NW, 6=Stay
     // Concept: N/NE = Drier/Sunnier, S/SW = Wetter/Stormier
@@ -411,44 +411,58 @@ const ordinal = date.ordinal;
         return page;
     }
 
+
     static async playWeatherSound(type) {
         if (!game.settings.get(MODULE_NAME, "enableWeatherSound")) return;
-        const playlist = game.playlists.contents.find(
-            p => p.getFlag(MODULE_NAME, "isWeatherPlaylist") === true || p.name === WEATHER_PLAYLIST_NAME
-        );
         
-        if (!playlist) return;
+        this._soundQueue = this._soundQueue.then(async () => {
+            const playlist = game.playlists.contents.find(
+                p => p.getFlag(MODULE_NAME, "isWeatherPlaylist") === true || p.name === WEATHER_PLAYLIST_NAME
+            );
+            
+            if (!playlist) return;
 
-        if (type === "none") {
-            await playlist.stopAll();
-            return;
-        }
-
-        const search = type.toLowerCase();
-
-        const currentlyPlaying = playlist.sounds.contents.find(s => s.playing);
-        if (currentlyPlaying) {
-            const currentName = currentlyPlaying.name.toLowerCase().replace(/\s/g, "");
-            if (currentName.startsWith(search)) {
-                return; 
+            if (type === "none") {
+                await playlist.stopAll();
+                return;
             }
-        }
 
+            const search = type.toLowerCase();
 
-        const candidates = playlist.sounds.contents.filter(s => {
-            const name = s.name.toLowerCase().replace(/\s/g, "");
-            return name.startsWith(search);
+            const playingSounds = playlist.sounds.contents.filter(s => s.playing);
+            
+            const match = playingSounds.find(s => {
+                const currentName = s.name.toLowerCase().replace(/\s/g, "");
+                return currentName.startsWith(search);
+            });
+
+            if (match) {
+                if (playingSounds.length > 1) {
+                    for (const s of playingSounds) {
+                        if (s.id !== match.id) await playlist.stopSound(s);
+                    }
+                }
+                return;
+            }
+
+            const candidates = playlist.sounds.contents.filter(s => {
+                const name = s.name.toLowerCase().replace(/\s/g, "");
+                return name.startsWith(search);
+            });
+
+            if (candidates.length === 0) return;
+
+            const sound = candidates[Math.floor(Math.random() * candidates.length)];
+            
+            if (!sound.playing) {
+                await playlist.stopAll(); 
+                await playlist.playSound(sound);
+            }
+        }).catch(err => {
+            console.error("Mini Calendar | Error playing weather sound:", err);
         });
 
-        if (candidates.length === 0) {
-            return;
-        }
-
-        const sound = candidates[Math.floor(Math.random() * candidates.length)];
-        if (!sound.playing) {
-            await playlist.stopAll(); 
-            await playlist.playSound(sound);
-        }
+        return this._soundQueue;
     }
 
     static async stopWeatherSounds() {
