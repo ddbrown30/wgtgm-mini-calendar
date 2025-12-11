@@ -248,6 +248,7 @@ export class WeatherEngine {
     static generate(date, previousWeather = null) {
         const calendarConfig = CONFIG.time.worldCalendarConfig;
         const season = this.getWeatherSeason(date, calendarConfig);
+        // console.log(season);
         const biomeKey = game.settings.get(MODULE_NAME, "biome") || "temperate";
         const biomeData = this.BIOMES[biomeKey] || this.BIOMES["temperate"];
         // console.log(season);
@@ -305,72 +306,55 @@ export class WeatherEngine {
         };
     }
     
-    // static getWeatherSeason(date, config) {
-    //     const ordinal = date.ordinal
-    //     if (config.weather?.values?.length > 0) {
-    //         return config.weather.values.find(s => ordinal >= s.monthStart && ordinal <= s.monthEnd) 
-    //             || { name: "Spring", tempOffset: 0 };
-    //     }
-
-    //     if (config.seasons?.values?.length > 0) {
-
-
-    //         const currentSeason = config.seasons.values.find(s => {
-    //             if (s.monthStart <= s.monthEnd) {
-    //                 return ordinal >= s.monthStart && ordinal <= s.monthEnd;
-    //             } else {
-    //                 return ordinal >= s.monthStart || ordinal <= s.monthEnd;
-    //             }
-    //         });
-
-    //         if (currentSeason) {
-    //             const name = currentSeason.name.toLowerCase();
-    //             // console.log(name);
-    //             if (name.includes("winter")) return { name: "Winter", tempOffset: -10 };
-    //             if (name.includes("spring")) return { name: "Spring", tempOffset: 0 };
-    //             if (name.includes("summer")) return { name: "Summer", tempOffset: 15 };
-    //             if (name.includes("autumn") || name.includes("fall")) return { name: "Autumn", tempOffset: 5 };
-    //         }
-    //     }
-
-    //     const totalMonths = config.months?.values?.length || 12;
-    //     const monthIndex = date.month; // 0-based
-    //     const seasonLength = totalMonths / 4;
-        
-    //     const seasonIndex = Math.floor(monthIndex / seasonLength) % 4;
-        
-    //     switch (seasonIndex) {
-    //         case 0: return { name: "Winter", tempOffset: -10 };
-    //         case 1: return { name: "Spring", tempOffset: 0 };
-    //         case 2: return { name: "Summer", tempOffset: 15 };
-    //         case 3: return { name: "Autumn", tempOffset: 5 };
-    //     }
-        
-    //     return { name: "Spring", tempOffset: 0 };
-    // }
 
 static getWeatherSeason(date, config) {
-        const ordinal = date.ordinal;
+const ordinal = date.ordinal; 
 
         if (config.weather?.values?.length > 0) {
             return config.weather.values.find(s => {
                 if (s.monthStart <= s.monthEnd) {
                     return ordinal >= s.monthStart && ordinal <= s.monthEnd;
-                } 
-                else {
+                } else {
                     return ordinal >= s.monthStart || ordinal <= s.monthEnd;
                 }
             }) || { name: "Spring", tempOffset: 0 };
         }
 
         if (config.seasons?.values?.length > 0) {
-            const currentSeason = config.seasons.values.find(s => {
-                if (s.monthStart <= s.monthEnd) {
-                    return ordinal >= s.monthStart && ordinal <= s.monthEnd;
-                } else {
-                    return ordinal >= s.monthStart || ordinal <= s.monthEnd;
+            let currentSeason = null;
+
+            const isDayBased = config.seasons.values.some(s => s.dayStart !== null && s.dayStart !== undefined);
+
+            if (isDayBased) {
+                const calendar = game.time.calendar;
+                let dayOfYear = date.day + 1;
+                
+                for (let i = 0; i < date.month; i++) {
+                    const m = calendar.months.values[i];
+                    const isLeap = calendar.isLeapYear(date.year);
+                    dayOfYear += (isLeap && m.leapDays !== undefined) ? m.leapDays : m.days;
                 }
-            });
+                currentSeason = config.seasons.values.find(s => {
+                    if (s.dayStart == null || s.dayEnd == null) return false;
+                    
+                    if (s.dayStart <= s.dayEnd) {
+                        return dayOfYear >= s.dayStart && dayOfYear <= s.dayEnd;
+                    } else {
+                        return dayOfYear >= s.dayStart || dayOfYear <= s.dayEnd;
+                    }
+                });
+
+            } else {
+                currentSeason = config.seasons.values.find(s => {
+                    if (s.monthStart == null || s.monthEnd == null) return false; // Skip invalid configs
+                    
+                    if (s.monthStart <= s.monthEnd) {
+                        return ordinal >= s.monthStart && ordinal <= s.monthEnd;
+                    } else {
+                        return ordinal >= s.monthStart || ordinal <= s.monthEnd;
+                    }
+                });
+            }
 
             if (currentSeason) {
                 const name = currentSeason.name.toLowerCase();
@@ -396,6 +380,7 @@ static getWeatherSeason(date, config) {
         
         return { name: "Spring", tempOffset: 0 };
     }
+
     static calculateTemp(season, cellId, biomeOffset = 0) {
         const base = 50; 
         const variance = Math.floor(Math.random() * 10) - 5;

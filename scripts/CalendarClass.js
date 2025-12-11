@@ -25,25 +25,47 @@ export function createMiniCalendarClass() {
             }
 
             const config = CONFIG.time.worldCalendarConfig;
-
             if (config) {
                 if (config.years?.yearZero) {
                     components.year += config.years.yearZero;
                 }
 
-                if (Number.isFinite(config.years?.firstWeekday)) {
-                    const daysInWeek = this.days?.values?.length || 7;
-                    components.dayOfWeek = (components.dayOfWeek + config.years.firstWeekday) % daysInWeek;
-                }
+                const daysInWeek = this.days?.values?.length || 7;
 
-                const monthConfig = config.months?.values?.[components.month];
-                const startingWeekday = monthConfig?.startingWeekday ?? null;
+                if (config.years?.resetWeekdays) {
+                    components.dayOfWeek = components.dayOfMonth % daysInWeek;
+                } 
+                else {
+                    if (Number.isFinite(config.years?.firstWeekday)) {
+                        components.dayOfWeek = (components.dayOfWeek + config.years.firstWeekday) % daysInWeek;
+                    }
 
-                if (Number.isFinite(startingWeekday)) {
-                    const daysInWeek = this.days?.values?.length || 7;
-                    components.dayOfWeek = (components.dayOfMonth + startingWeekday) % daysInWeek;
+                    const monthConfig = config.months?.values?.[components.month];
+                    const startingWeekday = monthConfig?.startingWeekday ?? null;
+
+                    if (Number.isFinite(startingWeekday)) {
+                        components.dayOfWeek = (components.dayOfMonth + startingWeekday) % daysInWeek;
+                    }
                 }
             }
+            // if (config) {
+            //     if (config.years?.yearZero) {
+            //         components.year += config.years.yearZero;
+            //     }
+
+            //     if (Number.isFinite(config.years?.firstWeekday)) {
+            //         const daysInWeek = this.days?.values?.length || 7;
+            //         components.dayOfWeek = (components.dayOfWeek + config.years.firstWeekday) % daysInWeek;
+            //     }
+
+            //     const monthConfig = config.months?.values?.[components.month];
+            //     const startingWeekday = monthConfig?.startingWeekday ?? null;
+
+            //     if (Number.isFinite(startingWeekday)) {
+            //         const daysInWeek = this.days?.values?.length || 7;
+            //         components.dayOfWeek = (components.dayOfMonth + startingWeekday) % daysInWeek;
+            //     }
+            // }
             
             return components;
         }

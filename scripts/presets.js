@@ -464,6 +464,7 @@ export function harptos() {
             description: "The standard calendar of the Forgotten Realms.",
             years: {
                 yearZero: 0,
+                resetWeekdays: true,
                 firstWeekday: 0,
                 leapYear: {
                     leapStart: 0,

@@ -143,6 +143,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   height: fit-content;
+  text-transform: capitalize;
 }
 
 .wgtngmMiniCalender .calendar-grid .day {

@@ -558,7 +558,7 @@ static async #_toggleWeatherSound(event, target) {
       }
     }
 
-    const weekdayNames = calendar.days.values.map((d) => game.i18n.localize(d.abbreviation || d.name.substring(0, 3)));
+    const weekdayNames = calendar.days.values.map((d) => game.i18n.localize(d.abbreviation) || game.i18n.localize (d.name).substring(0, 3));
 
     const daysInWeek = calendar.days.values.length;
 
