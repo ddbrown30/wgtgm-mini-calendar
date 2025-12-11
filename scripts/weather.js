@@ -34,18 +34,6 @@ hail: {
     label: "Hail",
     filter: { enabled: false },
     effects: [{
-      id: "fogShader",
-      effectClass: foundry.canvas.rendering.shaders.WeatherShaderEffect,
-      shaderClass: foundry.canvas.rendering.shaders.FogShader,
-      blendMode: PIXI.BLEND_MODES.SCREEN,
-      performanceLevel: 2,
-      config: {
-        slope: 1.5,
-        intensity: 0.050,
-        speed: 5,
-        scale: 25
-      }
-    },{
       id: "hailShader",
       effectClass: HailWeatherEffect,
       blendMode: PIXI.BLEND_MODES.SCREEN,
