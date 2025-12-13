@@ -382,8 +382,23 @@ const ordinal = date.ordinal;
     }
     
     static async getForecastPage() {
-        const journal = game.journal.getName(calendarJournal);
-        if (!journal) return null;
+        const journalName = calendarJournal;
+        let journal = game.journal.getName(journalName);
+        if (!journal) {
+              if (!game.user.isGM) {
+                ui.notifications.warn(`The ${journalName} journal doesn't exist.`);
+                return;
+              }
+              try {
+                journal = await JournalEntry.create({ name: journalName });
+              } catch (e) {
+                console.error("Mini Calendar | Failed to create journal", e);
+                return;
+            }
+        }
+
+        // const journal = game.journal.getName(calendarJournal);
+        // if (!journal) return null;
 
         const pageName = "Weather History"; 
         let page = journal.pages.getName(pageName);
