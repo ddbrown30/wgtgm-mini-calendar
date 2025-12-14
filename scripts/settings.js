@@ -223,7 +223,7 @@ game.settings.register(MODULE_NAME, "use12hour", {
                 if (!value) WeatherEngine.applyWeatherEffect("none");
                 else WeatherEngine.refreshWeather(); 
             });
-            if (game.wgtngmMiniCalender.calendarInstance) {
+            if (game.wgtngmMiniCalender.calendarInstance && game.user.isGM) {
                 const fxIcon = game.wgtngmMiniCalender.calendarInstance.element.querySelector('[data-action="toggle-weather-fx"]');
                 fxIcon.classList.toggle('true', value);
             }
@@ -251,7 +251,7 @@ game.settings.register(MODULE_NAME, "use12hour", {
                     WeatherEngine.stopWeatherSounds();
                  });
              }
-            if (game.wgtngmMiniCalender.calendarInstance) {
+            if (game.wgtngmMiniCalender.calendarInstance && game.user.isGM) {
                 WeatherEngine.refreshWeather();
                 const soundIcon = game.wgtngmMiniCalender.calendarInstance.element.querySelector('[data-action="toggle-weather-sound"]');
                 soundIcon.classList.toggle('fa-volume-high', value);      

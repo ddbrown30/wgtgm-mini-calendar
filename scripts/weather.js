@@ -477,7 +477,7 @@ const ordinal = date.ordinal;
 
 
 static async applyWeatherEffect(type) {
-        if (!canvas.scene) return;
+        if (!canvas.scene ||  !game.user.isGM) return;
         
         const sceneFlag = canvas.scene.getFlag(MODULE_NAME, "enableWeather");
         const visualsEnabled = game.settings.get(MODULE_NAME, "enableWeatherEffects");
