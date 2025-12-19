@@ -1,8 +1,84 @@
 import { MODULE_NAME } from "./settings.js";
 import { calendarJournal } from "./helper.js"; 
 import { WEATHER_PLAYLIST_NAME, formatTrackName } from "./playlist-importer.js";
-import {HailWeatherEffect} from './hail.js'
+import {HailWeatherEffect} from './hail.js';
+import {AuroraShader} from './aurora.js';
+import {HeatWaveShader} from './heatwave.js';
 export const weatherEffects = {
+lightWind: {
+    id: "lightWind",
+    label: "Light Wind",
+    filter: { enabled: false },
+    effects: [
+      {
+        id: "windHaze",
+        effectClass: foundry.canvas.rendering.shaders.WeatherShaderEffect,
+        shaderClass: HeatWaveShader,
+        blendMode: PIXI.BLEND_MODES.ADD,
+        config: { 
+          opacity: 0.5,
+          slope: 0.9,       
+          intensity: 0.6, 
+          speed: 0.2, 
+          scale: 1.0,       
+          tint: [0.1, 0.2, 0.3], 
+          offset: 0.0  
+        }
+      },
+    ]
+  },
+heatWave: {
+    id: "heatWave",
+    label: "Heat Wave",
+    filter: { enabled: false },
+    effects: [
+      {
+        id: "heatHaze",
+        effectClass: foundry.canvas.rendering.shaders.WeatherShaderEffect,
+        shaderClass: HeatWaveShader,
+        blendMode: PIXI.BLEND_MODES.ADD,
+        config: { 
+          opacity: 0.2,
+          slope: 0.4,       
+          intensity: 0.2, 
+          speed: 0.2, 
+          scale: 1.0,       
+          tint: [1.0, 0.8, 0.6], 
+          offset: 0.0  
+        }
+      },
+      {
+        id: "heatShimmer",
+        effectClass: foundry.canvas.rendering.shaders.WeatherShaderEffect,
+        shaderClass: HeatWaveShader,
+        blendMode: PIXI.BLEND_MODES.SCREEN, 
+        config: { 
+          opacity: 0.15,
+          slope: 0.6, 
+          intensity: 0.3, 
+          speed: 0.4, 
+          scale: 2.0, 
+          tint: [0.5, 0.5, 0.1], 
+          offset: 10.0  
+        }
+      },
+      {
+        id: "heatPulse",
+        effectClass: foundry.canvas.rendering.shaders.WeatherShaderEffect,
+        shaderClass: HeatWaveShader,
+        blendMode: PIXI.BLEND_MODES.SCREEN, 
+        config: { 
+          opacity: 0.1,
+          slope: 0.9, 
+          intensity: 0.2, 
+          speed: 0.1, 
+          scale: 0.5, 
+          tint: [0.1, 0.2, 1.0], 
+          offset: 50.0  
+        }
+      }
+    ]
+  },
 lightSnow: {
     id: "lightSnow",
     label: "Light Snow",
@@ -106,7 +182,7 @@ lightRain: {
       effectClass: foundry.canvas.rendering.shaders.WeatherShaderEffect,
       shaderClass: foundry.canvas.rendering.shaders.RainShader,
       blendMode: PIXI.BLEND_MODES.SCREEN,
-      config: { opacity: 0.35, tint: [0.8, 0.9, 1.0], intensity: 0.4, strength: 0.5, rotation: 0.2618, speed: 0.15 }
+      config: { opacity: 0.45, tint: [0.8, 0.9, 1.0], intensity: 0.5, strength: 0.5, rotation: 0.2618, speed: 0.15 }
     },{
       id: "fogShader",
       effectClass: foundry.canvas.rendering.shaders.WeatherShaderEffect,
@@ -145,6 +221,54 @@ lightRain: {
       config: { opacity: 0.2, slope: 0.8, intensity: 0.2, speed: 0.1, scale: 1.5 }
     }]
   },
+aurora: {
+    id: "aurora",
+    label: "Aurora",
+    filter: { enabled: false },
+    effects: [{
+      id: "auroraGreen",
+      effectClass: foundry.canvas.rendering.shaders.WeatherShaderEffect,
+      shaderClass: AuroraShader,
+      blendMode: PIXI.BLEND_MODES.ADD, 
+      config: { 
+        opacity: 0.3,
+        slope: 0.9,       
+        intensity: 0.3, 
+        speed: 0.1, 
+        scale: 1.5,       
+        tint: [0.1, 1.0, 0.4], 
+        offset: 100.0  
+      }
+    },{
+      id: "auroraPurple",
+      effectClass: foundry.canvas.rendering.shaders.WeatherShaderEffect,
+      shaderClass: AuroraShader,
+      blendMode: PIXI.BLEND_MODES.SCREEN,
+      config: { 
+        opacity: 0.4,
+        slope: 1, 
+        intensity: 0.4, 
+        speed: 0.1, 
+        scale: 2.5,
+        tint: [0.8, 0.0, 1.0], 
+        offset: 100.0  
+      }
+    },{
+      id: "auroraBase",
+      effectClass: foundry.canvas.rendering.shaders.WeatherShaderEffect,
+      shaderClass: AuroraShader,
+      blendMode: PIXI.BLEND_MODES.SCREEN, 
+      config: { 
+        opacity: 0.4,
+        slope: 1.8, 
+        intensity: 0.2, 
+        speed: 0.2, 
+        scale: 1.25,
+        tint: [0.0, 0.5, 1.0], 
+        offset: 50.0  
+      }
+    }]
+  },
   sandstorm: {
     id: "sandstorm",
     label: "Sandstorm",
@@ -178,122 +302,129 @@ lightRain: {
 };
 
 export class WeatherEngine {
-    static HEX_MAP = {
-        0:  { type: "none",      label: "Clear",             icon: "fas fa-sun",                 neighbors: [0, 0, 2, 1, 1, 0] },
-        1:  { type: "partlyCloudy",    label: "Scattered Clouds",  icon: "fas fa-cloud-sun",           neighbors: [0, 2, 4, 3, 3, 0] },
-        2:  { type: "none",      label: "Fair",              icon: "fas fa-sun",                 neighbors: [0, 2, 4, 4, 1, 0] },
-        3:  { type: "lightRain", label: "Light Rain",        icon: "fas fa-cloud-rain",          neighbors: [1, 4, 6, 5, 5, 1] },
-        4:  { type: "clouds",    label: "Overcast",          icon: "fas fa-cloud",               neighbors: [1, 2, 2, 6, 3, 1] },
-        5:  { type: "rainStorm", label: "Storm",             icon: "fas fa-bolt",                neighbors: [3, 6, 6, 5, 5, 3] },
-        6:  { type: "heavyRain",      label: "Heavy Rain",        icon: "fas fa-cloud-showers-heavy", neighbors: [3, 4, 4, 6, 5, 3] }
-    };
-    static _soundQueue = Promise.resolve();
-    // Biome Configurations
-    // Directions: 0=N, 1=NE, 2=SE, 3=S, 4=SW, 5=NW, 6=Stay
-    // Concept: N/NE = Drier/Sunnier, S/SW = Wetter/Stormier
-    static BIOMES = {
-        "temperate": {
-            tempOffset: 0,
-            seasons: {
-                "Winter": [3, 3, 4, 2, 6, 6],
-                "Spring": [0, 1, 2, 3, 4, 5],
-                "Summer": [0, 0, 1, 5, 6, 6],
-                "Autumn": [2, 2, 3, 3, 4, 6] 
-            }
-        },
-        "desert": {
-            tempOffset: 20,
-            seasons: {
-                "Winter": [0, 0, 6, 6, 2, 1], 
-                "Spring": [0, 0, 0, 6, 1, 2],
-                "Summer": [0, 0, 0, 0, 0, 6], 
-                "Autumn": [0, 0, 6, 6, 2, 1]
-            }
-        },
-        "polar": {
-            tempOffset: -30, // It is colder
-            seasons: {
-                // Strong push South (3,4,5) for Snow/Blizzards
-                "Winter": [3, 4, 4, 5, 5, 6], 
-                "Spring": [3, 4, 6, 0, 1, 6],
-                "Summer": [0, 1, 6, 6, 3, 4], 
-                "Autumn": [3, 3, 4, 5, 6, 6]
-            }
-        },
-        "tropical": {
-            tempOffset: 15,
-            seasons: {
-                // Wet season vs Dry season instead of Winter/Summer?
-                // For now, we map Summer -> Wet, Winter -> Dry-ish
-                "Winter": [0, 1, 2, 6, 6, 6], // Drier
-                "Spring": [2, 3, 4, 6, 6, 6], 
-                "Summer": [3, 4, 5, 5, 6, 6], // Storms!
-                "Autumn": [3, 4, 2, 2, 6, 6]
-            }
-        }
+static _soundQueue = Promise.resolve();
+
+static HEX_MAP = {
+        0:  { type: "clouds",       label: "Overcast",         icon: "fas fa-cloud",               neighbors: [1, 2, 3, 4, 5, 6] },
+        1:  { type: "partlyCloudy", label: "Mostly Cloudy",    icon: "fas fa-cloud-sun",           neighbors: [7, 8, 2, 0, 6, 18] },
+        2:  { type: "partlyCloudy", label: "Partly Cloudy",    icon: "fas fa-cloud-sun",           neighbors: [8, 9, 10, 3, 0, 1] },
+        3:  { type: "lightRain",    label: "Drizzle",          icon: "fas fa-cloud-rain",          neighbors: [0, 2, 10, 11, 12, 4] },
+        4:  { type: "lightRain",    label: "Light Rain",       icon: "fas fa-cloud-rain",          neighbors: [0, 3, 12, 13, 14, 5] },
+        5:  { type: "fog",          label: "Fog",              icon: "fas fa-smog",                neighbors: [6, 0, 4, 14, 15, 16] },
+        6:  { type: "none",         label: "Fair",             icon: "fas fa-sun",                 neighbors: [18, 1, 0, 5, 16, 17] },
+        7:  { type: "none",         label: "Clear",            icon: "fas fa-sun",                 neighbors: [7, 7, 8, 1, 18, 7] },
+        8:  { type: "none",         label: "Clear",            icon: "fas fa-sun",                 neighbors: [7, 8, 9, 2, 1, 7] },
+        9:  { type: "none",         label: "Hot/Bright",       icon: "fas fa-sun",                 neighbors: [8, 9, 10, 10, 2, 8] },
+        10: { type: "rain",         label: "Rain",             icon: "fas fa-cloud-showers-heavy", neighbors: [9, 9, 10, 11, 3, 2] },  
+        11: { type: "heavyRain",    label: "Heavy Rain",       icon: "fas fa-cloud-showers-heavy", neighbors: [3, 10, 11, 12, 12, 3] },
+        12: { type: "rainStorm",    label: "Thunderstorm",     icon: "fas fa-cloud-bolt",          neighbors: [3, 11, 11, 12, 13, 4] },
+        13: { type: "heavyRain",    label: "Showers Heavy",    icon: "fas fa-cloud-showers",       neighbors: [4, 12, 12, 13, 14, 14] },
+        14: { type: "rain",         label: "Showers",          icon: "fas fa-cloud-showers-heavy", neighbors: [5, 4, 13, 13, 14, 15] },
+        15: { type: "lightWind",    label: "Gale Winds",       icon: "fas fa-wind",                neighbors: [16, 5, 14, 14, 15, 15] },
+        16: { type: "partlyCloudy", label: "Windy",            icon: "fas fa-wind",                neighbors: [17, 6, 5, 15, 15, 16] },
+        17: { type: "none",         label: "Breezy",           icon: "fas fa-wind",                neighbors: [18, 18, 6, 16, 16, 17] },
+        18: { type: "none",         label: "Dry",              icon: "fas fa-sun",                 neighbors: [7, 7, 1, 6, 17, 18] }
     };
 
+    static DESERT_OVERRIDES = {
+        0:  { type: "heatWave",     label: "Haze",             icon: "fas fa-sun-haze" },
+        1:  { type: "heatWave",     label: "Haze",             icon: "fas fa-sun-haze" },
+        2:  { type: "lightWind",    label: "Light Winds",      icon: "fas fa-wind" },
+        3:  { type: "partlyCloudy", label: "Partly Cloudy",    icon: "fas fa-cloud-sun"},  
+        4:  { type: "none",         label: "Dry",              icon: "fas fa-sun" },
+        5:  { type: "sandstorm",    label: "Dust Storm",        icon: "fas fa-smog" },
+        6:  { type: "heatWave",     label: "Heatwave",         icon: "fas fa-smog" },
+        10: { type: "rain",         label: "Rain",             icon: "fas fa-cloud-showers-heavy" },
+        11: { type: "sandstorm",    label: "Sandstorm",        icon: "fas fa-wind" },
+        12: { type: "none",         label: "Dry Storm",        icon: "fas fa-bolt" }, 
+        13: { type: "sandstorm",    label: "Sandstorm",        icon: "fas fa-wind" },
+        14: { type: "lightWind",    label: "Light Winds",      icon: "fas fa-wind" },
+        15: { type: "lightWind",    label: "Gale Winds",       icon: "fas fa-wind" },
+        16: { type: "heatWave",     label: "Heatwave",         icon: "fas fa-sun-haze" },
+        17: { type: "lightWind",    label: "Light Winds",      icon: "fas fa-wind" },
+        18: { type: "none",         label: "Dry",              icon: "fas fa-sun" }
+    };
+
+
+    static BIOMES = {
+        "temperate": { tempOffset: 0, seasons: { "Winter": [3,3,4,2,6,6], "Spring": [0,1,2,3,4,5], "Summer": [0,0,1,5,6,6], "Autumn": [2,2,3,3,4,6] } },
+        "desert": { tempOffset: 20, seasons: { "Winter": [2, 3, 0, 0, 6, 6], "Spring": [5, 5, 1, 0, 6, 6], "Summer": [4, 3, 2, 5, 0, 6], "Autumn": [4, 5, 0, 0, 6, 6]  } },
+        "polar": { tempOffset: -30, seasons: { "Winter": [3,4,4,5,5,6], "Spring": [3,4,6,0,1,6], "Summer": [0,1,6,6,3,4], "Autumn": [3,3,4,5,6,6] } },
+        "tropical": { tempOffset: 15, seasons: { "Winter": [0,1,2,6,6,6], "Spring": [2,3,4,6,6,6], "Summer": [3,4,5,5,6,6], "Autumn": [3,4,2,2,6,6] } }
+    };
+                
+           
     static generate(date, previousWeather = null) {
         const calendarConfig = CONFIG.time.worldCalendarConfig;
         const season = this.getWeatherSeason(date, calendarConfig);
-        // console.log(season);
         const biomeKey = game.settings.get(MODULE_NAME, "biome") || "temperate";
         const biomeData = this.BIOMES[biomeKey] || this.BIOMES["temperate"];
-        // console.log(season);
         let newCellId;
-
         if (!previousWeather) {
-            newCellId = 4; 
-            if (biomeKey === "desert") newCellId = 0;
+            newCellId = 0; 
+            if (biomeKey === "desert") newCellId = 7;
         } else {
             const moves = biomeData.seasons[season.name] || biomeData.seasons["Spring"];
+            const direction = moves[Math.floor(Math.random() * 6)];
             
-            const roll = Math.floor(Math.random() * 6);
-            const direction = moves[roll];
-
-            if (direction === 6) {
-                newCellId = previousWeather.cell;
-            } else {
-                const currentHex = this.HEX_MAP[previousWeather.cell];
-                newCellId = currentHex.neighbors[direction];
+            if (direction === 6) newCellId = previousWeather.cell;
+            else {
+                newCellId = this.HEX_MAP[previousWeather.cell].neighbors[direction];
                 if (newCellId === undefined) newCellId = previousWeather.cell;
             }
         }
-
         let weatherDef = this.HEX_MAP[newCellId];
-        let label = weatherDef.label;
-        let icon = weatherDef.icon;
-        let type = weatherDef.type;
-
-        if (season.name === "Winter" || biomeKey === "polar") {
-             if (type === "rain") { type = "snow"; icon = "fas fa-snowflake"; label = "Snow"; }
-             if (type === "rainStorm") { type = "blizzard"; icon = "fas fa-snow-blowing"; label = "Blizzard"; }
-             if (type === "lightRain") { type = "hail"; icon = "fas fa-cloud-hail"; label = "Hail"; }
+        if (biomeKey === "desert" && this.DESERT_OVERRIDES[newCellId]) {
+            weatherDef = { ...weatherDef, ...this.DESERT_OVERRIDES[newCellId] };
         }
-        
-        if (biomeKey === "desert") {
-             if (type === "rainStorm" || type === "rain") { 
-                 type = "sandstorm"; 
-                 icon = "fas fa-wind"; 
-                 label = "Sandstorm"; 
-             }
-             if (type === "lightRain") { 
-                 type = "none"; 
-                 icon = "fas fa-sun"; 
-                 label = "Heat Haze"; 
-             }
-        }
-
-        return {
-            cell: newCellId,
-            icon: icon,
-            label: label,
-            type: type,
-            temp: this.calculateTemp(season, newCellId, biomeData.tempOffset), 
-            date: date
-        };
-    }
+        let { type, icon, label } = weatherDef;
+        const temp = this.calculateTemp(season, newCellId, biomeData.tempOffset);
     
+        const freezingPoint = 32;
+        const isFreezing = temp <= freezingPoint;
+        if (isFreezing) {
+             if (type === "rain") {
+                 type = "lightSnow"; icon = "fas fa-snowflake"; label = "Snow";
+             }
+             else if (type === "lightRain") {
+                 type = "hail"; icon = "fas fa-cloud-hail"; label = "Hail";
+             }
+             else if (type === "heavyRain") {
+                 type = "snow"; icon = "fas fa-snowflake"; label = "Heavy Snow";
+             }
+             else if (type === "rainStorm") {
+                 type = "blizzard"; icon = "fas fa-snow-blowing"; label = "Blizzard";
+             }
+        }
+
+        const auroraChance = game.settings.get(MODULE_NAME, "auroraChance");
+        const allAurora = game.settings.get(MODULE_NAME, "allAurora");
+        const aChance = auroraChance ? auroraChance:0.25;
+
+        if (type === "none" && (biomeKey === "polar" || season.name === "Winter" || allAurora )) {
+             if (Math.random() < aChance || aChance === 1) {
+                 type = "aurora"; icon = "fas fa-moon-over-sun"; label = "Aurora";
+             }
+        }
+
+        return { cell: newCellId, icon, label, type, temp, date };
+    }
+
+    static calculateTemp(season, cellId, biomeOffset = 0) {
+        const base = 50; 
+        const variance = Math.floor(Math.random() * 10) - 5;
+        let weatherOffset = 0;
+        
+        if ([7,8,9,18].includes(cellId)) weatherOffset = 10;   // Sunny/Dry
+        if ([1,2,6].includes(cellId))    weatherOffset = 5;    // Fair
+        if ([0].includes(cellId))        weatherOffset = 0;    // Neutral
+        if ([3,4,5,15,16,17].includes(cellId)) weatherOffset = -5; // Wet/Windy
+        if ([10,11,12,13,14].includes(cellId)) weatherOffset = -10; // Stormy
+        
+        return base + (season.tempOffset || 0) + biomeOffset + weatherOffset + variance;
+    }
+
+
 
 static getWeatherSeason(date, config) {
 const ordinal = date.ordinal; 
@@ -369,18 +500,7 @@ const ordinal = date.ordinal;
         return { name: "Spring", tempOffset: 0 };
     }
 
-    static calculateTemp(season, cellId, biomeOffset = 0) {
-        const base = 50; 
-        const variance = Math.floor(Math.random() * 10) - 5;
-        
-        let weatherOffset = 0;
-        if (cellId === 0) weatherOffset = 10; // Sunny
-        if (cellId === 6) weatherOffset = -5; // Rain
-        if (cellId === 5) weatherOffset = -8; // Storm
-        
-        return base + (season.tempOffset || 0) + biomeOffset + weatherOffset + variance;
-    }
-    
+
     static async getForecastPage() {
         const journalName = calendarJournal;
         let journal = game.journal.getName(journalName);
@@ -397,8 +517,6 @@ const ordinal = date.ordinal;
             }
         }
 
-        // const journal = game.journal.getName(calendarJournal);
-        // if (!journal) return null;
 
         const pageName = "Weather History"; 
         let page = journal.pages.getName(pageName);
@@ -425,7 +543,7 @@ const ordinal = date.ordinal;
             
             if (!playlist) return;
 
-            if (type === "none") {
+            if (type === "none" || type === "heatWave" || type === "aurora") {
                 await playlist.stopAll();
                 return;
             }
@@ -477,7 +595,7 @@ const ordinal = date.ordinal;
 
 
 static async applyWeatherEffect(type) {
-        if (!canvas.scene ||  !game.user.isGM) return;
+        if (!canvas.scene || !game.user.isGM) return;
         
         const sceneFlag = canvas.scene.getFlag(MODULE_NAME, "enableWeather");
         const visualsEnabled = game.settings.get(MODULE_NAME, "enableWeatherEffects");
@@ -485,8 +603,17 @@ static async applyWeatherEffect(type) {
 
         let targetWeatherId = "";
         if (visualsEnabled && isEnabled) {
-             if (type && type !== "none" && CONFIG.weatherEffects[type]) {
-                 targetWeatherId = CONFIG.weatherEffects[type].id;
+            if (type && type !== "none") {
+                 if (type === "aurora") {
+                     if (this.isNightTime()) {
+                         targetWeatherId = CONFIG.weatherEffects[type]?.id || "";
+                     } else {
+                         targetWeatherId = ""; 
+                     }
+                 } 
+                 else if (CONFIG.weatherEffects[type]) {
+                     targetWeatherId = CONFIG.weatherEffects[type].id;
+                 }
              }
         }
 
@@ -499,23 +626,28 @@ static async applyWeatherEffect(type) {
         await this.playWeatherSound(type);
     }
 
+    static isNightTime() {
+        if (game.wgtngmMiniCalender?.constructor?.isNightTime) {
+            return game.wgtngmMiniCalender.constructor.isNightTime();
+        }
+        if (canvas.scene && canvas.scene.environment.darknessLevel > 0.4) {
+            return true;
+        }
+        return false;
+    }
 
-
-    /**
-     * Refreshes the current weather display based on settings and date.
-     * Called by the toggle button and settings changes.
-     */
     static async refreshWeather() {
         if (!game.user.isGM) return;
+        
         const defaultWeatherEnabled = game.settings.get(MODULE_NAME, "enableWeatherEffects");
         const sceneFlag = canvas.scene.getFlag(MODULE_NAME, "enableWeather");
-        const isEnabled = sceneFlag !== undefined ? sceneFlag : defaultWeatherEnabled;
-
-        const enabled = game.settings.get(MODULE_NAME, "enableWeatherEffects");
         
-        if (!enabled || !isEnabled) {
-             await this.applyWeatherEffect("none");
-             return;
+        if (!defaultWeatherEnabled) {
+             return; 
+        }
+
+        if (sceneFlag === false) {
+             return; 
         }
 
         const currentTimestamp = game.time.worldTime;
@@ -530,6 +662,7 @@ static async applyWeatherEffect(type) {
             await this.updateForecasts();
         }
     }
+
 
 
     static async getHistory() {
@@ -620,6 +753,7 @@ static async applyWeatherEffect(type) {
         const key = `${year}-${month}-${day}`;
         return history[key] || null;
     }
+
     static getTempDisplay(tempF) {
         if (game.settings.get(MODULE_NAME, "useCelsius")) {
             return Math.floor((tempF - 32) * 5 / 9) + "°C";
@@ -632,16 +766,44 @@ static async applyWeatherEffect(type) {
      * @param {string} type - The weather ID (e.g., "rain", "blizzard", "none").
      * @param {number} temp - The temperature in degrees (Fahrenheit by default).
      */
-    static async setWeatherOverride(type, temp) {
+    static async setWeatherOverride(type, temp, dayDelta=0) {
         if (!game.user.isGM) {
             ui.notifications.warn("Only the GM can override weather.");
             return;
         }
+      let delta = parseInt(dayDelta);
+        if (isNaN(delta) || delta < 0) delta = 0;
 
         const calendar = game.time.calendar;
         const comps = calendar.timeToComponents(game.time.worldTime);
-        const key = `${comps.year}-${comps.month}-${comps.dayOfMonth}`;
+        const months = calendar.months.values;
+
+        let dayLookup = comps.dayOfMonth + delta;
+        let monthLookup = comps.month;
+        let yearLookup = comps.year;
+        while (true) {
+            const monthData = months[monthLookup];
+            
+            let maxDaysInMonth = monthData.days;
+            if (calendar.isLeapYear(yearLookup) && monthData.leapDays !== undefined) {
+                maxDaysInMonth = monthData.leapDays;
+            }
+
+            if (dayLookup < maxDaysInMonth) {
+                break; 
+            }
+
+            dayLookup -= maxDaysInMonth;
+            monthLookup++;
+
+            if (monthLookup >= months.length) {
+                monthLookup = 0;
+                yearLookup++;
+            }
+        }
         
+        const key = `${yearLookup}-${monthLookup}-${dayLookup}`;
+
         const uiMap = {
             "none":         { label: "Clear",            icon: "fas fa-sun" },
             "partlyCloudy": { label: "Scattered Clouds", icon: "fas fa-cloud-sun" },
@@ -655,10 +817,13 @@ static async applyWeatherEffect(type) {
             "blizzard":     { label: "Blizzard",         icon: "fas fa-snow-blowing" },
             "leaves":       { label: "Windy",            icon: "fas fa-wind" },
             "sandstorm":    { label: "Sandstorm",        icon: "fas fa-wind" },
-            "hail":         { label: "Hail",             icon: "fas fa-cloud-hail" }
+            "hail":         { label: "Hail",             icon: "fas fa-cloud-hail" },
+            "aurora":       { label: "Aurora",           icon: "fas fa-moon-over-sun" },
+            "heatWave":     { label: "Heatwave",         icon: "fas fa-sun-haze" },
+            "lightWind":    { label: "Light Wind",       icon: "fas fa-wind" }
         };
 
-        const info = uiMap[type] || { label: type, icon: "fas fa-question" };
+        const info = uiMap[type] || { label: type, icon: type };
 
         const history = await this.getHistory();
         
@@ -671,7 +836,6 @@ static async applyWeatherEffect(type) {
             date: { year: comps.year, month: comps.month, day: comps.dayOfMonth },
             isManual: true 
         };
-
         await this.saveHistory(history);
         await this.applyWeatherEffect(type);
 

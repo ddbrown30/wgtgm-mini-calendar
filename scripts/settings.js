@@ -53,14 +53,16 @@ export default async function minicalendarSettings() {
         scope: "world",
         config: false,
         type: Object,
-        default: {} 
+        default: {} ,
+        requiresReload: true
     });
 
     game.settings.register(MODULE_NAME, "calendarSource", {
         scope: "world",
         config: false,
         type: String,
-        default: "world" 
+        default: "world",
+        requiresReload: true 
     });
 
     game.settings.registerMenu(MODULE_NAME, "calendarConfigMenu", {
@@ -183,6 +185,33 @@ game.settings.register(MODULE_NAME, "use12hour", {
         config: false,
         type: Boolean,
         default: false
+    });
+
+    game.settings.register(MODULE_NAME, "broadcastWeather", {
+        name: "Broadcast weather to chat",
+        hint: "Sends a Message to Chat with the days weather on date change.",
+        scope: "world",
+        config: false,
+        type: Boolean,
+        default: false
+    });
+
+    game.settings.register(MODULE_NAME, "allAurora", {
+        name: "Non Seasonal Aurora",
+        hint: "Display the Aurora weather effect throughout the year.",
+        scope: "world",
+        config: false,
+        type: Boolean,
+        default: true
+    });
+    game.settings.register(MODULE_NAME, "auroraChance", {
+        name: "Chance for Aurora",
+        hint: "The likelyhood an aurora will occur on a clear night (0.0 to 1.0).",
+        scope: "world",
+        config: false,
+        type: Number,
+        range: { min: 0, max: 1, step: 0.05 },
+        default: 0.25
     });
 
     // Internal setting to store the calculated forecast data

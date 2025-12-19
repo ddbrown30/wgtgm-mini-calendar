@@ -1,3 +1,124 @@
+export function barovia() {
+  return {
+    name: "Barovian Calendar",
+    id: "barovia-lunar",
+    description: "The lunar calendar of Barovia, where the moon cycles determine the passage of time.",
+    years: {
+      yearZero: 0,
+      firstWeekday: 0,
+      resetWeekdays: false,
+      leapYear: {
+        leapStart: 0,
+        leapInterval: 0
+      }
+    },
+    months: {
+      values: [
+        { name: "Yinyavr", abbreviation: "Yin", ordinal: 1, days: 30 },
+        { name: "Fenravr", abbreviation: "Fen", ordinal: 2, days: 30 },
+        { name: "Martavr", abbreviation: "Mar", ordinal: 3, days: 30 },
+        { name: "Prylla", abbreviation: "Pry", ordinal: 4, days: 30 },
+        { name: "Mada", abbreviation: "Mad", ordinal: 5, days: 30 },
+        { name: "Eyun", abbreviation: "Eyu", ordinal: 6, days: 30 },
+        { name: "Eyul", abbreviation: "Eyl", ordinal: 7, days: 30 },
+        { name: "Ugavr", abbreviation: "Uga", ordinal: 8, days: 30 },
+        { name: "Sintavr", abbreviation: "Sin", ordinal: 9, days: 30 },
+        { name: "Ottyavr", abbreviation: "Ott", ordinal: 10, days: 30 },
+        { name: "Neyavr", abbreviation: "Ney", ordinal: 11, days: 30 },
+        { name: "Dekavr", abbreviation: "Dek", ordinal: 12, days: 30 }
+      ]
+    },
+    days: {
+      values: [
+        { name: "Firstday", abbreviation: "1st", ordinal: 1 },
+        { name: "Secondday", abbreviation: "2nd", ordinal: 2 },
+        { name: "Thirdday", abbreviation: "3rd", ordinal: 3 },
+        { name: "Fourthday", abbreviation: "4th", ordinal: 4 },
+        { name: "Fifthday", abbreviation: "5th", ordinal: 5 },
+        { name: "Sixthday", abbreviation: "6th", ordinal: 6 },
+        { name: "Seventhday", abbreviation: "7th", ordinal: 7 }
+      ],
+      daysPerYear: 360,
+      hoursPerDay: 24,
+      minutesPerHour: 60,
+      secondsPerMinute: 60
+    },
+    seasons: {
+      values: [
+        { name: "Cold Moon", monthStart: 1, monthEnd: 1 },
+        { name: "Wolf Moon", monthStart: 2, monthEnd: 2 },
+        { name: "Raven Moon", monthStart: 3, monthEnd: 3 },
+        { name: "Rain Moon", monthStart: 4, monthEnd: 4 },
+        { name: "Maid Moon", monthStart: 5, monthEnd: 5 },
+        { name: "Summer Moon", monthStart: 6, monthEnd: 6 },
+        { name: "War Moon", monthStart: 7, monthEnd: 7 },
+        { name: "Wine Moon", monthStart: 8, monthEnd: 8 },
+        { name: "Harvest Moon", monthStart: 9, monthEnd: 9 },
+        { name: "Hunter's Moon", monthStart: 10, monthEnd: 10 },
+        { name: "Rot Moon", monthStart: 11, monthEnd: 11 },
+        { name: "Winter Moon", monthStart: 12, monthEnd: 12 }
+      ]
+    },
+    moons: {
+      values: [
+        {
+          name: "Luna",
+          cycleLength: 30,
+          firstNewMoon: { year: 0, month: 0, day: 1 },
+          color: "#dfb8b8",
+          phases: [
+            { name: "New Moon", length: 3.75, display: "New Moon", icon: "fa-circle" },
+            { name: "Waxing Crescent", length: 3.75, display: "Waxing Crescent", icon: "fa-moon" },
+            { name: "First Quarter", length: 3.75, display: "First Quarter", icon: "fa-adjust" },
+            { name: "Waxing Gibbous", length: 3.75, display: "Waxing Gibbous", icon: "fa-moon" },
+            { name: "Full Moon", length: 3.75, display: "Full Moon", icon: "fa-circle" },
+            { name: "Waning Gibbous", length: 3.75, display: "Waning Gibbous", icon: "fa-moon" },
+            { name: "Last Quarter", length: 3.75, display: "Last Quarter", icon: "fa-adjust fa-flip-horizontal" },
+            { name: "Waning Crescent", length: 3.75, display: "Waning Crescent", icon: "fa-moon" }
+          ]
+        }
+      ]
+    },
+    weather: {
+      values: [
+        { name: "Winter", monthStart: 12, monthEnd: 1, tempOffset: -20 },
+        { name: "Spring", monthStart: 2, monthEnd: 7, tempOffset: 5 },
+        { name: "Autumn", monthStart: 8, monthEnd: 11, tempOffset: 5 }
+      ]
+    },
+    notes: [
+      { title: "New Year's Day", content: "Celebrations to the New Year, with gifts given for luck, health, and prosperity.", icon: "fas fa-glass-cheers", date: { year: 0, month: 0, day: 0 }, repeatUnit: "years", repeatInterval: 1, repeatCount: 0, isPreset: true },
+      { title: "Imbolc", content: "The Promise of Spring. When wolves begin to give milk again.", icon: "fas fa-dog", date: { year: 0, month: 1, day: 1 }, repeatUnit: "years", repeatInterval: 1, repeatCount: 0, isPreset: true },
+      { title: "Ostara (Spring Equinox)", content: "Spring has arrived! New life sprouts; fertility abounds.", icon: "fas fa-seedling", date: { year: 0, month: 2, day: 15 }, repeatUnit: "years", repeatInterval: 1, repeatCount: 0, isPreset: true },
+      { title: "Beltane", content: "Festival of Fire. Bonfires representing life and maypole dancing.", icon: "fas fa-fire", date: { year: 0, month: 4, day: 0 }, repeatUnit: "years", repeatInterval: 1, repeatCount: 0, isPreset: true },
+      { title: "BLOOD MOON", content: "The Morninglord's Tears. A 5-day period where the moon sits large and red. Terrible thunderstorms plague the valley.", icon: "fas fa-cloud-bolt", date: { year: 0, month: 5, day: 14 }, repeatUnit: "years", repeatInterval: 1, repeatCount: 0, isPreset: true },
+      { title: "Litha (Summer Solstice)", content: "Midsummer celebration. Longest day of the year.", icon: "fas fa-sun", date: { year: 0, month: 5, day: 21 }, repeatUnit: "years", repeatInterval: 1, repeatCount: 0, isPreset: true },
+      { title: "Lughnasadh", content: "First Harvest. Gratitude for bread and fresh fruits.", icon: "fas fa-wheat", date: { year: 0, month: 7, day: 0 }, repeatUnit: "years", repeatInterval: 1, repeatCount: 0, isPreset: true },
+      { title: "Mabon (Autumn Equinox)", content: "Reaping of the harvest.", icon: "fas fa-leaf", date: { year: 0, month: 8, day: 22 }, repeatUnit: "years", repeatInterval: 1, repeatCount: 0, isPreset: true },
+      { title: "Samhain", content: "Witches' New Year. Veil between worlds is thin.", icon: "fas fa-ghost", date: { year: 0, month: 9, day: 29 }, repeatUnit: "years", repeatInterval: 1, repeatCount: 0, isPreset: true },
+      { title: "Yule (Winter Solstice)", content: "Longest night of the year.", icon: "fas fa-snowflake", date: { year: 0, month: 11, day: 19 }, repeatUnit: "years", repeatInterval: 1, repeatCount: 0, isPreset: true },
+      { title: "New Year's Eve", content: "Final preparations for the new cycle.", icon: "fas fa-hourglass-end", date: { year: 0, month: 11, day: 29 }, repeatUnit: "years", repeatInterval: 1, repeatCount: 0, isPreset: true }
+    ],
+    sun: {
+      values: [
+        { dawn: 9, dusk: 17, monthStart: 1, monthEnd: 1 },
+        { dawn: 8, dusk: 18, monthStart: 2, monthEnd: 2 },
+        { dawn: 7, dusk: 18, monthStart: 3, monthEnd: 3 },
+        { dawn: 7, dusk: 18, monthStart: 4, monthEnd: 4 },
+        { dawn: 7, dusk: 18, monthStart: 5, monthEnd: 5 },
+        { dawn: 7, dusk: 18, monthStart: 6, monthEnd: 6 },
+        { dawn: 7, dusk: 18, monthStart: 7, monthEnd: 7 },
+        { dawn: 7, dusk: 18, monthStart: 8, monthEnd: 8 },
+        { dawn: 7, dusk: 18, monthStart: 9, monthEnd: 9 },
+        { dawn: 7, dusk: 18, monthStart: 10, monthEnd: 10 },
+        { dawn: 8, dusk: 18, monthStart: 11, monthEnd: 11 },
+        { dawn: 9, dusk: 17, monthStart: 12, monthEnd: 12 }
+      ]
+    }
+  };
+}
+
+
 export function galifar() {
     return {
         name: "Galifar Calendar",
@@ -65,8 +186,8 @@ export function galifar() {
                 icon: "fas fa-crown",
                 date: {
                     year: 1,
-                    month: 0, // Zarantyr
-                    day: 0    // 1st
+                    month: 0,
+                    day: 0   
                 },
                 repeatUnit: "none",
                 repeatInterval: 0,
@@ -79,8 +200,8 @@ export function galifar() {
                 icon: "fas fa-shield-alt",
                 date: {
                     year: 894,
-                    month: 0, // Zarantyr (Default if unknown)
-                    day: 0    // 1st
+                    month: 0, 
+                    day: 0    
                 },
                 repeatUnit: "none",
                 repeatInterval: 0,
@@ -93,8 +214,8 @@ export function galifar() {
                 icon: "fas fa-skull",
                 date: {
                     year: 994,
-                    month: 1, // Olarune (Month 2)
-                    day: 19   // 20th
+                    month: 1, 
+                    day: 19   
                 },
                 repeatUnit: "none",
                 repeatInterval: 0,
@@ -107,8 +228,8 @@ export function galifar() {
                 icon: "fas fa-flag",
                 date: {
                     year: 998,
-                    month: 0, // Zarantyr
-                    day: 0    // 1st
+                    month: 0, 
+                    day: 0    
                 },
                 repeatUnit: "none",
                 repeatInterval: 0,
@@ -138,7 +259,8 @@ export function warhammer() {
                     name: "Hexenstag",
                     abbreviation: "Heg",
                     ordinal: 1,
-                    days: 1
+                    days: 1,
+                    intercalary: true
                 },
                 {
                     name: "Nachexen",
@@ -156,7 +278,8 @@ export function warhammer() {
                     name: "Mitterfruhl",
                     abbreviation: "Mit",
                     ordinal: 3,
-                    days: 1
+                    days: 1,
+                    intercalary: true
                 },
                 {
                     name: "Pflugzeit",
@@ -180,7 +303,8 @@ export function warhammer() {
                     name: "Sonnstill",
                     abbreviation: "Son",
                     ordinal: 6,
-                    days: 1
+                    days: 1,
+                    intercalary: true
                 },
                 {
                     name: "Vorgeheim",
@@ -192,7 +316,8 @@ export function warhammer() {
                     name: "Geheimnistag",
                     abbreviation: "Geh",
                     ordinal: 7,
-                    days: 1
+                    days: 1,
+                    intercalary: true
                 },
                 {
                     name: "Nachgeheim",
@@ -210,7 +335,8 @@ export function warhammer() {
                     name: "Mittherbst",
                     abbreviation: "Mib",
                     ordinal: 9,
-                    days: 1
+                    days: 1,
+                    intercalary: true
                 },
                 {
                     name: "Brauzeit",
@@ -234,7 +360,8 @@ export function warhammer() {
                     name: "Mondstille",
                     abbreviation: "Mon",
                     ordinal: 12,
-                    days: 1
+                    days: 1,
+                    intercalary: true
                 },
                 {
                     name: "Vorhexen",
@@ -342,9 +469,9 @@ export function warhammer() {
                     ],
                     color: "#e0e0e0",
                     firstNewMoon: {
-                        year: 1,
-                        month: 1,
-                        day: 12
+                        year: 0,
+                        month: 2,
+                        day: 1
                     }
                 },
                 {
@@ -395,9 +522,9 @@ export function warhammer() {
                     ],
                     color: "#9db92c",
                     firstNewMoon: {
-                        year: 2522,
+                        year: 0,
                         month: 2,
-                        day: 8
+                        day: 7
                     }
                 }
             ]
@@ -1035,7 +1162,7 @@ export function gregorian() {
             description: "The Gregorian calendar with simplified leap years.",
             years: {
                 yearZero: 0,
-                firstWeekday: 0,
+                firstWeekday: 5,
                 leapYear: { leapStart: 0, leapInterval: 4 },
             },
             months: {

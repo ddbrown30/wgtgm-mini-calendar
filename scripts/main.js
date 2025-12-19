@@ -1,6 +1,6 @@
 import minicalendarSettings, { MODULE_NAME } from "./settings.js";
 import { wgtngmMiniCalender } from "./mini-calendar.js";
-import { handleMPClick, localize, openwgtngmMiniCalendarSheet } from "./helper.js";
+import { handleMPClick, localize, openwgtngmMiniCalendarSheet,openwgtngmMiniCalendarAPI } from "./helper.js";
 import { CalendarConfig } from "./calendar-config.js";
 import { createMiniCalendarClass } from "./CalendarClass.js";
 import { weatherEffects, WeatherEngine } from "./weather.js"; 
@@ -91,8 +91,8 @@ Hooks.once("init", async function () {
          * @param {string} type - The weather type (e.g. "rain", "snow", "none")
          * @param {number} temp - Temperature value
          */
-        overrideWeather: async (type, temp) => {
-            await WeatherEngine.setWeatherOverride(type, temp);
+        overrideWeather: async (type, temp, dayDelta) => {
+            await WeatherEngine.setWeatherOverride(type, temp, dayDelta);
         },
         /**
        * Sets the game time to a specific hour of the current (or offset) day.
@@ -101,7 +101,8 @@ Hooks.once("init", async function () {
        */
         setTime: async (day, hour) => {
             await wgtngmMiniCalender.setDayHour(day, hour);
-        }
+        },
+        openCalendar: async (toggle) => { await openwgtngmMiniCalendarAPI(toggle) }
     };
 
 

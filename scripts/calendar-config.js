@@ -1,7 +1,7 @@
 import { MODULE_NAME } from "./settings.js";
 import { confirmationDialog, calendarJournal } from "./helper.js";
 import { setCalendarJSON } from "./main.js";
-import { pf2e, harptos, gregorian, warhammer, galifar } from "./presets.js";
+import { pf2e, harptos, gregorian, warhammer, galifar,barovia } from "./presets.js";
 
 var ApplicationV2 = foundry.applications.api.ApplicationV2;
 var HandlebarsApplicationMixin = foundry.applications.api.HandlebarsApplicationMixin;
@@ -26,7 +26,6 @@ export class CalendarConfig extends calendarForm {
             submitOnChange: false,
         },
         actions: {
-            reset: this.#onResetDefaults,
             importTrigger: function(event, target) {
                 this.element.querySelector("#wgtgm-import-file").click();
                 },
@@ -151,6 +150,7 @@ export class CalendarConfig extends calendarForm {
             { value: "harptos", label: "Preset: Harptos (Full Format)", selected: source === "harptos" },
             { value: "pf2e", label: "Preset: PF2E Absalom Reckoning (Golarion)", selected: source === "pf2e" },
             { value: "galifar", label: "Preset: Galifar Calendar (Eberron)", selected: source === "galifar" },
+            { value: "barovia", label: "Preset: Barovian Calendar (Ravenloft)", selected: source === "barovia" },
             { value: "warhammer", label: "Preset: Warhammer Imperial Calendar", selected: source === "warhammer" },
             { value: "custom", label: "Custom JSON (Full Format)", selected: source === "custom" },
         ];
@@ -163,6 +163,9 @@ export class CalendarConfig extends calendarForm {
             calendarJsonString = JSON.stringify(calendarData, null, 2);
         } else if (source === "pf2e") {
             calendarData = pf2e();
+            calendarJsonString = JSON.stringify(calendarData, null, 2);
+        } else if (source === "barovia") {
+            calendarData = barovia();
             calendarJsonString = JSON.stringify(calendarData, null, 2);
         } else if (source === "galifar") {
             calendarData = galifar();
@@ -213,12 +216,6 @@ export class CalendarConfig extends calendarForm {
     _getButtons() {
         return [
             {
-                type: "button",
-                action: "reset",
-                icon: "fa-solid fa-undo",
-                label: "Reset to default",
-            },
-            {
                 type: "submit",
                 icon: "fa-solid fa-floppy-disk",
                 label: "Save Changes",
@@ -250,6 +247,8 @@ export class CalendarConfig extends calendarForm {
         } else {
             if (source === "warhammer") {
                 calendarData = warhammer();
+            } else if (source === "barovia") {
+                calendarData = barovia();
             } else if (source === "galifar") {
                 calendarData = galifar();
             } else if (source === "pf2e") {
@@ -307,7 +306,9 @@ export class CalendarConfig extends calendarForm {
         }
 
         setCalendarJSON();
-
+        if (calendarChanged) {
+            foundry.applications.settings.SettingsConfig.reloadConfirm({ world: true });
+        }
 
         Hooks.callAll("closeCalendarConfig");
     }
@@ -550,38 +551,4 @@ export class CalendarConfig extends calendarForm {
         }
     }
 
-    /** Reset to Harptos preset */
-    static async #onResetDefaults(event, form) {
-        const app = form.owner;
-        if (!app) return;
-
-        const confirmed = await confirmationDialog(
-            `Reset calendar configuration to the Harptos preset? Unsaved changes will be lost.`,
-        );
-        if (!confirmed) return;
-
-        try {
-            const harptosData = harptos();
-            const value = JSON.stringify(harptosData, null, 2);
-
-            const formElement = form.element;
-            if (formElement) {
-                const sourceSelect = formElement.querySelector("#calendar-source");
-                const textarea = formElement.querySelector("#calendar-json");
-                const jsonArea = formElement.querySelector("#wgtngm-custom-json-area");
-
-                if (sourceSelect) sourceSelect.value = "harptos";
-                if (textarea) {
-                    textarea.value = value;
-                    textarea.disabled = true;
-                    textarea.style.opacity = "0.7";
-                }
-                if (jsonArea) jsonArea.style.display = "block";
-            }
-            ui.notifications.info("Calendar preset changed to Harptos. Click 'Save Changes' to apply.");
-        } catch (e) {
-            console.error("Mini Calendar | Error resetting to Harptos:", e);
-            ui.notifications.error("Failed to load Harptos preset.");
-        }
-    }
 }

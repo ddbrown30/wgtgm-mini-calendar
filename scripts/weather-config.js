@@ -24,7 +24,10 @@ export class WeatherConfig extends HandlebarsApplicationMixin(ApplicationV2) {
 
     async _prepareContext(options) {
         return {
+            broadcastWeather: game.settings.get(MODULE_NAME, "broadcastWeather"),
             biome: game.settings.get(MODULE_NAME, "biome"),
+            auroraChance: game.settings.get(MODULE_NAME, "auroraChance"),
+            allAurora: game.settings.get(MODULE_NAME, "allAurora"),
             useCelsius: game.settings.get(MODULE_NAME, "useCelsius"),
             enableWeatherEffects: game.settings.get(MODULE_NAME, "enableWeatherEffects"),
             enableWeatherSound: game.settings.get(MODULE_NAME, "enableWeatherSound"),
@@ -39,7 +42,10 @@ export class WeatherConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     static async #onSubmit(event, form, formData) {
+        await game.settings.set(MODULE_NAME, "broadcastWeather", formData.object.broadcastWeather);
         await game.settings.set(MODULE_NAME, "biome", formData.object.biome);
+        await game.settings.set(MODULE_NAME, "auroraChance", formData.object.auroraChance);
+        await game.settings.set(MODULE_NAME, "allAurora", formData.object.allAurora);
         await game.settings.set(MODULE_NAME, "useCelsius", formData.object.useCelsius);
         await game.settings.set(MODULE_NAME, "enableWeatherEffects", formData.object.enableWeatherEffects);
         await game.settings.set(MODULE_NAME, "enableWeatherSound", formData.object.enableWeatherSound);
@@ -51,5 +57,4 @@ export class WeatherConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     }
     }
 }
-
 

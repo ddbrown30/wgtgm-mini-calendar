@@ -7,7 +7,7 @@
 
     <div class="calendar-grid wgtngm-calendar-grid">
         {{#each weekdays}}
-        <div class="weekday">{{this}}</div>
+        <div class="weekday">{{#unless ../isIntercalary}}{{this}}{{/unless}}</div>
         {{/each}}
 
         {{#each days}}

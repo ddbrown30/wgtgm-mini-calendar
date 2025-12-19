@@ -1,5 +1,5 @@
 import { MODULE_NAME } from "./settings.js";
-import { localize, calendarJournal, confirmationDialog, whisperChat, renderCalendarIfOpen } from "./helper.js";
+import { localize, calendarJournal, confirmationDialog, whisperChat, broadcastChat, renderCalendarIfOpen } from "./helper.js";
 import { CalendarConfig } from "./calendar-config.js";
 import { WeatherEngine } from "./weather.js";
 import { WeatherConfig  } from "./weather-config.js";
@@ -46,10 +46,6 @@ export class wgtngmMiniCalender extends wgtngmcal {
       "open-weather-settings": this.#_weatherConfig,
       "set-date": this.#_dayClickContext,
       "toggle-weather-sound": this.#_toggleWeatherSound,
-      // "set-date": {
-      //   handler: this.#_dayClickContext,
-      //   buttons: [0, 2],
-      // },
       "toggle-weather-fx": this.#_toggleWeatherFX,
     },
   };
@@ -73,6 +69,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
   #moonPhaseCache = new Map();
   #isCustomMinimized = false;
   #lastCheckedDate = null;
+  #lastWeatherBroadcastDate =null;
   _throttledDarknessUpdate = foundry.utils.throttle(this._updateSceneDarkness.bind(this), 1000);
   _debouncedRender = foundry.utils.debounce(this.render.bind(this), 100);
   _positionObserver = null;
@@ -239,10 +236,11 @@ _getEntryContextOptions() {
         console.warn(`Mini Calendar | Moon "${moonConfig.name}" missing valid firstNewMoon configuration.`);
         return null;
       }
-
+      // console.log(moonConfig);
       const referenceDateComps = {
         year: moonConfig.firstNewMoon.year,
         month: moonConfig.firstNewMoon.month - 1,
+        day: moonConfig.firstNewMoon.day - 1,
         dayOfMonth: moonConfig.firstNewMoon.day - 1,
         hour: 0,
         minute: 0,
@@ -398,20 +396,26 @@ async _getNotesForDay(date, preFetchedJournal = null, preFetchedPageMap = null) 
     return frame;
   }
 
-  static async #_toggleWeatherFX(event, target) {
+
+
+static async #_toggleWeatherFX(event, target) {
       const currentState = game.settings.get(MODULE_NAME, "enableWeatherEffects");
       const newState = !currentState;
       
       await game.settings.set(MODULE_NAME, "enableWeatherEffects", newState);
       target.classList.toggle('true', newState);      
+      
       if (newState) {
           ui.notifications.info("Weather Effects Enabled");
+          await WeatherEngine.refreshWeather();
       } else {
           ui.notifications.info("Weather Effects Disabled");
+          await WeatherEngine.applyWeatherEffect("none");
       }
       this.render();
-
   }
+
+
 
 static async #_toggleWeatherSound(event, target) {
       const currentState = game.settings.get(MODULE_NAME, "enableWeatherSound");
@@ -458,6 +462,8 @@ static async #_toggleWeatherSound(event, target) {
     }
 
     const currentMonth = calendar.months.values[this.#viewMonth];
+    const rawMonthConfig = CONFIG.time.worldCalendarConfig.months.values[this.#viewMonth];
+    const isIntercalary = rawMonthConfig?.intercalary === true;    
     const nowComponents = calendar.timeToComponents(game.time.worldTime);
     const isCurrentGameMonthAndYear = this.#viewYear === nowComponents.year && this.#viewMonth === nowComponents.month;
     const mph = calendar.days.minutesPerHour;
@@ -588,6 +594,7 @@ static async #_toggleWeatherSound(event, target) {
 
     return {
       ...context,
+      isIntercalary: isIntercalary,
       monthName: game.i18n.localize(currentMonth.name),
       year: this.#viewYear,
       weekdays: weekdayNames,
@@ -822,13 +829,13 @@ static async #_toggleWeatherSound(event, target) {
 
 _onUpdateWorldTime = async (worldTime, dt) => {
     await this._checkDailyEvents();
-    
     if (game.user.isGM && game.settings.get(MODULE_NAME, "enableDarknessControl")) {
     this._throttledDarknessUpdate(worldTime)
     }
     if (game.user.isGM) {
         await WeatherEngine.updateForecasts();
     }
+    await this._weatherToChat();
     const slider = this.element.querySelector(".mini-time-slider");
     if (slider && document.activeElement !== slider) {
         const calendar = game.time.calendar;
@@ -845,6 +852,7 @@ _onUpdateWorldTime = async (worldTime, dt) => {
    * Checks the current game date for any unwhispered events and sends them to chat.
    */
   async _whisperToChat(date) {
+
     const notes = await this._getNotesForDay(date);
     if (!notes || notes.length === 0) return;
     const calendar = game.time.calendar;
@@ -864,6 +872,36 @@ _onUpdateWorldTime = async (worldTime, dt) => {
 
   }
 
+
+ async _weatherToChat() {
+    const showWeather = game.settings.get(MODULE_NAME, "enableWeatherForecast");
+    const broadcastWeather = game.settings.get(MODULE_NAME, "broadcastWeather");
+
+    if (!showWeather || !broadcastWeather) return;
+
+    const calendar = game.time.calendar;
+
+    const nowComponents = calendar.timeToComponents(game.time.worldTime);
+    const dateKey = `${nowComponents.year}-${nowComponents.month}-${nowComponents.dayOfMonth}`;
+
+    if (this.#lastWeatherBroadcastDate === dateKey) return;
+    
+    this.#lastWeatherBroadcastDate = dateKey;
+
+    const page = game.journal.getName(calendarJournal)?.pages.getName("Weather History");
+    const weatherHistory = page?.flags?.[MODULE_NAME]?.history || {};
+    const currentWeather = weatherHistory[dateKey];
+
+    if (!currentWeather) return;
+
+    const currentWeatherIcon = currentWeather.icon ? `<i class="${currentWeather.icon}"></i>` : "";
+    const currentTemp = WeatherEngine.getTempDisplay(currentWeather.temp) || "";
+    const weatherLabel = currentWeather.label === "Aurora" ? "Clear" : currentWeather.label;
+
+    let content = `<h3>${currentWeatherIcon} ${currentTemp}</h3><span style="font-size:16px">${weatherLabel}</span>`;
+
+    broadcastChat(content);
+}
 
   /**
    * Checks the current game date for any unwhispered events and sends them to chat.
@@ -1778,7 +1816,6 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
           second: currentTimeComps.second,
         };
 
-        // Clamp dayOfMonth if necessary
         const monthData = calendar.months.values[newTimeComps.month];
         const daysInMonth = calendar.isLeapYear(newYear) ? (monthData.leapDays ?? monthData.days) : monthData.days;
 
@@ -2068,6 +2105,37 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
    * @returns {{dawn: number, dusk: number}} - The hour for dawn and dusk
    */
   _getSunTimes(worldTime = game.time.worldTime) {
+    // const calendar = game.time.calendar;
+    // let dawn = 6;
+    // let dusk = 18;
+
+    // if (!calendar) return { dawn, dusk };
+
+    // const comps = calendar.timeToComponents(worldTime);
+    // const sunConfig = CONFIG.time.worldCalendarConfig?.sun;
+
+    // if (sunConfig && Array.isArray(sunConfig.values)) {
+    //   const currentMonth = calendar.months.values[comps.month];
+    //   const ordinal = currentMonth.ordinal;
+
+    //   const match = sunConfig.values.find((v) => ordinal >= v.monthStart && ordinal <= v.monthEnd);
+
+    //   if (match) {
+    //     if (typeof match.dawn === "number") dawn = match.dawn;
+    //     if (typeof match.dusk === "number") dusk = match.dusk;
+    //   }
+    // }
+    // return { dawn, dusk };
+    return wgtngmMiniCalender.getSunTimes(worldTime);
+  }
+
+
+/**
+   * Calculates sun times based on the current date configuration.
+   * @param {number} [worldTime=game.time.worldTime]
+   * @returns {{dawn: number, dusk: number}}
+   */
+  static getSunTimes(worldTime = game.time.worldTime) {
     const calendar = game.time.calendar;
     let dawn = 6;
     let dusk = 18;
@@ -2090,6 +2158,7 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
     }
     return { dawn, dusk };
   }
+
 
   _updateTimeOfDayClass(worldTime) {
     if (!this.element) return;
@@ -2159,8 +2228,21 @@ async _updateSceneDarkness(worldTime) {
       const currentHour = comps.hour + (comps.minute / mph) + (comps.second / (mph * spm));
       const { dawn, dusk } = this._getSunTimes(worldTime);
 
-      const levelHigh = game.settings.get(MODULE_NAME, "darknessLevelHigh"); // Night
-      const levelLow = game.settings.get(MODULE_NAME, "darknessLevelLow");   // Day
+      let levelHigh = game.settings.get(MODULE_NAME, "darknessLevelHigh"); 
+      const levelLow = game.settings.get(MODULE_NAME, "darknessLevelLow");   
+
+      const moons = CONFIG.time.worldCalendarConfig.moons?.values ?? [];
+      const currentMoon = moons
+        .map((moon) => this._calculateMoonPhase(game.time.worldTime, moon, calendar))
+        .filter((phase) => phase !== null);
+      if (currentMoon && currentMoon[0].phaseName && currentMoon[0].phaseName.toLowerCase().includes("full")) {
+              levelHigh = Math.min(levelHigh, 0.75); 
+      }
+
+      if (canvas.scene.weather === "aurora") {
+          levelHigh = Math.min(levelHigh, 0.5);
+      }
+
       const currentDarkness = canvas.scene.environment.darknessLevel;
       const transitionHalf = 1.0; 
 
@@ -2197,6 +2279,26 @@ async _updateSceneDarkness(worldTime) {
           );
       }
   }
+
+/**
+   * Checks if the current time is technically night (before dawn OR after dusk).
+   * @param {number} [worldTime=game.time.worldTime]
+   * @returns {boolean}
+   */
+  static isNightTime(worldTime = game.time.worldTime) {
+    const calendar = game.time.calendar;
+    if (!calendar) return false;
+    
+    const { dawn, dusk } = this.getSunTimes(worldTime);
+    const comps = calendar.timeToComponents(worldTime);
+    
+    const mph = calendar.days.minutesPerHour;
+    const spm = calendar.days.secondsPerMinute;
+    const currentHour = comps.hour + (comps.minute / mph) + (comps.second / (mph * spm));
+
+    return currentHour < dawn || currentHour >= dusk;
+  }
+
 
   /**
    * Gets the season name for the currently viewed month.

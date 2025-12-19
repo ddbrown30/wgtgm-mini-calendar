@@ -37,8 +37,30 @@
         <div class="form-fields">
             <input type="checkbox" name="useCelsius" {{#if useCelsius}}checked{{/if}}>
         </div>
-        <p class="notes">Display temperatures in Celsius instead of Fahrenheit..</p>
+        <p class="notes">Display temperatures in Celsius instead of Fahrenheit.</p>
+    </div>    
+    <label>Broadcast weather to chat</label>
+    <div class="form-group">
+        <div class="form-fields">
+            <input type="checkbox" name="broadcastWeather" {{#if broadcastWeather}}checked{{/if}}>
+        </div>
+        <p class="notes">Sends a Message to Chat with the days weather on date change.</p>
     </div>
+    <label>Non Seasonal Aurora</label>
+    <div class="form-group">
+        <div class="form-fields">
+            <input type="checkbox" name="allAurora" {{#if allAurora}}checked{{/if}}>
+        </div>
+        <p class="notes">Display the Aurora weather effect throughout the year.</p>
+    </div>
+    <label>Chance for aurora on a clear night</label>
+    <div class="form-group">
+        <div class="form-fields" style="flex-grow: 1;">
+            <range-picker name="auroraChance" value="{{auroraChance}}" min="0" max="1" step="0.05">
+            <input type="range" min="0" max="1" step="0.05"><input type="number" min="0" max="1" step="0.05"></range-picker>
+        </div>
+    </div>
+
 </div>
 
 
