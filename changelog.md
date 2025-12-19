@@ -1,15 +1,11 @@
-#2.6
-- Added real world leap year logic for gregorian (100/400 rule)
+#2.5
+- Added real-world leap year logic for Gregorian (100/400 rule)
 - Added intercalary support
-- With Weather FX off manual scene overrides now work
+- With Weather FX off, manual scene overrides now work
 - Added day delta to the weather override
 - updated Warhammer calendar
 - added barovian calendar
-
-
-
-#2.5
-- extened weather mapping
+- extended weather mapping
 - added heatwave and aurora
 - added darkness logic to full moons
 - added snow temp logic
