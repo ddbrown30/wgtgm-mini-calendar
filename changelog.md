@@ -1,3 +1,9 @@
+#2.6
+- Full moon and aurora darkness override settings
+- globalLight fix
+- Weather Override Fix
+- Macro Fix
+
 #2.5
 - Added real-world leap year logic for Gregorian (100/400 rule)
 - Added intercalary support
@@ -9,6 +15,7 @@
 - added heatwave and aurora
 - added darkness logic to full moons
 - added snow temp logic
+
 
 #2.0
 - updated hooks

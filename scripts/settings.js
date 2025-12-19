@@ -130,7 +130,8 @@ game.settings.register(MODULE_NAME, "use12hour", {
         type: Boolean,
         default: false
     });
-    
+
+
     game.settings.register(MODULE_NAME, "enableDarknessActive", {
         name: "Adjust Darkness on Active Scenes Only",
         hint: "If enabled, the module will adjust scene darkness only on active scenes.",
@@ -168,6 +169,27 @@ game.settings.register(MODULE_NAME, "use12hour", {
         range: { min: 0, max: 1, step: 0.05 },
         default: 0.0
     });
+
+    game.settings.register(MODULE_NAME, "auroraDarknessOverride", {
+        name: "Darkness Level (Night - Aurora)",
+        hint: "The darkness level for the scene during an aurora (0.0 to 1.0).",
+        scope: "world",
+        config: true,
+        type: Number,
+        range: { min: 0, max: 1, step: 0.05 },
+        default: 0.8
+    });
+
+    game.settings.register(MODULE_NAME, "moonDarknessOverride", {
+        name: "Darkness Level (Full Moon)",
+        hint: "The darkness level for the scene during the full moon (0.0 to 1.0).",
+        scope: "world",
+        config: true,
+        type: Number,
+        range: { min: 0, max: 1, step: 0.05 },
+        default: 0.7
+    });
+
 
     game.settings.register(MODULE_NAME, "customCalendarDraft", {
         scope: "world", 

@@ -332,7 +332,7 @@ static HEX_MAP = {
         2:  { type: "lightWind",    label: "Light Winds",      icon: "fas fa-wind" },
         3:  { type: "partlyCloudy", label: "Partly Cloudy",    icon: "fas fa-cloud-sun"},  
         4:  { type: "none",         label: "Dry",              icon: "fas fa-sun" },
-        5:  { type: "sandstorm",    label: "Dust Storm",        icon: "fas fa-smog" },
+        5:  { type: "sandstorm",    label: "Dust Storm",       icon: "fas fa-smog" },
         6:  { type: "heatWave",     label: "Heatwave",         icon: "fas fa-smog" },
         10: { type: "rain",         label: "Rain",             icon: "fas fa-cloud-showers-heavy" },
         11: { type: "sandstorm",    label: "Sandstorm",        icon: "fas fa-wind" },
@@ -355,6 +355,7 @@ static HEX_MAP = {
                 
            
     static generate(date, previousWeather = null) {
+      console.log(previousWeather);
         const calendarConfig = CONFIG.time.worldCalendarConfig;
         const season = this.getWeatherSeason(date, calendarConfig);
         const biomeKey = game.settings.get(MODULE_NAME, "biome") || "temperate";
@@ -387,7 +388,7 @@ static HEX_MAP = {
                  type = "lightSnow"; icon = "fas fa-snowflake"; label = "Snow";
              }
              else if (type === "lightRain") {
-                 type = "hail"; icon = "fas fa-cloud-hail"; label = "Hail";
+                 type = "hail"; icon = "fas fa-cloud-hail"; label = "Hail";;
              }
              else if (type === "heavyRain") {
                  type = "snow"; icon = "fas fa-snowflake"; label = "Heavy Snow";
@@ -805,22 +806,23 @@ static async applyWeatherEffect(type) {
         const key = `${yearLookup}-${monthLookup}-${dayLookup}`;
 
         const uiMap = {
-            "none":         { label: "Clear",            icon: "fas fa-sun" },
-            "partlyCloudy": { label: "Scattered Clouds", icon: "fas fa-cloud-sun" },
-            "clouds":       { label: "Overcast",         icon: "fas fa-cloud" },
-            "lightRain":    { label: "Light Rain",       icon: "fas fa-cloud-rain" },
-            "rain":         { label: "Rain",             icon: "fas fa-cloud-showers-heavy" },
-            "heavyRain":    { label: "Heavy Rain",       icon: "fas fa-cloud-showers-heavy" },
-            "rainStorm":    { label: "Storm",            icon: "fas fa-bolt" },
-            "fog":          { label: "Fog",              icon: "fas fa-smog" },
-            "snow":         { label: "Snow",             icon: "fas fa-snowflake" },
-            "blizzard":     { label: "Blizzard",         icon: "fas fa-snow-blowing" },
-            "leaves":       { label: "Windy",            icon: "fas fa-wind" },
-            "sandstorm":    { label: "Sandstorm",        icon: "fas fa-wind" },
-            "hail":         { label: "Hail",             icon: "fas fa-cloud-hail" },
-            "aurora":       { label: "Aurora",           icon: "fas fa-moon-over-sun" },
-            "heatWave":     { label: "Heatwave",         icon: "fas fa-sun-haze" },
-            "lightWind":    { label: "Light Wind",       icon: "fas fa-wind" }
+            "none":         { label: "Clear",            icon: "fas fa-sun"                   ,cell:7},
+            "partlyCloudy": { label: "Scattered Clouds", icon: "fas fa-cloud-sun"             ,cell:1},
+            "clouds":       { label: "Overcast",         icon: "fas fa-cloud"                 ,cell:0},
+            "lightRain":    { label: "Light Rain",       icon: "fas fa-cloud-rain"            ,cell:3},
+            "rain":         { label: "Rain",             icon: "fas fa-cloud-showers-heavy"   ,cell:10},
+            "heavyRain":    { label: "Heavy Rain",       icon: "fas fa-cloud-showers-heavy"   ,cell:11},
+            "rainStorm":    { label: "Storm",            icon: "fas fa-bolt"                  ,cell:12},
+            "fog":          { label: "Fog",              icon: "fas fa-smog"                  ,cell:5},
+            "lightSnow":    { label: "Snow",             icon: "fas fa-snowflake"             ,cell:4},
+            "snow":         { label: "Heavy Snow",       icon: "fas fa-snowflake"             ,cell:11},
+            "blizzard":     { label: "Blizzard",         icon: "fas fa-snow-blowing"          ,cell:12},
+            "leaves":       { label: "Windy",            icon: "fas fa-wind"                  ,cell:16},
+            "sandstorm":    { label: "Sandstorm",        icon: "fas fa-wind"                  ,cell:13},
+            "hail":         { label: "Hail",             icon: "fas fa-cloud-hail"            ,cell:3},
+            "aurora":       { label: "Aurora",           icon: "fas fa-moon-over-sun"         ,cell:5},
+            "heatWave":     { label: "Heatwave",         icon: "fas fa-sun-haze"              ,cell:1},
+            "lightWind":    { label: "Light Wind",       icon: "fas fa-wind"                  ,cell:15}
         };
 
         const info = uiMap[type] || { label: type, icon: type };
@@ -833,6 +835,7 @@ static async applyWeatherEffect(type) {
             temp: temp,
             label: info.label,
             icon: info.icon,
+            cell: info.cell || 0,
             date: { year: comps.year, month: comps.month, day: comps.dayOfMonth },
             isManual: true 
         };

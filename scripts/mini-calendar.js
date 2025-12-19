@@ -2218,6 +2218,8 @@ async _updateSceneDarkness(worldTime) {
       const defaultEnabled = game.settings.get(MODULE_NAME, "defaultSceneDarkness");
       const sceneFlag = canvas.scene.getFlag(MODULE_NAME, "enableDarkness");
       const isEnabled = sceneFlag !== undefined ? sceneFlag : defaultEnabled;
+      const auroraOverride = game.settings.get(MODULE_NAME, "auroraDarknessOverride") || 0.8;
+      const moonOverride = game.settings.get(MODULE_NAME, "moonDarknessOverride") || 0.7;
 
       if (!isEnabled) return;
 
@@ -2236,14 +2238,16 @@ async _updateSceneDarkness(worldTime) {
         .map((moon) => this._calculateMoonPhase(game.time.worldTime, moon, calendar))
         .filter((phase) => phase !== null);
       if (currentMoon && currentMoon[0].phaseName && currentMoon[0].phaseName.toLowerCase().includes("full")) {
-              levelHigh = Math.min(levelHigh, 0.75); 
+              levelHigh = Math.min(levelHigh, moonOverride); 
       }
 
       if (canvas.scene.weather === "aurora") {
-          levelHigh = Math.min(levelHigh, 0.5);
+          levelHigh = Math.min(levelHigh, auroraOverride);
       }
 
       const currentDarkness = canvas.scene.environment.darknessLevel;
+      const globalLight = canvas.scene.environment.globalLight;
+
       const transitionHalf = 1.0; 
 
       let targetDarkness;
@@ -2274,7 +2278,7 @@ async _updateSceneDarkness(worldTime) {
           const transitionMS = Math.floor(Math.abs(currentDarkness - targetDarkness) * transitionBaseMS);
 
           await canvas.scene.update(
-              { environment: { darknessLevel: targetDarkness } },
+              { environment: { darknessLevel: targetDarkness, globalLight:globalLight } },
               { animateDarkness: 1200 }
           );
       }
