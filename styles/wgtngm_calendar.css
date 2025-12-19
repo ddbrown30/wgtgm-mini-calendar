@@ -842,3 +842,7 @@ body.theme-light .wgtngmMiniCalender .wgtngm-tooltip {
 .wgtngmMiniCalender .calendar-footer.time-controls button{
   padding: 0;
 }
+
+.wgtngmMiniCalenderConfig textarea:read-only{
+  color: var(--color-text-secondary);
+}
