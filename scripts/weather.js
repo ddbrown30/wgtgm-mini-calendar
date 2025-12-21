@@ -355,7 +355,7 @@ static HEX_MAP = {
                 
            
     static generate(date, previousWeather = null) {
-      console.log(previousWeather);
+      // console.log(previousWeather);
         const calendarConfig = CONFIG.time.worldCalendarConfig;
         const season = this.getWeatherSeason(date, calendarConfig);
         const biomeKey = game.settings.get(MODULE_NAME, "biome") || "temperate";
