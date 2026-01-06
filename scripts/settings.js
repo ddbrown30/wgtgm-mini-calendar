@@ -232,9 +232,14 @@ game.settings.register(MODULE_NAME, "use12hour", {
         name: "Use Celsius",
         hint: "Display temperatures in Celsius instead of Fahrenheit.",
         scope: "client",
-        config: false,
+        config: true,
         type: Boolean,
-        default: false
+        default: false,
+        onChange: () => {
+             if (game.wgtngmMiniCalender?.calendarInstance?.rendered) {
+                 game.wgtngmMiniCalender.calendarInstance.render();
+             }
+        }
     });
 
     game.settings.register(MODULE_NAME, "broadcastWeather", {
