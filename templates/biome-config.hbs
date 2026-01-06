@@ -1,0 +1,58 @@
+<div class="biome-config-container">
+    <input type="file" id="wgtgm-import-file" accept=".json" style="display:none;" />
+
+    <div class="hex-map-panel" >
+    
+        {{#each hexes}}
+<div class="hex-cell {{this.active}}" data-action="selectHex" data-id="{{this.id}}"
+             style="position: absolute; width: 100px; height: 87px; {{this.style}} 
+                    display: flex; justify-content: center; align-items: center; 
+                clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+                    cursor: pointer; transition: all 0.1s;">
+            <i class="{{this.icon}}"></i>
+            <span>{{this.id}}</span>
+        </div>
+        {{/each}}
+    </div>    
+    <div class="config-panel">
+        
+        <div class="panel-section">
+            <p class="notes" style="margin-bottom: 5px;">Select a hex on the left, then click a weather type to paint it.</p>
+            
+            <div class="weather-tag-cloud">
+                {{#each weatherTypesWithActive}}
+                <button type="button" class="weather-btn {{this.isActive}}" data-action="setWeather" 
+                        data-type="{{this.id}}" data-icon="{{this.icon}}">
+                    <i class="{{this.icon}}"></i> {{this.label}}
+                </button>
+                {{/each}}
+            </div>
+        </div>
+
+        <div class="panel-section" style="margin-top: 10px;">
+            <h3 style="border-bottom: 1px solid var(--color-border-light-2); padding-bottom: 5px;">Biome Settings</h3>
+            
+            <div class="form-group">
+                <label>Climate Profile</label>
+                <select name="biomeProfile">
+                    {{selectOptions profiles valueAttr="value" labelAttr="label"}}
+                </select>
+                <p class="notes">Sets Seasonal randomness.</p>
+            </div>
+            <hr>
+            <div class="form-group">
+                <label>Temperature Offset ({{tempUnit}})</label>
+                <input type="number" name="tempOffset" value="{{tempOffset}}" step="1">
+                <p class="notes">Base temperature adjustment.</p>
+            </div>
+        </div>
+    <div class="biome-footer">    
+    <button type="button" data-action="resetCustom">
+        <i class="fas fa-trash"></i> Reset
+    </button>
+    <button type="button" data-action="saveAndClose">
+        <i class="fa fa-check"></i> Save
+    </button>
+</div>
+    </div>
+</div>

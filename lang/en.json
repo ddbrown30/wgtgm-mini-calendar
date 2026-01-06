@@ -10,7 +10,9 @@
       "pauseOnCombat":"Pause time on combat",
       "pauseOnCombatHint":"Stops the clock during combat.",
       "resumeAfterCombat":"Resume time after combat",
-      "resumeAfterCombatHint":"Restores the clock after combat has finished."
+      "resumeAfterCombatHint":"Restores the clock after combat has finished.",
+      "fadedUIHint":"Calnedar will fade until mouse is hovered over",
+      "fadedUI":"Enable Fade UI"
     }
   }
 }

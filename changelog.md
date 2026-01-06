@@ -1,3 +1,14 @@
+#2.8
+- Added Biome editor, with import/export
+- added dock option
+- Added focus fade option
+- Fixed playlist permission error for players view
+- Added time to events
+- Added context to change weather
+- setting date will set it to dawn of the date not noon
+- added barovian calendar
+- added weather variations per day
+
 #2.6
 - Full moon and aurora darkness override settings
 - globalLight fix

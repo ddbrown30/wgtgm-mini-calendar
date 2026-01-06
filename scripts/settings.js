@@ -42,6 +42,20 @@ export default async function minicalendarSettings() {
         default: false
     });
 
+    game.settings.register(MODULE_NAME, "dockSidebar", {
+    name: "Dock to Sidebar",
+    hint: "If enabled, the calendar will be docked above the Player List in the left sidebar. (Requires reopening the calendar).",
+    scope: "client",
+    config: true,
+    default: false,
+    type: Boolean,
+        onChange: () => {
+             if (game.wgtngmMiniCalender?.calendarInstance?.rendered) {
+                 game.wgtngmMiniCalender.calendarInstance.render(true);
+             }
+        }
+    });
+
     game.settings.register(MODULE_NAME, "minimized", {
         scope: "client",
         config: false,
@@ -100,6 +114,20 @@ game.settings.register(MODULE_NAME, "use12hour", {
         config: false,
         type: Boolean,
         default: false
+    });
+
+    game.settings.register(MODULE_NAME, "fadedUI", {
+        name: localize("settings.fadedUI"), 
+        hint: localize("settings.fadedUIHint"), 
+        scope: "cliebt",
+        config: true,
+        type: Boolean,
+        default: true,
+        onChange: (value) => {
+             if (game.wgtngmMiniCalender?.calendarInstance?.rendered) {
+                 game.wgtngmMiniCalender.calendarInstance.element.classList.toggle("faded-ui", value);
+         }
+        }
     });
 
     game.settings.register(MODULE_NAME, "pauseOnCombat", {
@@ -311,6 +339,19 @@ game.settings.register(MODULE_NAME, "use12hour", {
         }
     });
 
+game.settings.register(MODULE_NAME, "customBiomeMap", {
+        scope: "world",
+        config: false,
+        default: {},
+        type: Object
+    });
+
+    game.settings.register(MODULE_NAME, "customBiomeConfig", {
+        scope: "world",
+        config: false,
+        default: {},
+        type: Object
+    });
 // KEY BINDS
     game.keybindings.register(MODULE_NAME, "MiniCalendar", {
       name: "Open the Mini Calendar",

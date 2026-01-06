@@ -47,6 +47,8 @@ export class wgtngmMiniCalender extends wgtngmcal {
       "set-date": this.#_dayClickContext,
       "toggle-weather-sound": this.#_toggleWeatherSound,
       "toggle-weather-fx": this.#_toggleWeatherFX,
+      "set-dock": this.#_toggleDock,
+      "change-weather": this.#_changeWeatherMini,
     },
   };
 
@@ -76,6 +78,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
   
 _debouncedSavePosition = foundry.utils.debounce(async () => {
     if (!this.element || !this.position) return;
+    if (this.element && this.element.classList.contains("docked")) return;
     const { width, height, left, top } = this.position;
     const saved = game.settings.get(MODULE_NAME, "calSheetDimensions");
     if (saved.width !== width || saved.height !== height || saved.left !== left || saved.top !== top) {
@@ -191,7 +194,17 @@ _getEntryContextOptions() {
     }
       this._whisperToChat(date);
     }
-  }].concat();
+  }, {
+    name: "Set Weather",
+    icon: '<i class="fas fa-cloud-sun"></i>',
+    condition: li => game.user.isGM && li.dataset.date,
+    callback: (li) => {
+          const dateStr = li.dataset.date;
+          if (!dateStr) return;
+          const date = JSON.parse(dateStr);
+          this._showWeatherOverrideDialog(date);
+        },
+      }].concat();
 }
 
 
@@ -374,28 +387,42 @@ async _getNotesForDay(date, preFetchedJournal = null, preFetchedPageMap = null) 
     const frame = await super._renderFrame(options);
     if ( !this.hasFrame ) return frame;
     
-    if (!game.user.isGM) return frame;
+    let copyId = ``;
+    const dockedState = game.settings.get(MODULE_NAME, "dockSidebar") ? "window-maximize" : "anchor";
 
-    const weatherEnabled = game.settings.get(MODULE_NAME, "enableWeatherEffects");
-    const weatherTooltip = weatherEnabled ? "Disable Weather FX" : "Enable Weather FX";
-    const currentState = game.settings.get(MODULE_NAME, "enableWeatherEffects");
-    const soundEnabled = game.settings.get(MODULE_NAME, "enableWeatherSound");
-    
-    const soundTooltip = soundEnabled ? "Disable Weather Sounds" : "Enable Weather Sounds";
-    const soundIcon = soundEnabled ? "fa-volume-high" : "fa-volume-xmark";
+    if (game.user.isGM) 
+    {
+      const weatherEnabled = game.settings.get(MODULE_NAME, "enableWeatherEffects");
+      const weatherTooltip = weatherEnabled ? "Disable Weather FX" : "Enable Weather FX";
+      const currentState = game.settings.get(MODULE_NAME, "enableWeatherEffects");
+      const soundEnabled = game.settings.get(MODULE_NAME, "enableWeatherSound");
+      
+      const soundTooltip = soundEnabled ? "Disable Weather Sounds" : "Enable Weather Sounds";
+      const soundIcon = soundEnabled ? "fa-volume-high" : "fa-volume-xmark";
+      
 
-    const copyId = `
-        <button type="button" class="header-control fa-solid fa-calendar-plus icon" data-action="add-note-header" 
-                data-tooltip="Create Note" aria-label="Create Note"></button>
-        <button type="button" class="header-control fa-solid ${soundIcon} icon" data-action="toggle-weather-sound"
-                data-tooltip="Stop Sound Effects" aria-label="Stop Sound Effects"></button>        
-        <button type="button" class="header-control fa-solid fa-cloud-sun-rain icon ${currentState}" data-action="toggle-weather-fx"
-                data-tooltip="${weatherTooltip}" aria-label="Toggle Weather"></button>
-      `;
-      this.window.close.insertAdjacentHTML("beforebegin", copyId);
+      copyId = `
+          <button type="button" class="header-control fa-solid fa-calendar-plus icon" data-action="add-note-header" 
+                  data-tooltip="Create Note" aria-label="Create Note"></button>
+          <button type="button" class="header-control fa-solid ${soundIcon} icon" data-action="toggle-weather-sound"
+                  data-tooltip="Stop Sound Effects" aria-label="Stop Sound Effects"></button>        
+          <button type="button" class="header-control fa-solid fa-cloud-sun-rain icon ${currentState}" data-action="toggle-weather-fx"
+                  data-tooltip="${weatherTooltip}" aria-label="Toggle Weather"></button>
+        `;
+    }
+    copyId += `<button type="button" class="header-control fa-solid fa-${dockedState} icon" data-action="set-dock"
+                  data-tooltip="Toggle dock" aria-label="Toggle dock"></button>`
+    this.window.close.insertAdjacentHTML("beforebegin", copyId);
     return frame;
   }
 
+static async #_toggleDock(event, target) {
+    const dockedState = game.settings.get(MODULE_NAME, "dockSidebar");
+    await game.settings.set(MODULE_NAME, "dockSidebar", !dockedState);
+    target.classList.toggle("fa-window-maximize", !dockedState);    
+    target.classList.toggle("fa-anchor", dockedState);    
+    this.render(true);
+}
 
 
 static async #_toggleWeatherFX(event, target) {
@@ -625,6 +652,36 @@ static async #_toggleWeatherSound(event, target) {
 
   async _onRender(context, options) {
     await super._onRender(context, options);
+// --- DOCKING / UNDOCKING LOGIC ---
+    const dockSidebar = game.settings.get(MODULE_NAME, "dockSidebar");
+    const players = document.getElementById("players");
+
+    const uiConfig = game.settings.get("core", "uiConfig") || {};
+    const colorScheme = uiConfig.colorScheme;
+    const interfaceTheme = colorScheme?.interface ? `theme-${colorScheme.interface}` : "";
+    if (dockSidebar) {
+        if (players && players.parentNode) {
+            this.element.classList.add("docked", interfaceTheme);
+            if (this.element.parentNode !== players.parentNode) {
+                players.parentNode.insertBefore(this.element, players);
+            }
+        }
+    } else {
+        this.element.classList.remove("docked");
+        const classesToRemove = [...this.element.classList].filter(c => c.startsWith("theme-"));
+        this.element.classList.remove(...classesToRemove);
+        if (players && this.element.parentNode === players.parentNode) {
+            document.body.appendChild(this.element);
+
+            const saved = game.settings.get(MODULE_NAME, "calSheetDimensions");
+            if (saved && saved.left && saved.top) {
+                this.setPosition(saved);
+            } else {
+                this.setPosition({ top: 100, left: 100 });
+            }
+        }
+    }
+
     this._cachedTimeDisplays = this.element.querySelectorAll(".time-display");
     this._updateTimeOfDayClass(game.time.worldTime);
     this._updateWindowTitle();
@@ -789,6 +846,11 @@ static async #_toggleWeatherSound(event, target) {
     Hooks.on("deleteJournalEntryPage", this._onJournalUpdate);
 
 
+    const fadedUI = game.settings.get(MODULE_NAME, "fadedUI");
+    if (fadedUI) {this.element.classList.toggle("faded-ui", fadedUI);}
+
+
+
     const startMinimized = game.settings.get(MODULE_NAME, "startMinimized");
     const closedMinimized = game.settings.get(MODULE_NAME, "minimized");
     if (startMinimized || closedMinimized) {
@@ -902,20 +964,11 @@ _onUpdateWorldTime = async (worldTime, dt) => {
 
     broadcastChat(content);
 }
-
-  /**
-   * Checks the current game date for any unwhispered events and sends them to chat.
-   */
-  async _checkDailyEvents() {
+async _checkDailyEvents() {
     if (!game.users.activeGM?.isSelf) return;
 
     const calendar = game.time.calendar;
     const currentComps = calendar.timeToComponents(game.time.worldTime);
-
-    const dateKey = `${currentComps.year}-${currentComps.month}-${currentComps.dayOfMonth}`;
-    if (this.#lastCheckedDate === dateKey) return;
-
-    this.#lastCheckedDate = dateKey;
 
     const date = {
       year: currentComps.year,
@@ -926,22 +979,92 @@ _onUpdateWorldTime = async (worldTime, dt) => {
     const notes = await this._getNotesForDay(date);
     if (!notes || notes.length === 0) return;
 
-    const newNotes = notes.filter((n) => !n.whispered);
-    if (newNotes.length === 0) return;
+    const unwhisperedNotes = notes.filter((n) => !n.whispered);
+    if (unwhisperedNotes.length === 0) return;
 
-    const monthName = game.i18n.localize(calendar.months.values[date.month].name);
-    const dayNum = date.day + 1;
-    let content = `<h4>Events for ${monthName} ${dayNum}, ${date.year}</h4>`;
+    let notesToWhisper = [];
+    let updateNeeded = false;
 
-    newNotes.forEach((n) => {
-      content += `<p><strong>${n.title}</strong><br/>${n.content}</p>`;
-      n.whispered = true; // Mark as sent
-    });
+    for (const n of unwhisperedNotes) {
+        let shouldSend = false;
 
-    whisperChat(content);
+        if (n.hour !== null && n.hour !== undefined) {
+            const noteHour = n.hour;
+            const noteMinute = n.minute || 0;
+            
+            if (currentComps.hour > noteHour || (currentComps.hour === noteHour && currentComps.minute >= noteMinute)) {
+                shouldSend = true;
+            }
+        } 
+        else {
+            shouldSend = true;
+        }
 
-    await this._saveNotesForDay(date, notes);
+        if (shouldSend) {
+            notesToWhisper.push(n);
+            n.whispered = true; 
+            updateNeeded = true;
+        }
+    }
+
+    if (notesToWhisper.length > 0) {
+        const monthName = game.i18n.localize(calendar.months.values[date.month].name);
+        const dayNum = date.day + 1;
+        let content = `<h4>Events for ${monthName} ${dayNum}, ${date.year}</h4>`;
+
+        notesToWhisper.forEach((n) => {
+            const timeStr = (n.hour !== null && n.hour !== undefined) 
+                ? ` [${String(n.hour).padStart(2, '0')}:${String(n.minute||0).padStart(2, '0')}]` 
+                : "";
+            content += `<p><strong>${n.title}${timeStr}</strong><br/>${n.content}</p>`;
+        });
+
+        whisperChat(content);
+    }
+
+    if (updateNeeded) {
+        await this._saveNotesForDay(date, notes);
+    }
   }
+  // /**
+  //  * Checks the current game date for any unwhispered events and sends them to chat.
+  //  */
+  // async _checkDailyEvents() {
+  //   if (!game.users.activeGM?.isSelf) return;
+
+  //   const calendar = game.time.calendar;
+  //   const currentComps = calendar.timeToComponents(game.time.worldTime);
+
+  //   const dateKey = `${currentComps.year}-${currentComps.month}-${currentComps.dayOfMonth}`;
+  //   if (this.#lastCheckedDate === dateKey) return;
+
+  //   this.#lastCheckedDate = dateKey;
+
+  //   const date = {
+  //     year: currentComps.year,
+  //     month: currentComps.month,
+  //     day: currentComps.dayOfMonth,
+  //   };
+
+  //   const notes = await this._getNotesForDay(date);
+  //   if (!notes || notes.length === 0) return;
+
+  //   const newNotes = notes.filter((n) => !n.whispered);
+  //   if (newNotes.length === 0) return;
+
+  //   const monthName = game.i18n.localize(calendar.months.values[date.month].name);
+  //   const dayNum = date.day + 1;
+  //   let content = `<h4>Events for ${monthName} ${dayNum}, ${date.year}</h4>`;
+
+  //   newNotes.forEach((n) => {
+  //     content += `<p><strong>${n.title}</strong><br/>${n.content}</p>`;
+  //     n.whispered = true; // Mark as sent
+  //   });
+
+  //   whisperChat(content);
+
+  //   await this._saveNotesForDay(date, notes);
+  // }
 
   _activateListeners(html) {
     if (!html) return;
@@ -963,6 +1086,17 @@ _onUpdateWorldTime = async (worldTime, dt) => {
     };
     this._showAddNoteDialog(currentDateObj, null, null, false);
   }
+
+  static #_changeWeatherMini(event, target) {
+    const nowComponents = game.time.calendar.timeToComponents(game.time.worldTime);
+    const currentDateObj = {
+      year: nowComponents.year,
+      month: nowComponents.month,
+      day: nowComponents.dayOfMonth,
+    };
+    this._showWeatherOverrideDialog(currentDateObj)
+  }
+
 
 
   static #_addNoteMini(event, target) {
@@ -1136,9 +1270,33 @@ async _saveNotesForDay(date, notes) {
    * @param {object | null} noteToEdit - If editing, the note object to pre-fill.
    */
   async _showAddNoteDialog(date, noteToEdit = null, position = null, openViewNote = false) {
+    // --- Time & Dropdown Logic ---
+    const calendar = game.time.calendar;
+    const hoursInDay = calendar.days.hoursPerDay || 24;
+    const minutesInHour = calendar.days.minutesPerHour || 60;
+
+    const isAllDay = noteToEdit ? (noteToEdit.hour === null || noteToEdit.hour === undefined) : true;
+    const allDayChecked = isAllDay ? "checked" : "";
+    const timeDisplay = isAllDay ? "none" : "flex";
+
+    let hourOptions = "";
+    for (let h = 0; h < hoursInDay; h++) {
+        const val = h;
+        const label = String(h).padStart(2, "0");
+        const selected = (noteToEdit?.hour === h) ? "selected" : "";
+        hourOptions += `<option value="${val}" ${selected}>${label}</option>`;
+    }
+
+    let minuteOptions = "";
+    for (let m = 0; m < minutesInHour; m += 5) { 
+        const val = m;
+        const label = String(m).padStart(2, "0");
+        const selected = (noteToEdit?.minute === m) ? "selected" : "";
+        minuteOptions += `<option value="${val}" ${selected}>${label}</option>`;
+    }
+
     const isEditing = noteToEdit !== null;
     const title = isEditing ? "Edit Note" : "Add Note";
-
     const pinTypes = [
       { key: "fas fa-book", label: "Note" },
       { key: "fas fa-map-pin", label: "Pin" },
@@ -1169,7 +1327,12 @@ async _saveNotesForDay(date, notes) {
         </div>
         <div class="form-group">
             <label>Icon:</label>
-            <select name="icon">${pinTypeOptions}</select>
+            <div style="display:flex; align-items:center; gap:10px; flex:1;">
+                <select name="icon" style="flex:1;">${pinTypeOptions}</select>
+                <div style="width: 30px; text-align: center; display: flex; justify-content: center;">
+                    <i id="icon-preview" class="${currentIcon}" style="font-size: 1.5em; vertical-align: middle;"></i>
+                </div>
+            </div>
         </div>
         <div class="form-group repeat-input">
             <label style="flex:0;">Repeat:</label>
@@ -1185,9 +1348,24 @@ async _saveNotesForDay(date, notes) {
 
         </div>
         <div class="form-group">
+            <label>Time:</label>
+            <div style="flex: 0; display: flex; flex-direction: column; gap: 5px;">
+                <div id="note-time-container" style="display: ${timeDisplay}; align-items: center; gap: 5px;">
+                    <select name="hour" style="width: 60px;">${hourOptions}</select>
+                    <span>:</span>
+                    <select name="minute" style="width: 60px;">${minuteOptions}</select>
+                </div>
+            </div>
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <input type="checkbox" name="allDay" id="note-all-day" ${allDayChecked}>
+                    <label for="note-all-day" style="flex: 1;">All Day Event</label>
+                </div>
+        </div>
+        <div class="form-group">
             <label>Note:</label>
             <textarea name="content" placeholder="Enter note content..." style="width: 100%; height: 100px; resize: vertical;">${foundry.utils.escapeHTML(noteToEdit?.content || "")}</textarea>
         </div>
+        <div class="form-group repeat-input">
         <div class="form-group" style="display: flex; align-items: center; gap: 5px;">
              <label style="flex:none; white-space:nowrap;">Player Visible:</label>
              <input type="checkbox" name="playerVisible" style="flex:1;" ${noteToEdit?.playerVisible ? "checked" : ""} />
@@ -1199,6 +1377,23 @@ async _saveNotesForDay(date, notes) {
       content: content,
       classes: ["wgtngmMiniCalender-dialog", "dialog", "edit-note"],
       modal: false,
+      render: (dialog) => {
+          const allDayBox = dialog.target.element.querySelector("#note-all-day");
+          const timeContainer = dialog.target.element.querySelector("#note-time-container");
+          
+          if(allDayBox && timeContainer) {
+              allDayBox.addEventListener("change", (ev) => {
+                  timeContainer.style.display = ev.target.checked ? "none" : "flex";
+              });
+          }
+          const iconSelect = dialog.target.element.querySelector("select[name='icon']");
+          const iconPreview = dialog.target.element.querySelector("#icon-preview");
+          if (iconSelect && iconPreview) {
+              iconSelect.addEventListener("change", (ev) => {
+                  iconPreview.className = ev.target.value;
+              });
+          }
+      },
       ok: {
         label: "Save",
         icon: "fas fa-check",
@@ -1209,6 +1404,9 @@ async _saveNotesForDay(date, notes) {
             ui.notifications.warn("Title is required.");
             return false;
           }
+          const isAllDayResult = form.allDay.checked;
+          const selectedHour = isAllDayResult ? null : parseInt(form.hour.value);
+          const selectedMinute = isAllDayResult ? null : parseInt(form.minute.value);
           return {
              title: newTitle,
               icon: form.icon.value,
@@ -1216,6 +1414,8 @@ async _saveNotesForDay(date, notes) {
               repeatInterval: parseInt(form.repeatInterval.value),
               repeatUnit: form.repeatUnit.value,
               repeatCount: parseInt(form.repeatCount.value),
+              hour: selectedHour,
+              minute: selectedMinute,
               startDate: date,
               playerVisible: form.playerVisible.checked 
           };
@@ -1253,6 +1453,8 @@ if (isEditing) {
           notes[index].repeatInterval = result.repeatInterval;
           notes[index].repeatUnit = result.repeatUnit;
           notes[index].repeatCount = result.repeatCount;
+          notes[index].hour = result.hour;
+          notes[index].minute = result.minute;
           notes[index].startDate = result.startDate;
           notes[index].playerVisible = result.playerVisible;
           delete notes[index].isRecurringInstance; 
@@ -1266,6 +1468,8 @@ if (isEditing) {
           repeatInterval: result.repeatInterval,
           repeatUnit: result.repeatUnit,
           repeatCount: result.repeatCount,
+          hour: result.hour,
+          minute: result.minute,              
           startDate: result.startDate, 
           playerVisible: result.playerVisible,
         };
@@ -1667,7 +1871,7 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
 
   async _contextSetTime(date) {
     if (!game.user.isGM) return;
-
+    const { dawn } = this._getSunTimes();
     const calendar = game.time.calendar;
     if (date.month < 0 || date.month >= calendar.months.values.length) return;
 
@@ -1687,7 +1891,7 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
       const newTimeComps = {
         year: systemYear,
         day: dayOfYear,
-        hour: 12,
+        hour: dawn,
         minute: 0,
         second: 0,
       };
@@ -2232,13 +2436,12 @@ async _updateSceneDarkness(worldTime) {
 
       let levelHigh = game.settings.get(MODULE_NAME, "darknessLevelHigh"); 
       const levelLow = game.settings.get(MODULE_NAME, "darknessLevelLow");   
-
       const moons = CONFIG.time.worldCalendarConfig.moons?.values ?? [];
       const currentMoon = moons
         .map((moon) => this._calculateMoonPhase(game.time.worldTime, moon, calendar))
         .filter((phase) => phase !== null);
-      if (currentMoon && currentMoon[0].phaseName && currentMoon[0].phaseName.toLowerCase().includes("full")) {
-              levelHigh = Math.min(levelHigh, moonOverride); 
+      if (currentMoon?.[0]?.phaseName?.toLowerCase().includes("full")) {
+          levelHigh = Math.min(levelHigh, moonOverride); 
       }
 
       if (canvas.scene.weather === "aurora") {
@@ -2347,6 +2550,199 @@ async _updateSceneDarkness(worldTime) {
     if (!titleElement) return;
     const seasonName = this._getViewingSeason();
     titleElement.textContent = seasonName;
+  }
+
+
+
+
+
+async _showWeatherOverrideDialog(targetDate) {
+    const calendar = game.time.calendar;
+    const useCelsius = game.settings.get("wgtgm-mini-calendar", "useCelsius");
+    const tempUnitLabel = useCelsius ? "°C" : "°F";
+    const defaultTemp = useCelsius ? 20 : 70;
+
+    const existingWeather = await WeatherEngine.getWeatherForDate(targetDate.year, targetDate.month, targetDate.day);
+    const existingTemp = existingWeather?.temp;
+    const parsedExistingTemp = !isNaN(existingTemp) ? Math.round((existingTemp - 32 ) / 1.8) : defaultTemp;
+
+    const selections = {
+        morning: existingWeather?.type || "none",
+        midday: existingWeather?.variations?.midday?.type || null, 
+        evening: existingWeather?.variations?.evening?.type || null
+    };
+
+    const uiMap = {
+        "none":         { label: "Clear",            icon: "fas fa-sun"},
+        "partlyCloudy": { label: "Scattered Clouds", icon: "fas fa-cloud-sun"},
+        "clouds":       { label: "Overcast",         icon: "fas fa-cloud"},
+        "lightRain":    { label: "Light Rain",       icon: "fas fa-cloud-rain"},
+        "rain":         { label: "Rain",             icon: "fas fa-cloud-showers-heavy"},
+        "heavyRain":    { label: "Heavy Rain",       icon: "fas fa-cloud-showers-heavy"},
+        "rainStorm":    { label: "Storm",            icon: "fas fa-bolt"},
+        "fog":          { label: "Fog",              icon: "fas fa-smog"},
+        "lightSnow":    { label: "Snow",             icon: "fas fa-snowflake"},
+        "snow":         { label: "Heavy Snow",       icon: "fas fa-snowflake"},
+        "blizzard":     { label: "Blizzard",         icon: "fas fa-snow-blowing"},
+        "leaves":       { label: "Windy",            icon: "fas fa-wind"},
+        "sandstorm":    { label: "Sandstorm",        icon: "fas fa-wind"},
+        "hail":         { label: "Hail",             icon: "fas fa-cloud-hail"},
+        "aurora":       { label: "Aurora",           icon: "fas fa-moon-over-sun"},
+        "heatWave":     { label: "Heatwave",         icon: "fas fa-sun-haze"},
+        "lightWind":    { label: "Light Wind",       icon: "fas fa-wind"}
+    };
+
+    let buttonsHtml = "";
+    for (const [key, data] of Object.entries(uiMap)) {
+        buttonsHtml += `
+            <button type="button" class="weather-tag-btn" data-value="${key}">
+                <i class="${data.icon}"></i> ${data.label}
+            </button>`;
+    }
+
+    const content = `
+        <div class="weather-override-container">
+            <div class="header-row">
+                 <span class="date-label">Weather for <strong>${targetDate.day + 1}/${targetDate.month + 1}/${targetDate.year}</strong></span>
+                 <div class="temp-control">
+                    <label>Temp (${tempUnitLabel})</label>
+                    <input type="number" name="temperature" value="${parsedExistingTemp}">
+                 </div>
+            </div>
+
+            <div class="timeline-slots">
+                <div class="slot-card active" data-mode="morning">
+                    <div class="slot-header"><i class="fas fa-sun"></i> Morning</div>
+                    <div class="slot-content">
+                        <i class="icon fas fa-question"></i>
+                        <span class="label">--</span>
+                    </div>
+                </div>
+                
+                <div class="slot-card" data-mode="midday">
+                    <div class="slot-header"><i class="fas fa-cloud-sun"></i> Midday</div>
+                    <div class="slot-content">
+                        <i class="icon fas fa-question"></i>
+                        <span class="label">--</span>
+                    </div>
+                    <div class="inherit-indicator" title="Inherits Morning Weather"><i class="fas fa-link"></i> Linked</div>
+                </div>
+
+                <div class="slot-card" data-mode="evening">
+                    <div class="slot-header"><i class="fas fa-moon"></i> Evening</div>
+                    <div class="slot-content">
+                        <i class="icon fas fa-question"></i>
+                        <span class="label">--</span>
+                    </div>
+                    <div class="inherit-indicator" title="Inherits Morning Weather"><i class="fas fa-link"></i> Linked</div>
+                </div>
+            </div>
+
+            <div class="divider">Select Condition:</div>
+
+            <div id="weather-tag-container">
+                ${buttonsHtml}
+            </div>
+            
+            <p class="notes" style="font-size:0.8em; color: var(--color-text-light-2); margin-top: 5px; text-align: center;">
+                <em>Click a timeline card above to target it, then select a condition below.</em>
+            </p>
+        </div>
+        
+
+    `;
+
+    await foundry.applications.api.DialogV2.prompt({
+        title: "Override Weather",
+        content: content,
+        classes: ["wgtngmMiniCalender-dialog", "dialog"],
+        modal: true,
+        render: (html) => {
+            const root = html.target.element;
+            const slots = root.querySelectorAll(".slot-card");
+            const btns = root.querySelectorAll(".weather-tag-btn");
+            
+            let currentMode = "morning";
+
+            // Function to redraw the visual cards based on current 'selections'
+            const updateVisuals = () => {
+                // 1. Determine effective weather for each slot
+                const morningVal = selections.morning;
+                const morningData = uiMap[morningVal] || uiMap["none"];
+
+                const middayVal = selections.midday;
+                const middayData = middayVal ? (uiMap[middayVal] || uiMap["none"]) : morningData;
+                const middayInherited = (middayVal === null);
+
+                const eveningVal = selections.evening;
+                const eveningData = eveningVal ? (uiMap[eveningVal] || uiMap["none"]) : morningData;
+                const eveningInherited = (eveningVal === null);
+
+                const mSlot = root.querySelector(`.slot-card[data-mode="morning"]`);
+                mSlot.querySelector(".icon").className = `icon ${morningData.icon}`;
+                mSlot.querySelector(".label").textContent = morningData.label;
+                
+                const midSlot = root.querySelector(`.slot-card[data-mode="midday"]`);
+                midSlot.querySelector(".icon").className = `icon ${middayData.icon}`;
+                midSlot.querySelector(".label").textContent = middayData.label;
+                midSlot.classList.toggle("inherited", middayInherited);
+
+                const eveSlot = root.querySelector(`.slot-card[data-mode="evening"]`);
+                eveSlot.querySelector(".icon").className = `icon ${eveningData.icon}`;
+                eveSlot.querySelector(".label").textContent = eveningData.label;
+                eveSlot.classList.toggle("inherited", eveningInherited);
+
+                slots.forEach(s => s.classList.remove("active"));
+                root.querySelector(`.slot-card[data-mode="${currentMode}"]`).classList.add("active");
+            };
+
+            const setTarget = (mode) => {
+                currentMode = mode;
+                updateVisuals();
+            };
+
+            slots.forEach(slot => {
+                slot.addEventListener("click", (ev) => {
+                    setTarget(ev.currentTarget.dataset.mode);
+                });
+            });
+
+            btns.forEach(btn => {
+                btn.addEventListener("click", (ev) => {
+                    const val = ev.currentTarget.dataset.value;
+
+                    if (currentMode !== "morning" && selections[currentMode] === val) {
+                        selections[currentMode] = null;
+                    } else {
+                        selections[currentMode] = val;
+                        
+                        if (currentMode === "morning") setTarget("midday");
+                        else if (currentMode === "midday") setTarget("evening");
+                    }
+                    updateVisuals();
+                });
+            });
+
+            updateVisuals();
+        },
+        ok: {
+            label: "Apply Override",
+            icon: "fas fa-check",
+            callback: async (event, button, dialog) => {
+                let tempInput = parseFloat(button.form.querySelector("input[name='temperature']").value);
+                if (isNaN(tempInput)) tempInput = defaultTemp;
+                
+                let finalTempF = tempInput;
+                if (useCelsius) finalTempF = (tempInput * 9/5) + 32;
+
+                const variations = {};
+                if (selections.midday) variations.midday = selections.midday;
+                if (selections.evening) variations.evening = selections.evening;
+
+                await WeatherEngine.setWeatherOverride(selections.morning, finalTempF, 0, targetDate, variations);
+            }
+        }
+    });
   }
 }
 

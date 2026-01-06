@@ -1,5 +1,5 @@
 import { MODULE_NAME } from "./settings.js";
-
+import { BiomeConfig } from "./biome-config.js";
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 export class WeatherConfig extends HandlebarsApplicationMixin(ApplicationV2) {
@@ -10,6 +10,9 @@ export class WeatherConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         title: "Weather Configuration",
         window: { resizable: false },
         position: { width: 400, height: "auto" },
+        actions:{
+            openBiomeEditor: () => new BiomeConfig().render(true)
+        },
         form: { handler: this.#onSubmit, closeOnSubmit: true }
     };
 
@@ -36,7 +39,8 @@ export class WeatherConfig extends HandlebarsApplicationMixin(ApplicationV2) {
                 "temperate": "Temperate (Standard)",
                 "desert": "Desert (Hot/Dry)",
                 "polar": "Polar (Cold/Snow)",
-                "tropical": "Tropical (Hot/Wet)"
+                "tropical": "Tropical (Hot/Wet)",
+                "custom": "Custom"
             }
         };
     }

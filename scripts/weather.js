@@ -304,7 +304,7 @@ aurora: {
 export class WeatherEngine {
 static _soundQueue = Promise.resolve();
 
-static HEX_MAP = {
+static DEFAULT_HEX_MAP = {
         0:  { type: "clouds",       label: "Overcast",         icon: "fas fa-cloud",               neighbors: [1, 2, 3, 4, 5, 6] },
         1:  { type: "partlyCloudy", label: "Mostly Cloudy",    icon: "fas fa-cloud-sun",           neighbors: [7, 8, 2, 0, 6, 18] },
         2:  { type: "partlyCloudy", label: "Partly Cloudy",    icon: "fas fa-cloud-sun",           neighbors: [8, 9, 10, 3, 0, 1] },
@@ -346,20 +346,37 @@ static HEX_MAP = {
     };
 
 
-    static BIOMES = {
+  static DEFAULT_BIOMES = {
         "temperate": { tempOffset: 0, seasons: { "Winter": [3,3,4,2,6,6], "Spring": [0,1,2,3,4,5], "Summer": [0,0,1,5,6,6], "Autumn": [2,2,3,3,4,6] } },
         "desert": { tempOffset: 20, seasons: { "Winter": [2, 3, 0, 0, 6, 6], "Spring": [5, 5, 1, 0, 6, 6], "Summer": [4, 3, 2, 5, 0, 6], "Autumn": [4, 5, 0, 0, 6, 6]  } },
         "polar": { tempOffset: -30, seasons: { "Winter": [3,4,4,5,5,6], "Spring": [3,4,6,0,1,6], "Summer": [0,1,6,6,3,4], "Autumn": [3,3,4,5,6,6] } },
         "tropical": { tempOffset: 15, seasons: { "Winter": [0,1,2,6,6,6], "Spring": [2,3,4,6,6,6], "Summer": [3,4,5,5,6,6], "Autumn": [3,4,2,2,6,6] } }
     };
                 
+
+  static getHexMap(biomeKey) {
+        if (biomeKey === "custom") {
+            const customMap = game.settings.get(MODULE_NAME, "customBiomeMap");
+            return (!foundry.utils.isEmpty(customMap)) ? customMap : this.DEFAULT_HEX_MAP;
+        }
+        return this.DEFAULT_HEX_MAP;
+    }
+
+    static get BIOMES() {
+        const custom = game.settings.get(MODULE_NAME, "customBiomeConfig");
+        return (!foundry.utils.isEmpty(custom)) ? foundry.utils.mergeObject(this.DEFAULT_BIOMES, custom) : this.DEFAULT_BIOMES;
+    }
            
-    static generate(date, previousWeather = null) {
-      // console.log(previousWeather);
+  static generate(date, previousWeather = null) {
         const calendarConfig = CONFIG.time.worldCalendarConfig;
         const season = this.getWeatherSeason(date, calendarConfig);
         const biomeKey = game.settings.get(MODULE_NAME, "biome") || "temperate";
+        
         const biomeData = this.BIOMES[biomeKey] || this.BIOMES["temperate"];
+        const currentHexMap = this.getHexMap(biomeKey);
+        // console.log(currentHexMap);
+        // console.log(biomeData);
+
         let newCellId;
         if (!previousWeather) {
             newCellId = 0; 
@@ -370,11 +387,18 @@ static HEX_MAP = {
             
             if (direction === 6) newCellId = previousWeather.cell;
             else {
-                newCellId = this.HEX_MAP[previousWeather.cell].neighbors[direction];
+              const currentHex = currentHexMap[previousWeather.cell];
+              if (currentHex) {
+                  newCellId = currentHex.neighbors[direction];
+              } else {
+                  newCellId = previousWeather.cell; 
+              }
                 if (newCellId === undefined) newCellId = previousWeather.cell;
             }
         }
-        let weatherDef = this.HEX_MAP[newCellId];
+        
+        let weatherDef = currentHexMap[newCellId];
+
         if (biomeKey === "desert" && this.DESERT_OVERRIDES[newCellId]) {
             weatherDef = { ...weatherDef, ...this.DESERT_OVERRIDES[newCellId] };
         }
@@ -408,7 +432,31 @@ static HEX_MAP = {
              }
         }
 
-        return { cell: newCellId, icon, label, type, temp, date };
+
+        const baseCellDef = currentHexMap[newCellId];
+        
+        const getVariant = () => {
+             if (!baseCellDef || !baseCellDef.neighbors) return { type, label, icon };
+             const randIdx = Math.floor(Math.random() * baseCellDef.neighbors.length);
+             const neighborId = baseCellDef.neighbors[randIdx];
+             const neighborDef = currentHexMap[neighborId] || baseCellDef;
+             return { type: neighborDef.type, label: neighborDef.label, icon: neighborDef.icon };
+        };
+
+        const middayVar = getVariant();
+        const eveningVar = getVariant();
+        
+        const variations = {
+            midday: middayVar,
+            evening: eveningVar
+        };
+        // ---------------------------
+
+
+
+
+
+        return { cell: newCellId, icon, label, type, temp, date,variations };
     }
 
     static calculateTemp(season, cellId, biomeOffset = 0) {
@@ -591,7 +639,7 @@ const ordinal = date.ordinal;
         const playlist = game.playlists.contents.find(
             p => p.getFlag(MODULE_NAME, "isWeatherPlaylist") === true || p.name === WEATHER_PLAYLIST_NAME
         );
-        if (playlist) await playlist.stopAll();
+        if (playlist && game.user.isGM) await playlist.stopAll();
     }
 
 
@@ -637,19 +685,14 @@ static async applyWeatherEffect(type) {
         return false;
     }
 
-    static async refreshWeather() {
+
+static async refreshWeather() {
         if (!game.user.isGM) return;
         
         const defaultWeatherEnabled = game.settings.get(MODULE_NAME, "enableWeatherEffects");
         const sceneFlag = canvas.scene.getFlag(MODULE_NAME, "enableWeather");
         
-        if (!defaultWeatherEnabled) {
-             return; 
-        }
-
-        if (sceneFlag === false) {
-             return; 
-        }
+        if (!defaultWeatherEnabled || sceneFlag === false) return; 
 
         const currentTimestamp = game.time.worldTime;
         const calendar = game.time.calendar;
@@ -658,12 +701,23 @@ static async applyWeatherEffect(type) {
         const weather = await this.getWeatherForDate(currentComps.year, currentComps.month, currentComps.dayOfMonth);
         
         if (weather) {
-            await this.applyWeatherEffect(weather.type);
+            let weatherTypeToUse = weather.type; 
+
+            if (currentComps.hour >= 12 && currentComps.hour < 18) {
+                if (weather.variations?.midday?.type) {
+                    weatherTypeToUse = weather.variations.midday.type;
+                }
+            } else if (currentComps.hour >= 18) {
+                if (weather.variations?.evening?.type) {
+                    weatherTypeToUse = weather.variations.evening.type;
+                }
+            }
+
+            await this.applyWeatherEffect(weatherTypeToUse);
         } else {
             await this.updateForecasts();
         }
     }
-
 
 
     static async getHistory() {
@@ -741,8 +795,8 @@ static async applyWeatherEffect(type) {
             lastWeather = forecasts[nextKey];
         }
         await this.saveHistory(forecasts);
-        
-        this.applyWeatherEffect(forecasts[todayKey].type);
+        this.refreshWeather();
+        // this.applyWeatherEffect(forecasts[todayKey].type);
     }    
 
 
@@ -762,44 +816,58 @@ static async applyWeatherEffect(type) {
         return tempF + "°F";
     }
 
+
 /**
-     * Manually overrides the weather for the current day.
-     * @param {string} type - The weather ID (e.g., "rain", "blizzard", "none").
-     * @param {number} temp - The temperature in degrees (Fahrenheit by default).
+     * Manually overrides the weather for the current day or a specific date.
+     * @param {string} type - The weather ID.
+     * @param {number} temp - The temperature.
+     * @param {number} dayDelta - (Optional) Days from now (ignored if contextDate is set).
+     * @param {object} contextDate - (Optional) {year, month, day} to force specific date.
      */
-    static async setWeatherOverride(type, temp, dayDelta=0) {
+    static async setWeatherOverride(type, temp, dayDelta=0, contextDate=null,variations=null) {
         if (!game.user.isGM) {
             ui.notifications.warn("Only the GM can override weather.");
             return;
         }
-      let delta = parseInt(dayDelta);
-        if (isNaN(delta) || delta < 0) delta = 0;
 
-        const calendar = game.time.calendar;
-        const comps = calendar.timeToComponents(game.time.worldTime);
-        const months = calendar.months.values;
+        let yearLookup, monthLookup, dayLookup;
 
-        let dayLookup = comps.dayOfMonth + delta;
-        let monthLookup = comps.month;
-        let yearLookup = comps.year;
-        while (true) {
-            const monthData = months[monthLookup];
-            
-            let maxDaysInMonth = monthData.days;
-            if (calendar.isLeapYear(yearLookup) && monthData.leapDays !== undefined) {
-                maxDaysInMonth = monthData.leapDays;
-            }
+        if (contextDate) {
+            yearLookup = contextDate.year;
+            monthLookup = contextDate.month;
+            dayLookup = contextDate.day;
+        } 
+        else {
+            let delta = parseInt(dayDelta);
+            if (isNaN(delta) || delta < 0) delta = 0;
 
-            if (dayLookup < maxDaysInMonth) {
-                break; 
-            }
+            const calendar = game.time.calendar;
+            const comps = calendar.timeToComponents(game.time.worldTime);
+            const months = calendar.months.values;
 
-            dayLookup -= maxDaysInMonth;
-            monthLookup++;
+            dayLookup = comps.dayOfMonth + delta;
+            monthLookup = comps.month;
+            yearLookup = comps.year;
 
-            if (monthLookup >= months.length) {
-                monthLookup = 0;
-                yearLookup++;
+            while (true) {
+                const monthData = months[monthLookup];
+                
+                let maxDaysInMonth = monthData.days;
+                if (calendar.isLeapYear(yearLookup) && monthData.leapDays !== undefined) {
+                    maxDaysInMonth = monthData.leapDays;
+                }
+
+                if (dayLookup < maxDaysInMonth) {
+                    break; 
+                }
+
+                dayLookup -= maxDaysInMonth;
+                monthLookup++;
+
+                if (monthLookup >= months.length) {
+                    monthLookup = 0;
+                    yearLookup++;
+                }
             }
         }
         
@@ -827,6 +895,18 @@ static async applyWeatherEffect(type) {
 
         const info = uiMap[type] || { label: type, icon: type };
 
+        const finalVariations = {};
+        if (variations) {
+            if (variations.midday) {
+                const mInfo = uiMap[variations.midday] || { label: variations.midday, icon: "" };
+                finalVariations.midday = { type: variations.midday, label: mInfo.label, icon: mInfo.icon };
+            }
+            if (variations.evening) {
+                const eInfo = uiMap[variations.evening] || { label: variations.evening, icon: "" };
+                finalVariations.evening = { type: variations.evening, label: eInfo.label, icon: eInfo.icon };
+            }
+        }
+
         const history = await this.getHistory();
         
         history[key] = {
@@ -836,17 +916,23 @@ static async applyWeatherEffect(type) {
             label: info.label,
             icon: info.icon,
             cell: info.cell || 0,
-            date: { year: comps.year, month: comps.month, day: comps.dayOfMonth },
+            date: { year: yearLookup, month: monthLookup, day: dayLookup },
+            variations: finalVariations,
             isManual: true 
         };
         await this.saveHistory(history);
-        await this.applyWeatherEffect(type);
+        
+        const calendar = game.time.calendar;
+        const currentComps = calendar.timeToComponents(game.time.worldTime);
+        if (currentComps.year === yearLookup && currentComps.month === monthLookup && currentComps.dayOfMonth === dayLookup) {
+            await this.refreshWeather();
+        }
 
         if (game.wgtngmMiniCalender?.calendarInstance?.rendered) {
             game.wgtngmMiniCalender.calendarInstance.render();
         }
 
-        console.log(`Mini Calendar | Weather overridden to ${info.label} (${temp}°).`);
+        console.log(`Mini Calendar | Weather overridden for ${dayLookup}/${monthLookup}/${yearLookup} to ${info.label} (${temp}°).`);
     }
 
 

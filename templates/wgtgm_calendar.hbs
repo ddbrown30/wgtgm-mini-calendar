@@ -72,7 +72,7 @@
     <footer class="calendar-mini-footer">            
         {{#if (and currentWeatherIcon showWeather)}}
             <div class="weather-icon" title="" >
-                <i class="{{this.currentWeatherIcon}}"><span class="wgtngm-tooltip"><p>{{this.currentWeatherTooltip}}</p></span></i>
+                <i class="{{this.currentWeatherIcon}}" ><span class="wgtngm-tooltip"><p>{{this.currentWeatherTooltip}}</p></span></i>
             </div>
         {{/if}}
             <span class="time-display" title="Current Game Time" data-action="set-time">{{currentTime}}</span>
@@ -86,7 +86,7 @@
         <i class="fas fa-backward-step" data-action="sub-minute" title="Subtract 10 Minutes"></i>
         {{#if (and currentWeatherIcon showWeather)}}
                     <div class="weather-icon" title="" >
-                <i class="{{this.currentWeatherIcon}}"><span class="wgtngm-tooltip"><p>{{this.currentWeatherTooltip}}</p></span></i>
+                <i class="{{this.currentWeatherIcon}}" data-action="change-weather"><span class="wgtngm-tooltip"><p>{{this.currentWeatherTooltip}}</p></span></i>
             </div>
         {{/if}}
         <span class="time-display" title="Current Game Time" data-action="set-time">{{currentTime}}</span>
