@@ -95,7 +95,7 @@ export function createMiniCalendarClass() {
 
                 if (seconds >= secInMonth) {
                     seconds -= secInMonth;
-                    if (m.intercalary) intercalaryDaysSkipped += days; // Add full month of intercalary days
+                    if (m.intercalary) intercalaryDaysSkipped += days; 
                 } else {
                     monthIndex = i;
                     break;
@@ -150,4 +150,3 @@ export function createMiniCalendarClass() {
         }
     }
 }
-

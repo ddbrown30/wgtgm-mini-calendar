@@ -1886,7 +1886,8 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
       dayOfYear += date.day;
       
       const yearZero = CONFIG.time.worldCalendarConfig?.years?.yearZero || 0;
-      const systemYear = date.year - yearZero;
+      const systemYear = date.year;
+      // const systemYear = date.year - yearZero;
       
       const newTimeComps = {
         year: systemYear,
@@ -2010,7 +2011,8 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
       try {
         const currentTimeComps = calendar.timeToComponents(game.time.worldTime);
         const yearZero = CONFIG.time.worldCalendarConfig?.years?.yearZero || 0;
-        const systemYear = newYear - yearZero;
+        const systemYear = newYear;
+        // const systemYear = newYear - yearZero;
         const newTimeComps = {
           year: systemYear,
           month: currentTimeComps.month,
@@ -2094,7 +2096,8 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
 
     try {
       const yearZero = CONFIG.time.worldCalendarConfig?.years?.yearZero || 0;
-      const systemYear = currentComps.year - yearZero;
+      const systemYear = currentComps.year;
+      // const systemYear = currentComps.year - yearZero;
       const newTimeComps = {
         year: systemYear,
         day: currentComps.day,
@@ -2157,7 +2160,8 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
     try {
       const comps = calendar.timeToComponents(game.time.worldTime);
       const yearZero = CONFIG.time.worldCalendarConfig?.years?.yearZero || 0;
-      const systemYear = comps.year - yearZero;
+      // const systemYear = comps.year - yearZero;
+      const systemYear = comps.year;
       const newComps = {
         year: systemYear,
         month: comps.month,

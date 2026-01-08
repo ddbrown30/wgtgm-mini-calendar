@@ -8,6 +8,7 @@
 - setting date will set it to dawn of the date not noon
 - added barovian calendar
 - added weather variations per day
+- fixed year zero bug
 
 #2.6
 - Full moon and aurora darkness override settings
