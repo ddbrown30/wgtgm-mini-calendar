@@ -1,3 +1,8 @@
+#2.82
+- auto select custom bug fix
+- forecast models updated 
+
+
 #2.8
 - Added Biome editor, with import/export
 - added dock option

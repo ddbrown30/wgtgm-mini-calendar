@@ -290,7 +290,7 @@ static async #onSaveAndClose(event, target) {
         currentConfig.custom = this.customBiome;
         await game.settings.set(MODULE_NAME, "customBiomeConfig", currentConfig);
 
-        await game.settings.set(MODULE_NAME, "biome", "custom");
+        // await game.settings.set(MODULE_NAME, "biome", "custom");
 
         ui.notifications.info("Custom Biome Saved & Activated.");
         this.close();

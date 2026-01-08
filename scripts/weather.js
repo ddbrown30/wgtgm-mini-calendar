@@ -346,12 +346,20 @@ static DEFAULT_HEX_MAP = {
     };
 
 
+// UPDATED
   static DEFAULT_BIOMES = {
-        "temperate": { tempOffset: 0, seasons: { "Winter": [3,3,4,2,6,6], "Spring": [0,1,2,3,4,5], "Summer": [0,0,1,5,6,6], "Autumn": [2,2,3,3,4,6] } },
-        "desert": { tempOffset: 20, seasons: { "Winter": [2, 3, 0, 0, 6, 6], "Spring": [5, 5, 1, 0, 6, 6], "Summer": [4, 3, 2, 5, 0, 6], "Autumn": [4, 5, 0, 0, 6, 6]  } },
-        "polar": { tempOffset: -30, seasons: { "Winter": [3,4,4,5,5,6], "Spring": [3,4,6,0,1,6], "Summer": [0,1,6,6,3,4], "Autumn": [3,3,4,5,6,6] } },
-        "tropical": { tempOffset: 15, seasons: { "Winter": [0,1,2,6,6,6], "Spring": [2,3,4,6,6,6], "Summer": [3,4,5,5,6,6], "Autumn": [3,4,2,2,6,6] } }
+        "temperate": { tempOffset: 0, seasons: { "Winter": [1,3,4,2,6,6], "Spring": [0,0,2,3,4,5], "Summer": [0,2,5,5,6,6], "Autumn": [0,2,3,3,4,6] } },
+        "desert": { tempOffset: 20, seasons: { "Winter": [5,3,2,5,1,5], "Spring": [0,0,0,3,4,5], "Summer": [0,2,1,4,0,0], "Autumn": [5,3,2,1,1,6]  } },
+        "polar": { tempOffset: -30, seasons: { "Winter": [3,4,5,2,3,3], "Spring": [3,1,5,3,4,5], "Summer": [5,1,6,6,3,4], "Autumn": [3,4,1,3,2,1] } },
+        "tropical": { tempOffset: 15, seasons: { "Winter": [0,1,5,2,6,3], "Spring": [0,1,2,3,4,5], "Summer": [2,2,3,4,5,0], "Autumn": [3,3,4,2,0,1] } }
     };
+      
+  // static DEFAULT_BIOMES = {
+  //       "temperate": { tempOffset: 0, seasons: { "Winter": [3,3,4,2,6,6], "Spring": [0,1,2,3,4,5], "Summer": [0,0,1,5,6,6], "Autumn": [2,2,3,3,4,6] } },
+  //       "desert": { tempOffset: 20, seasons: { "Winter": [2, 3, 0, 0, 6, 6], "Spring": [5, 5, 1, 0, 6, 6], "Summer": [4, 3, 2, 5, 0, 6], "Autumn": [4, 5, 0, 0, 6, 6]  } },
+  //       "polar": { tempOffset: -30, seasons: { "Winter": [3,4,4,5,5,6], "Spring": [3,4,6,0,1,6], "Summer": [0,1,6,6,3,4], "Autumn": [3,3,4,5,6,6] } },
+  //       "tropical": { tempOffset: 15, seasons: { "Winter": [0,1,2,6,6,6], "Spring": [2,3,4,6,6,6], "Summer": [3,4,5,5,6,6], "Autumn": [3,4,2,2,6,6] } }
+  //   };
                 
 
   static getHexMap(biomeKey) {
