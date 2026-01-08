@@ -657,6 +657,7 @@ static async applyWeatherEffect(type) {
         const sceneFlag = canvas.scene.getFlag(MODULE_NAME, "enableWeather");
         const visualsEnabled = game.settings.get(MODULE_NAME, "enableWeatherEffects");
         const isEnabled = sceneFlag !== undefined ? sceneFlag : visualsEnabled;
+        if (!visualsEnabled || !isEnabled) return;
 
         let targetWeatherId = "";
         if (visualsEnabled && isEnabled) {
@@ -742,7 +743,9 @@ static async refreshWeather() {
             [`flags.${MODULE_NAME}.history`]: history
         });
     }
+
     
+
     static async updateForecasts() {
         if (!game.user.isGM) return;
 
