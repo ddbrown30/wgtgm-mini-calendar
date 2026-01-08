@@ -2568,8 +2568,12 @@ async _showWeatherOverrideDialog(targetDate) {
 
     const existingWeather = await WeatherEngine.getWeatherForDate(targetDate.year, targetDate.month, targetDate.day);
     const existingTemp = existingWeather?.temp;
-    const parsedExistingTemp = !isNaN(existingTemp) ? Math.round((existingTemp - 32 ) / 1.8) : defaultTemp;
-
+    const parsedExistingTemp = !isNaN(existingTemp)
+      ? (useCelsius 
+          ? Math.round((existingTemp - 32) / 1.8) 
+          : Math.round(existingTemp))
+      : defaultTemp;
+  
     const selections = {
         morning: existingWeather?.type || "none",
         midday: existingWeather?.variations?.midday?.type || null, 
