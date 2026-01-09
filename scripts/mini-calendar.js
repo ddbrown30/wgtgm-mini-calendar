@@ -204,7 +204,16 @@ _getEntryContextOptions() {
           const date = JSON.parse(dateStr);
           this._showWeatherOverrideDialog(date);
         },
-      }].concat();
+      }, {
+    name: "Generate Forecast",
+    icon: '<i class="fas fa-sun"></i>',
+    condition: li => game.user.isGM && li.dataset.date,
+    callback: (li) => {
+          const dateStr = li.dataset.date;
+          if (!dateStr) return;
+          const date = JSON.parse(dateStr);
+          WeatherEngine.createForecasts(date);
+      }}].concat();
 }
 
 

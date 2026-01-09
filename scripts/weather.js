@@ -744,7 +744,56 @@ static async refreshWeather() {
         });
     }
 
-    
+        static async createForecasts(date) {
+        if (!game.user.isGM) return;
+        if (!date) return;
+        let forecasts = await this.getHistory();
+        console.log(date);
+        const calendar = game.time.calendar;
+        
+        const getKey = (y, m, d) => `${y}-${m}-${d}`;
+        const todayKey = date;
+        let lastWeather = this.generate({ 
+                year: date.year, 
+                month: date.month, 
+                day: date.day,
+            });
+        console.log(lastWeather);
+        forecasts[date] = lastWeather;
+        
+
+        let cursor = { ...date };
+        cursor.day = date.day; 
+
+        for (let i = 0; i < 5; i++) {
+            const monthIdx = cursor.month;
+            const monthData = calendar.months.values[monthIdx];
+            const isLeap = calendar.isLeapYear(cursor.year);
+            const maxDays = isLeap && monthData.leapDays !== undefined ? monthData.leapDays : monthData.days;
+
+            if (cursor.day >= maxDays) {
+                cursor.day = 0;
+                cursor.month++;
+                if (cursor.month >= calendar.months.values.length) {
+                    cursor.month = 0;
+                    cursor.year++;
+                }
+            }
+            const nextKey = getKey(cursor.year, cursor.month, cursor.day);
+            const cursorCurrentMonth = calendar.months.values[cursor.month];
+            const newWeather = this.generate({ 
+                year: cursor.year, 
+                month: cursor.month, 
+                day: cursor.day,
+            }, lastWeather); 
+            forecasts[nextKey] = newWeather;
+            lastWeather = forecasts[nextKey];
+              cursor.day++;
+
+        }
+        await this.saveHistory(forecasts);
+        this.refreshWeather();
+    } 
 
     static async updateForecasts() {
         if (!game.user.isGM) return;

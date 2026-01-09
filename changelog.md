@@ -1,3 +1,8 @@
+#2.83
+- fixed note import
+- added right click context on date to generate forecast
+
+
 #2.82
 - auto select custom bug fix
 - forecast models updated 

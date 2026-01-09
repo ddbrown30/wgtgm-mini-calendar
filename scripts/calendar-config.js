@@ -336,21 +336,29 @@ export class CalendarConfig extends calendarForm {
             let dirty = false;
 
             for (const note of recurring) {
-                const exists = existingNotes.find(en => en.isPreset && en.title === note.title);
-                if (!exists) {
-                    const newNote = {
-                        id: foundry.utils.randomID(),
-                        ...note,
-                        startDate: note.date || note.startDate, 
-                        isPreset: true 
-                    };
-                    if (newNote.date) delete newNote.date; 
-                    existingNotes.push(newNote);
-                    dirty = true;
-                    importCount++;
-                }
-            }
+            const incomingDate = note.date || note.startDate;
 
+            const exists = existingNotes.find(en => 
+                en.isPreset && 
+                en.title === note.title &&
+                en.startDate?.year === incomingDate?.year &&
+                en.startDate?.month === incomingDate?.month &&
+                en.startDate?.day === incomingDate?.day
+            );
+
+            if (!exists) {
+                const newNote = {
+                    id: foundry.utils.randomID(),
+                    ...note,
+                    startDate: incomingDate, 
+                    isPreset: true 
+                };
+                if (newNote.date) delete newNote.date; 
+                existingNotes.push(newNote);
+                dirty = true;
+                importCount++;
+            }
+        }
             if (dirty) {
                 let recHtml = "<h1>Recurring Events Index</h1>";
                 existingNotes.forEach(n => {
