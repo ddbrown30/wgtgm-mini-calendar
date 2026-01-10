@@ -1,3 +1,6 @@
+#2.85
+- When unchecking enable weather on scene in the scene config the weather will now be set to none and sound stop playing
+
 #2.83
 - fixed note import
 - added right click context on date to generate forecast

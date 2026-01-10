@@ -649,6 +649,12 @@ const ordinal = date.ordinal;
         );
         if (playlist && game.user.isGM) await playlist.stopAll();
     }
+    
+static async disableWeatherEffect() {
+        if (!canvas.scene || !game.user.isGM) return;
+        await canvas.scene.update({ weather: "" });
+        await this.playWeatherSound("none");
+    }
 
 
 static async applyWeatherEffect(type) {
