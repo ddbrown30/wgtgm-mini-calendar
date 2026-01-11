@@ -657,13 +657,15 @@ static async disableWeatherEffect() {
     }
 
 
+
 static async applyWeatherEffect(type) {
         if (!canvas.scene || !game.user.isGM) return;
-        
         const sceneFlag = canvas.scene.getFlag(MODULE_NAME, "enableWeather");
         const visualsEnabled = game.settings.get(MODULE_NAME, "enableWeatherEffects");
+
         const isEnabled = sceneFlag !== undefined ? sceneFlag : visualsEnabled;
-        if (!visualsEnabled || !isEnabled) return;
+        if (!isEnabled) return;
+        // if (!visualsEnabled || !isEnabled) return;
 
         let targetWeatherId = "";
         if (visualsEnabled && isEnabled) {
@@ -699,6 +701,7 @@ static async applyWeatherEffect(type) {
         }
         return false;
     }
+
 
 
 static async refreshWeather() {
