@@ -715,8 +715,16 @@ static async refreshWeather() {
         
         const defaultWeatherEnabled = game.settings.get(MODULE_NAME, "enableWeatherEffects");
         const sceneFlag = canvas.scene.getFlag(MODULE_NAME, "enableWeather");
-        
-        if (!defaultWeatherEnabled || sceneFlag === false) return; 
+
+        if (sceneFlag === false) {
+            await this.playWeatherSound("none");
+            return;
+        }
+
+        if (!defaultWeatherEnabled) {
+            await this.disableWeatherEffect();
+            return;
+        }
 
         const currentTimestamp = game.time.worldTime;
         const calendar = game.time.calendar;

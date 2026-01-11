@@ -2822,7 +2822,7 @@ Hooks.on("updateScene", async (scene, changes, options, userId) => {
 
           }
         if (myFlags.enableWeather !== undefined) {
-          if (!myFlags.enableWeather) WeatherEngine.disableWeatherEffect();
+          if (!myFlags.enableWeather) await WeatherEngine.playWeatherSound("none");
                 else WeatherEngine.refreshWeather(); 
           }
     }
