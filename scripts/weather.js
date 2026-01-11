@@ -662,9 +662,14 @@ static async applyWeatherEffect(type) {
         if (!canvas.scene || !game.user.isGM) return;
         const sceneFlag = canvas.scene.getFlag(MODULE_NAME, "enableWeather");
         const visualsEnabled = game.settings.get(MODULE_NAME, "enableWeatherEffects");
+        const sceneDefaultWeather = game.settings.get(MODULE_NAME, "sceneDefaultWeather");
 
-        const isEnabled = sceneFlag !== undefined ? sceneFlag : visualsEnabled;
-        if (!isEnabled) return;
+        const isEnabled = sceneFlag !== undefined ? sceneFlag : sceneDefaultWeather;
+
+        if (!isEnabled) {
+          await this.playWeatherSound("none");
+          return;
+        }
         // if (!visualsEnabled || !isEnabled) return;
 
         let targetWeatherId = "";
@@ -691,6 +696,7 @@ static async applyWeatherEffect(type) {
         await canvas.scene.update({ weather: targetWeatherId });
         await this.playWeatherSound(type);
     }
+    
 
     static isNightTime() {
         if (game.wgtngmMiniCalender?.constructor?.isNightTime) {

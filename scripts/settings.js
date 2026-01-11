@@ -242,6 +242,16 @@ game.settings.register(MODULE_NAME, "use12hour", {
         }
     });
 
+
+    game.settings.register(MODULE_NAME, "sceneDefaultWeather", {
+        name: "Enable Weather on Scenes",
+        hint: "If enabled, created scenes will have weather enabled by default",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: false
+    });
+
     game.settings.register(MODULE_NAME, "broadcastWeather", {
         name: "Broadcast weather to chat",
         hint: "Sends a Message to Chat with the days weather on date change.",

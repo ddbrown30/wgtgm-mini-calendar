@@ -41,14 +41,32 @@ export function setCalendarJSON(firstTime = false) {
     }
 }
 
+Hooks.on("preCreateScene", (scene, data, options, userId) => {
+    const updates = {};
+    if (foundry.utils.getProperty(data, `flags.${MODULE_NAME}.enableDarkness`) === undefined) {
+        const defaultDarkness = game.settings.get(MODULE_NAME, "defaultSceneDarkness");
+        updates[`flags.${MODULE_NAME}.enableDarkness`] = defaultDarkness;
+    }
+    if (foundry.utils.getProperty(data, `flags.${MODULE_NAME}.enableWeather`) === undefined) {
+        const defaultWeather = game.settings.get(MODULE_NAME, "sceneDefaultWeather");
+        updates[`flags.${MODULE_NAME}.enableWeather`] = defaultWeather;
+    }
+    if (!foundry.utils.isEmpty(updates)) {
+        scene.updateSource(updates);
+    }
+});
+
+
+
 Hooks.on("renderSceneConfig", (app, html, data) => {
+    const sceneDefaultWeather = game.settings.get(MODULE_NAME, "sceneDefaultWeather");
     const darknessEnabled = game.settings.get(MODULE_NAME, "enableDarknessControl") ? '':`disabled`;
     const defaultEnabled = game.settings.get(MODULE_NAME, "defaultSceneDarkness");
-    const defaultWeatherEnabled = game.settings.get(MODULE_NAME, "enableWeatherEffects");
     const currentFlag = app.document.getFlag(MODULE_NAME, "enableDarkness");
     const weatherFlag = app.document.getFlag(MODULE_NAME, "enableWeather");
+    console.log(app);
     const isEnabled = currentFlag !== undefined ? currentFlag : defaultEnabled;
-    const isWeatherEnabled = weatherFlag !== undefined ? weatherFlag : defaultWeatherEnabled;
+    const isWeatherEnabled = weatherFlag !== undefined ? weatherFlag : sceneDefaultWeather;
     const injection = `
         <fieldset>
             <legend><i class="fas fa-calendar-alt"></i> Mini Calendar</legend>
@@ -67,7 +85,7 @@ Hooks.on("renderSceneConfig", (app, html, data) => {
         </fieldset>
     `;
     const $html = $(html);
-    const $lightingTab = $html.find('div[data-tab="lighting"]');
+    const $lightingTab = $html.find('div[data-tab="ambience"]');
     if ($lightingTab.length > 0) {
         $lightingTab.append(injection);
         app.setPosition({ height: "auto" });
