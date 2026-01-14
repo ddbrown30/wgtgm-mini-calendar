@@ -1,0 +1,12 @@
+
+    <div class="sidebar-list">
+    
+        <input type="file" id="wgtgm-maker-import-file" accept=".json" style="display:none;" />
+        {{#each savedList}}
+        <div class="sidebar-item">
+            <span style="cursor:pointer;" data-action="loadCalendar" data-id="{{id}}">{{name}}</span>
+            <a data-action="exportCalendar" data-id="{{id}}" title="Export JSON"><i class="fas fa-file-export"></i></a>
+            <a data-action="deleteCalendar" data-id="{{id}}" ><i class="fas fa-trash"></i></a>
+        </div>
+        {{/each}}
+    </div>

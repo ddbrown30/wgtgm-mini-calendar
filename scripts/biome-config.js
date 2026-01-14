@@ -8,8 +8,11 @@ export class BiomeConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         tag: "form",
         id: "wgtngm-biome-config",
         classes: ["wgtngmBiomeConfig"],
+        window: { 
+      icon: 'fas fa-hexagon',
         title: "Custom Biome Editor",
-        window: { resizable: false},
+        resizable: false
+        },
         position: { width: 800, height: 650 },
         form: { handler: this.#onSubmit, closeOnSubmit: false, submitOnChange: false },
         actions: {
@@ -116,7 +119,6 @@ export class BiomeConfig extends HandlebarsApplicationMixin(ApplicationV2) {
                 isActive: w.id === (this.hexMap[this.selectedHex]?.type) ? "active" : ""
             })),
             
-            // Biome Settings Data
             profiles,
             tempOffset: displayOffset,
             tempUnit,

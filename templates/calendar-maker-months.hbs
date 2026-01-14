@@ -1,0 +1,26 @@
+
+
+<div class="tab{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
+            <div class="editor-card">
+                <h2>Months <button type="button" data-action="addMonth" class="btn-sm"><i class="fas fa-plus"></i> Add</button></h2>
+                                {{#if months}}
+
+                <table>
+                    <thead><tr><th style="width:40px;">Ord</th><th>Name</th><th>Abbr</th><th style="width:60px;">Days</th><th style="width:30px;">Int</th><th style="width:60px;">Leap</th><th></th></tr></thead>
+                    <tbody>
+                        {{#each months}}
+                        <tr>
+                            <td><input type="number" name="months.values.{{index}}.ordinal" value="{{ordinal}}"></td>
+                            <td><input type="text" name="months.values.{{index}}.name" value="{{name}}"></td>
+                            <td><input type="text" name="months.values.{{index}}.abbreviation" value="{{abbreviation}}"></td>
+                            <td><input type="number" name="months.values.{{index}}.days" value="{{days}}"></td>
+                            <td style="text-align:center;"><input type="checkbox" name="months.values.{{index}}.intercalary" {{#if intercalary}}checked{{/if}}></td>
+                            <td><input type="number" name="months.values.{{index}}.leapDays" value="{{leapDays}}"></td>
+                            <td><a data-action="removeMonth" data-index="{{index}}" style="color:red;"><i class="fas fa-trash"></i></a></td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>{{/if}}
+            </div>
+        </div>
+     

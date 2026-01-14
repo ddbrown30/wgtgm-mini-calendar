@@ -1,0 +1,62 @@
+<div class="tab{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
+    <div class="editor-card">
+        <h2>Events & Holidays <button type="button" data-action="addNote" class="btn-sm"><i class="fas fa-plus"></i> Add</button></h2>
+        {{#each notes}}
+        <div class="event-card">
+            <input type="hidden" name="notes.{{index}}.isPreset" value="{{isPreset}}">
+            
+            <div style="display:flex; gap:5px; margin-bottom:5px; align-items:center;">
+                <input type="text" name="notes.{{index}}.title" value="{{title}}" placeholder="Title" style="font-weight:bold; flex:1;">
+                
+                <div style="display:flex; align-items:center; gap:5px; margin-right:5px;" title="Visible to Players?">
+                    <label style="font-size:0.8em; white-space:nowrap;">Visible</label>
+                    <input type="checkbox" name="notes.{{index}}.playerVisible" {{#if playerVisible}}checked{{/if}}>
+                </div>
+
+                <a data-action="removeNote" data-index="{{index}}" style="color:red;"><i class="fas fa-trash"></i></a>
+            </div>
+            
+            <div class="grid-6">
+                <select name="notes.{{index}}.date.month">
+                    {{#each ../uniqueMonthOrdinals}}
+                    <option value="{{ordinal}}" {{#if (eq ordinal ../date.month)}}selected{{/if}}>{{displayName}}</option>
+                    {{/each}}
+                </select>
+                <label>Day: </label>
+                <input type="number" name="notes.{{index}}.date.day" value="{{date.day}}" placeholder="Day Idx">
+                <label>Year: </label>
+                <input type="number" name="notes.{{index}}.date.year" value="{{date.year}}" placeholder="Year">
+                <select name="notes.{{index}}.repeatUnit">
+                    <option value="none" {{#if (eq repeatUnit 'none')}}selected{{/if}}>Once</option>
+                    <option value="years" {{#if (eq repeatUnit 'years')}}selected{{/if}}>Yearly</option>
+                    <option value="months" {{#if (eq repeatUnit 'months')}}selected{{/if}}>Monthly</option>
+                </select>
+            </div>
+
+            <div class="icon-container" style="margin-top:5px; display:flex; gap:5px; align-items:center;">
+                <div style="flex:1;">
+                    <input type="text" 
+                           name="notes.{{index}}.icon" 
+                           value="{{#if icon}}{{icon}}{{/if}}" 
+                           list="icon-list-{{index}}" 
+                           class="wgtgm-icon-picker" 
+                           placeholder="Icon Class (e.g. fas fa-star)"
+                           style="width: 100%;">
+                    
+                    <datalist id="icon-list-{{index}}">
+                        {{#each ../pinTypes}}
+                        <option value="{{key}}">{{label}}</option>
+                        {{/each}}
+                    </datalist>
+                </div>
+                <div style="width: 30px; text-align: center;">
+                     <i class="icon-preview {{#if icon}}{{icon}}{{else}}fas fa-star{{/if}}" style="font-size: 1.5em;" title="Preview"></i>
+                </div>
+            </div>
+
+            <textarea name="notes.{{index}}.content" rows="1" style="width:100%; margin-top:5px;" placeholder="Description">{{content}}</textarea>
+        </div>
+        {{/each}}
+        
+    </div>
+</div>

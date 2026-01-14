@@ -2,22 +2,21 @@ import { MODULE_NAME } from "./settings.js";
 import { confirmationDialog, calendarJournal } from "./helper.js";
 import { setCalendarJSON } from "./main.js";
 import { pf2e, harptos, gregorian, warhammer, galifar,barovia } from "./presets.js";
+import { CalendarMaker } from "./calendar-maker.js"; 
 
 var ApplicationV2 = foundry.applications.api.ApplicationV2;
 var HandlebarsApplicationMixin = foundry.applications.api.HandlebarsApplicationMixin;
 const calendarForm = HandlebarsApplicationMixin(ApplicationV2);
 
-/**
- * The settings application for the Mini Calendar
- */
 export class CalendarConfig extends calendarForm {
     static DEFAULT_OPTIONS = {
         tag: "form",
         id: "wgtngm-calendar-config",
         classes: ["wgtngmMiniCalenderConfig"],
+        window: { 
+          icon: 'fas fa-cog',
         title: "Mini Calendar Configuration",
-        window: {
-            resizable: true,
+        resizable: true 
         },
         position: { width: 600, height: "auto" },
         form: {
@@ -26,44 +25,186 @@ export class CalendarConfig extends calendarForm {
             submitOnChange: false,
         },
         actions: {
-            importTrigger: function(event, target) {
-                this.element.querySelector("#wgtgm-import-file").click();
-                },
-            importNotesTrigger: function(event, target) {
-                this.element.querySelector("#wgtgm-import-notes-file").click();
-            },
-            exportCalendar: this.#exportJSON
+            importTrigger: function() { this.element.querySelector("#wgtgm-import-file").click(); },
+            importNotesTrigger: function() { this.element.querySelector("#wgtgm-import-notes-file").click(); },
+            exportCalendar: this.#exportJSON,
+            openMaker: this.#openMaker
         },
-
     };
 
-    /** @override */
     static PARTS = {
-        form: {
-            template: `modules/wgtgm-mini-calendar/templates/wgtgm-calendar-config.hbs`,
-            scrollable: [".form-body"],
-        },
-        footer: {
-            template: "templates/generic/form-footer.hbs",
-        },
+        form: { template: `modules/wgtgm-mini-calendar/templates/wgtgm-calendar-config.hbs`, scrollable: [".form-body"] },
+        footer: { template: "templates/generic/form-footer.hbs" },
     };
-
-  async _renderFrame(options) {
-    const frame = await super._renderFrame(options);
-    if ( !this.hasFrame ) return frame;
-    const copyId = `
-        <button type="button" class="header-control fa-solid fa-file-import icon" data-action="importTrigger"
-                data-tooltip="Import calendar JSON" aria-label="Import calendar from JSON"></button>
-        <button type="button" class="header-control fa-solid fa-file-arrow-up icon" data-action="importNotesTrigger"
-                    data-tooltip="Import Notes Only" aria-label="Import Notes Only"></button>
-        <button type="button" class="header-control fa-solid fa-file-export icon" data-action="exportCalendar"
-                data-tooltip="Export Calendar to JSON" aria-label="Export Calendar to JSON"></button>
-      `;
-      this.window.close.insertAdjacentHTML("beforebegin", copyId);
     
-    return frame;
-  }
+     async _renderFrame(options) {
+        const frame = await super._renderFrame(options);
+        if ( !this.hasFrame ) return frame;
+        const copyId = `
+            <button type="button" class="header-control fa-solid fa-hat-wizard icon" data-action="openMaker" data-tooltip="Open Calendar Maker"></button>
+            <button type="button" class="header-control fa-solid fa-file-import icon" data-action="importTrigger" data-tooltip="Import JSON"></button>
+            <button type="button" class="header-control fa-solid fa-file-arrow-up icon" data-action="importNotesTrigger" data-tooltip="Import Notes Only"></button>
+            <button type="button" class="header-control fa-solid fa-file-export icon" data-action="exportCalendar" data-tooltip="Export JSON"></button>
+          `;
+          this.window.close.insertAdjacentHTML("beforebegin", copyId);
+        return frame;
+      }
 
+    static #openMaker() {
+        this._openMaker()
+    }
+
+
+    _openMaker() {
+        const existingApp = foundry.applications.instances.get("wgtngm-calendar-maker") 
+                         || game.wgtngmMiniCalender?.wgtngmCalendarMaker;
+        if (existingApp) {
+             existingApp.render(true);
+        } 
+        else {
+             const newApp = new CalendarMaker();
+             if (!game.wgtngmMiniCalender) game.wgtngmMiniCalender = {}; 
+             game.wgtngmMiniCalender.wgtngmCalendarMaker = newApp;
+             newApp.render(true);
+        }
+    }
+
+    async _prepareContext(options) {
+        const context = await super._prepareContext(options);
+        context.buttons = [{ type: "submit", icon: "fa-solid fa-floppy-disk", label: "Save Changes" }];
+
+        const source = game.settings.get(MODULE_NAME, "calendarSource");
+        const savedCalendars = game.settings.get(MODULE_NAME, "savedCalendars") || {};
+
+        context.calendarOptions = [
+            { value: "world", label: "Default (World's Calendar)", selected: source === "world" },
+            { value: "gregorian", label: "Preset: Gregorian", selected: source === "gregorian" },
+            { value: "harptos", label: "Preset: Harptos", selected: source === "harptos" },
+            { value: "pf2e", label: "Preset: PF2E", selected: source === "pf2e" },
+            { value: "galifar", label: "Preset: Galifar", selected: source === "galifar" },
+            { value: "barovia", label: "Preset: Barovia", selected: source === "barovia" },
+            { value: "warhammer", label: "Preset: Warhammer", selected: source === "warhammer" },
+            { value: "custom", label: "Custom (Manual JSON)", selected: source === "custom" },
+        ];
+
+        for (const [id, cal] of Object.entries(savedCalendars)) {
+            context.calendarOptions.push({
+                value: id,
+                label: `Custom: ${cal.name || id}`,
+                selected: source === id
+            });
+        }
+
+        let calendarData = null;
+        
+        if (source === "world") calendarData = game.time.calendar.toJSON();
+        else if (source === "warhammer") calendarData = warhammer();
+        else if (source === "barovia") calendarData = barovia();
+        else if (source === "galifar") calendarData = galifar();
+        else if (source === "pf2e") calendarData = pf2e();
+        else if (source === "harptos") calendarData = harptos();
+        else if (source === "gregorian") calendarData = gregorian();
+        else if (savedCalendars[source]) {
+            calendarData = savedCalendars[source];
+        } else if (source === "custom") {
+             try {
+                const draft = game.settings.get(MODULE_NAME, "customCalendarDraft");
+                calendarData = draft ? JSON.parse(draft) : game.settings.get(MODULE_NAME, "calendarConfiguration");
+            } catch(e) { calendarData = {}; }
+        }
+
+        if (!calendarData) calendarData = {};
+        context.calendarJson = JSON.stringify(calendarData, null, 2);
+        context.timeMultiplier = game.settings.get(MODULE_NAME, "timeMultiplier");
+        
+        return context;
+    }
+
+    static async #onSubmitForm(event, form, formData) {
+        const source = formData.object.source;
+        const calendarJsonString = formData.object.calendarJson;
+        const multiplier = parseInt(formData.object.timeMultiplier) || 1;
+
+        await game.settings.set(MODULE_NAME, "timeMultiplier", multiplier);
+        await game.settings.set(MODULE_NAME, "calendarSource", source);
+
+        const savedCalendars = game.settings.get(MODULE_NAME, "savedCalendars") || {};
+        let calendarData = null;
+        let calendarChanged = false;
+
+        if (source === "world") {
+            await game.settings.set(MODULE_NAME, "calendarConfiguration", {});
+            calendarChanged = true;
+        } else if (savedCalendars[source]) {
+            try {
+                calendarData = savedCalendars[source];
+                const activeConfig = foundry.utils.deepClone(calendarData);
+                console.log(activeConfig);
+                const validationData = foundry.utils.deepClone(activeConfig);
+                if (validationData.moons) delete validationData.moons;
+                if (validationData.weather) delete validationData.weather;
+                if (validationData.sun) delete validationData.sun;
+                if (validationData.notes) delete validationData.notes;
+                new foundry.data.CalendarData(validationData);
+                this._validateCustomData(activeConfig);
+                await game.settings.set(MODULE_NAME, "calendarConfiguration", activeConfig);
+                if (calendarData.notes) {
+                    await this._importPresetEvents(calendarData.notes); 
+                }
+                ui.notifications.info(`Applied Custom Calendar: ${calendarData.name}`);
+                calendarChanged = true;
+            } catch (e) {
+                // console.error("Mini Calendar | Saved Calendar Validation Failed:", e);
+                ui.notifications.error(`Validation Failed: ${e.message}`);
+                return;
+            }
+        } else if (source === "custom") {
+            try {
+                calendarData = JSON.parse(calendarJsonString);
+                const validationData = foundry.utils.deepClone(calendarData);
+                if (validationData.moons) delete validationData.moons;
+                if (validationData.weather) delete validationData.weather;
+                if (validationData.sun) delete validationData.sun;
+                if (validationData.notes) delete validationData.notes;
+                new foundry.data.CalendarData(validationData);
+                this._validateCustomData(calendarData);
+                await game.settings.set(MODULE_NAME, "calendarConfiguration", calendarData);
+                await game.settings.set(MODULE_NAME, "customCalendarDraft", calendarJsonString);
+                if (calendarData.notes) {
+                   await this._importPresetEvents(calendarData.notes);
+                }
+                calendarChanged = true;
+                ui.notifications.info("Custom Calendar Saved Successfully.");
+             } catch(e) { 
+                 // console.error("Mini Calendar | Validation Failed:", e);
+                 if (e instanceof SyntaxError) {
+                    ui.notifications.error("Invalid JSON Syntax. Please check your formatting.");
+                 } else {
+                    ui.notifications.error(`Validation Failed: ${e.message}`);
+                 }
+                 return; 
+             }
+        } else {
+             if (source === "warhammer") calendarData = warhammer();
+             else if (source === "barovia") calendarData = barovia();
+             else if (source === "galifar") calendarData = galifar();
+             else if (source === "pf2e") calendarData = pf2e();
+             else if (source === "harptos") calendarData = harptos();
+             else if (source === "gregorian") calendarData = gregorian();
+             
+             await game.settings.set(MODULE_NAME, "calendarConfiguration", calendarData);
+             if (calendarData.notes) {
+                 await this._importPresetEvents(calendarData.notes);
+             }
+             calendarChanged = true;
+        }
+
+        setCalendarJSON();
+        if (calendarChanged) {
+            foundry.applications.settings.SettingsConfig.reloadConfirm({ world: true });
+        }
+        Hooks.callAll("closeCalendarConfig");
+    }
     /**
      * Tries to parse a JSON string.
      * @param {string} jsonString
@@ -94,11 +235,9 @@ export class CalendarConfig extends calendarForm {
                 if (typeof s.monthStart !== "number" || typeof s.monthEnd !== "number") {
                     throw new Error(`Season ${i} (${s.name}) is missing 'monthStart' or 'monthEnd'.`);
                 }
-                // Check if the season refers to a valid month ordinal
                 const startValid = validOrdinals.includes(s.monthStart);
                 const endValid = validOrdinals.includes(s.monthEnd);
                 
-                // Note: Logic allows wrap-around (Winter: Dec -> Feb), so we just check existence
                 if (!startValid || !endValid) {
                      throw new Error(`Season "${s.name}" references invalid month ordinals (${s.monthStart}-${s.monthEnd}). Check your Month configuration.`);
                 }
@@ -137,81 +276,7 @@ export class CalendarConfig extends calendarForm {
         }
     }
 
-    /** @override */
-    async _prepareContext(options) {
-        const context = await super._prepareContext(options);
-        context.buttons = this._getButtons();
 
-        const source = game.settings.get(MODULE_NAME, "calendarSource");
-
-        context.calendarOptions = [
-            { value: "world", label: "Default (World's Calendar)", selected: source === "world" },
-            { value: "gregorian", label: "Preset: Gregorian (Full Format)", selected: source === "gregorian" },
-            { value: "harptos", label: "Preset: Harptos (Full Format)", selected: source === "harptos" },
-            { value: "pf2e", label: "Preset: PF2E Absalom Reckoning (Golarion)", selected: source === "pf2e" },
-            { value: "galifar", label: "Preset: Galifar Calendar (Eberron)", selected: source === "galifar" },
-            { value: "barovia", label: "Preset: Barovian Calendar (Ravenloft)", selected: source === "barovia" },
-            { value: "warhammer", label: "Preset: Warhammer Imperial Calendar", selected: source === "warhammer" },
-            { value: "custom", label: "Custom JSON (Full Format)", selected: source === "custom" },
-        ];
-
-        let calendarJsonString = "{}";
-        let calendarData = null;
-
-        if (source === "warhammer") {
-            calendarData = warhammer();
-            calendarJsonString = JSON.stringify(calendarData, null, 2);
-        } else if (source === "pf2e") {
-            calendarData = pf2e();
-            calendarJsonString = JSON.stringify(calendarData, null, 2);
-        } else if (source === "barovia") {
-            calendarData = barovia();
-            calendarJsonString = JSON.stringify(calendarData, null, 2);
-        } else if (source === "galifar") {
-            calendarData = galifar();
-            calendarJsonString = JSON.stringify(calendarData, null, 2);
-        } else if (source === "harptos") {
-            calendarData = harptos();
-            calendarJsonString = JSON.stringify(calendarData, null, 2);
-        } else if (source === "gregorian") {
-            calendarData = gregorian();
-            calendarJsonString = JSON.stringify(calendarData, null, 2);
-        } else if (source === "custom") {
-            let savedConfig;
-            if (game.settings.get(MODULE_NAME, "customCalendarDraft")) {
-                try {
-                    savedConfig = JSON.parse(game.settings.get(MODULE_NAME, "customCalendarDraft"));
-                } catch (e) {
-                    console.log(e);
-                    savedConfig = game.settings.get(MODULE_NAME, "calendarConfiguration");
-                }
-            } else {
-                savedConfig = game.settings.get(MODULE_NAME, "calendarConfiguration");
-            }
-            if (savedConfig && Object.keys(savedConfig).length > 0) {
-                calendarData = savedConfig;
-                calendarJsonString = JSON.stringify(calendarData, null, 2);
-            } else {
-                ui.notifications.warn("Custom calendar selected but no configuration found. Loading Harptos example.");
-                calendarData = harptos();
-                calendarJsonString = JSON.stringify(calendarData, null, 2);
-            }
-        } else {
-            calendarData = game.time.calendar.toJSON();
-            calendarJsonString = JSON.stringify(calendarData, null, 2);
-        }
-
-        if (!calendarData || Object.keys(calendarData).length === 0) {
-            ui.notifications.warn("Invalid or empty calendar data found. Loading Harptos default for display.");
-            calendarData = harptos();
-            calendarJsonString = JSON.stringify(calendarData, null, 2);
-        }
-
-        context.timeMultiplier = game.settings.get(MODULE_NAME, "timeMultiplier");
-        context.calendarJson = calendarJsonString;
-
-        return context;
-    }
 
     _getButtons() {
         return [
@@ -223,95 +288,7 @@ export class CalendarConfig extends calendarForm {
         ];
     }
 
-    /**
-     * @override
-     * @param {Event} event
-     * @param {object} form
-     * @param {object} formData
-     */
-    static async #onSubmitForm(event, form, formData) {
-        const source = formData.object.source;
-        let calendarJsonString = formData.object.calendarJson;
-        let calendarData = null;
-        const multiplier = parseInt(formData.object.timeMultiplier) || 1;
 
-        await game.settings.set(MODULE_NAME, "timeMultiplier", multiplier);
-        await game.settings.set(MODULE_NAME, "calendarSource", source);
-
-        let calendarChanged = false;
-
-        if (source === "world") {
-            await game.settings.set(MODULE_NAME, "calendarConfiguration", {});
-            ui.notifications.info("Calendar source set to World Default.");
-            calendarChanged = true;
-        } else {
-            if (source === "warhammer") {
-                calendarData = warhammer();
-            } else if (source === "barovia") {
-                calendarData = barovia();
-            } else if (source === "galifar") {
-                calendarData = galifar();
-            } else if (source === "pf2e") {
-                calendarData = pf2e();
-            } else if (source === "harptos") {
-                calendarData = harptos();
-            } else if (source === "gregorian") {
-                calendarData = gregorian();
-            } else if (source === "custom") {
-                calendarData = this._tryParseJson(calendarJsonString);
-                if (!calendarData) {
-                    ui.notifications.error(
-                        "Invalid JSON! Calendar was not saved. Please check the format and try again.",
-                    );
-                    return;
-                }
-                try {
-                    const validationData = foundry.utils.deepClone(calendarData);
-                    if (validationData.moons) delete validationData.moons;
-                    if (validationData.weather) delete validationData.weather;
-                    if (validationData.sun) delete validationData.sun;
-                    if (validationData.notes) delete validationData.notes;
-                    new foundry.data.CalendarData(validationData);
-                    this._validateCustomData(calendarData);
-                } catch (validationError) {
-                    console.error("Mini Calendar | Calendar validation failed:", validationError);
-                    ui.notifications.error(
-                        `Calendar data is invalid: ${validationError.message}. Please fix and try again.`,
-                    );
-                    return;
-                }
-                game.settings.set(MODULE_NAME, "customCalendarDraft", calendarJsonString);
-            }
-
-            if (calendarData) {
-                try {
-                    const notesToImport = calendarData.notes;
-                    const configToSave = foundry.utils.deepClone(calendarData);
-                    delete configToSave.notes;
-                    if (notesToImport && Array.isArray(notesToImport)) {
-                        await this._importPresetEvents(notesToImport);
-                    }
-                    await game.settings.set(MODULE_NAME, "calendarConfiguration", configToSave);
-                    ui.notifications.info(`Custom Calendar (${source}) Saved!`);
-                    calendarChanged = true;
-                } catch (err) {
-                    console.error("Mini Calendar | Error saving calendar configuration:", err);
-                    ui.notifications.error("Failed to save calendar configuration. Check console.");
-                    return;
-                }
-            } else {
-                ui.notifications.error("Failed to obtain calendar data. Save aborted.");
-                return;
-            }
-        }
-
-        setCalendarJSON();
-        if (calendarChanged) {
-            foundry.applications.settings.SettingsConfig.reloadConfirm({ world: true });
-        }
-
-        Hooks.callAll("closeCalendarConfig");
-    }
 
     /**
      * Helper to import preset notes (both recurring and single) into the journal.
@@ -359,6 +336,7 @@ export class CalendarConfig extends calendarForm {
                 importCount++;
             }
         }
+
             if (dirty) {
                 let recHtml = "<h1>Recurring Events Index</h1>";
                 existingNotes.forEach(n => {

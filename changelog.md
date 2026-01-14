@@ -1,3 +1,11 @@
+#3.0
+- Added Calendar Wizard
+- Added New Event repetition options
+- Added more icon options
+- Added custom icon option
+- Added scene weather toggle
+- Added option to hide weather forecasting from players
+
 #2.85
 - When unchecking enable weather on scene in the scene config the weather will now be set to none and sound stop playing
 

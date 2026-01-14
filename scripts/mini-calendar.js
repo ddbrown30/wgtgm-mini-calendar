@@ -1,5 +1,5 @@
 import { MODULE_NAME } from "./settings.js";
-import { localize, calendarJournal, confirmationDialog, whisperChat, broadcastChat, renderCalendarIfOpen } from "./helper.js";
+import { localize, calendarJournal, confirmationDialog, whisperChat, broadcastChat, renderCalendarIfOpen, PIN_TYPES } from "./helper.js";
 import { CalendarConfig } from "./calendar-config.js";
 import { WeatherEngine } from "./weather.js";
 import { WeatherConfig  } from "./weather-config.js";
@@ -47,6 +47,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
       "set-date": this.#_dayClickContext,
       "toggle-weather-sound": this.#_toggleWeatherSound,
       "toggle-weather-fx": this.#_toggleWeatherFX,
+      "toggle-scene-fx": this.#_toggleSceneFX,
       "set-dock": this.#_toggleDock,
       "change-weather": this.#_changeWeatherMini,
     },
@@ -71,7 +72,9 @@ export class wgtngmMiniCalender extends wgtngmcal {
   #moonPhaseCache = new Map();
   #isCustomMinimized = false;
   #lastCheckedDate = null;
-  #lastWeatherBroadcastDate =null;
+  #lastWeatherBroadcastDate = game.settings.get(MODULE_NAME, "lastWeatherBroadcastDate") || null;
+  wasPausedForGame = false;
+  wasPausedForCombat = false;
   _throttledDarknessUpdate = foundry.utils.throttle(this._updateSceneDarkness.bind(this), 1000);
   _debouncedRender = foundry.utils.debounce(this.render.bind(this), 100);
   _positionObserver = null;
@@ -125,7 +128,6 @@ _debouncedSavePosition = foundry.utils.debounce(async () => {
   }
 
   _getMoonPhasesForDay(dayTimestamp, moons, calendar) {
-    // Use the timestamp directly as the key
     const cacheKey = dayTimestamp;
 
     if (this.#moonPhaseCache.has(cacheKey)) {
@@ -159,7 +161,6 @@ _debouncedSavePosition = foundry.utils.debounce(async () => {
       parentClassHooks: false
     });
   }
-
 
 _getEntryContextOptions() {
   return [{
@@ -325,13 +326,13 @@ _getEntryContextOptions() {
         "waning crescent": "waning-crescent.webp",
       };
 
-      const imageName = phaseImages[currentPhase.name.toLowerCase()];
+      const imageName = currentPhase.name ? phaseImages[currentPhase?.name.toLowerCase()] : '';
       const imagePath = imageName ? `modules/wgtgm-mini-calendar/ui/moons/${imageName}` : "icons/svg/circle.svg";
 
       return {
         name: moonConfig.name,
-        phaseName: currentPhase.name,
-        phaseDisplayName: currentPhase.display || currentPhase.name,
+        phaseName: currentPhase?.name,
+        phaseDisplayName: currentPhase?.display || currentPhase?.name,
         image: imagePath,
         color: moonConfig.color || "#ffffff",
         daysIntoPhase: Math.floor(daysIntoPhase),
@@ -408,7 +409,11 @@ async _getNotesForDay(date, preFetchedJournal = null, preFetchedPageMap = null) 
       
       const soundTooltip = soundEnabled ? "Disable Weather Sounds" : "Enable Weather Sounds";
       const soundIcon = soundEnabled ? "fa-volume-high" : "fa-volume-xmark";
-      
+
+
+      const sceneTooltip = weatherEnabled ? "Disable Scene Weather FX" : "Enable Scene Weather FX";
+      const sceneFlag = canvas.scene.getFlag(MODULE_NAME, "enableWeather");
+
 
       copyId = `
           <button type="button" class="header-control fa-solid fa-calendar-plus icon" data-action="add-note-header" 
@@ -417,6 +422,8 @@ async _getNotesForDay(date, preFetchedJournal = null, preFetchedPageMap = null) 
                   data-tooltip="Stop Sound Effects" aria-label="Stop Sound Effects"></button>        
           <button type="button" class="header-control fa-solid fa-cloud-sun-rain icon ${currentState}" data-action="toggle-weather-fx"
                   data-tooltip="${weatherTooltip}" aria-label="Toggle Weather"></button>
+          <button type="button" class="header-control fa-solid fa-map ${sceneFlag} icon" data-action="toggle-scene-fx"
+                  data-tooltip="${sceneTooltip}" aria-label="Toggle Scene Weather"></button>
         `;
     }
     copyId += `<button type="button" class="header-control fa-solid fa-${dockedState} icon" data-action="set-dock"
@@ -432,6 +439,26 @@ static async #_toggleDock(event, target) {
     target.classList.toggle("fa-anchor", dockedState);    
     this.render(true);
 }
+
+
+static async #_toggleSceneFX(event, target) {
+      if (!canvas.scene || !game.user.isGM) return;
+      const currentState = canvas.scene.getFlag(MODULE_NAME, "enableWeather");
+      const newState = !currentState;
+      
+      await canvas.scene.setFlag(MODULE_NAME, "enableWeather", newState);
+      target.classList.toggle('true', newState);      
+      
+      if (newState) {
+          ui.notifications.info("Weather Scene Effects Enabled");
+          await WeatherEngine.refreshWeather();
+      } else {
+          ui.notifications.info("Weather Scene Effects Disabled");
+          await WeatherEngine.disableWeatherEffect();
+
+      }
+      this.render();
+  }
 
 
 static async #_toggleWeatherFX(event, target) {
@@ -484,9 +511,13 @@ static async #_toggleWeatherSound(event, target) {
     }
 
     this._initializeViewState();
+    
 
     let weatherHistory = {};
-        const showWeather = game.settings.get(MODULE_NAME, "enableWeatherForecast");
+        const hideWeatherPlayer = game.settings.get(MODULE_NAME, "hideWeatherPlayer");
+        const enableWeatherForecast = game.settings.get(MODULE_NAME, "enableWeatherForecast");
+        const showWeather = enableWeatherForecast && (game.user.isGM || !hideWeatherPlayer) ? true : false;
+
          const page = game.journal.getName(calendarJournal)?.pages.getName("Weather History");
          weatherHistory = page?.flags?.[MODULE_NAME]?.history || {};
 
@@ -846,8 +877,24 @@ static async #_toggleWeatherSound(event, target) {
     }
 
     if (this.#isRunning && game.user.isGM) {
-      this._startTime();
+        if (game.paused) {
+            this.wasPausedForGame = true;
+        }
+        const pauseOnCombat = game.settings.get(MODULE_NAME, "pauseOnCombat");
+        if (pauseOnCombat && game.combat?.started) {
+            this.wasPausedForCombat = true;
+        }
+        if (!this.wasPausedForGame && !this.wasPausedForCombat) {
+            this._startTime();
+        } else {
+             console.log(`Mini Calendar | Time advancement withheld on load. (Game Paused: ${this.wasPausedForGame}, Combat: ${this.wasPausedForCombat})`);
+        }
     }
+
+
+    // if (this.#isRunning && game.user.isGM) {
+    //   this._startTime();
+    // }
 
     Hooks.on("updateWorldTime", this._onUpdateWorldTime);
     Hooks.on("updateJournalEntryPage", this._onJournalUpdate);
@@ -956,7 +1003,12 @@ _onUpdateWorldTime = async (worldTime, dt) => {
     const dateKey = `${nowComponents.year}-${nowComponents.month}-${nowComponents.dayOfMonth}`;
 
     if (this.#lastWeatherBroadcastDate === dateKey) return;
-    
+    const storedDate = game.settings.get(MODULE_NAME, "lastWeatherBroadcastDate");
+    if (storedDate === dateKey) {
+        this.#lastWeatherBroadcastDate = dateKey;
+        return;
+    }
+    await game.settings.set(MODULE_NAME, "lastWeatherBroadcastDate", dateKey); 
     this.#lastWeatherBroadcastDate = dateKey;
 
     const page = game.journal.getName(calendarJournal)?.pages.getName("Weather History");
@@ -973,6 +1025,7 @@ _onUpdateWorldTime = async (worldTime, dt) => {
 
     broadcastChat(content);
 }
+
 async _checkDailyEvents() {
     if (!game.users.activeGM?.isSelf) return;
 
@@ -1035,45 +1088,7 @@ async _checkDailyEvents() {
         await this._saveNotesForDay(date, notes);
     }
   }
-  // /**
-  //  * Checks the current game date for any unwhispered events and sends them to chat.
-  //  */
-  // async _checkDailyEvents() {
-  //   if (!game.users.activeGM?.isSelf) return;
 
-  //   const calendar = game.time.calendar;
-  //   const currentComps = calendar.timeToComponents(game.time.worldTime);
-
-  //   const dateKey = `${currentComps.year}-${currentComps.month}-${currentComps.dayOfMonth}`;
-  //   if (this.#lastCheckedDate === dateKey) return;
-
-  //   this.#lastCheckedDate = dateKey;
-
-  //   const date = {
-  //     year: currentComps.year,
-  //     month: currentComps.month,
-  //     day: currentComps.dayOfMonth,
-  //   };
-
-  //   const notes = await this._getNotesForDay(date);
-  //   if (!notes || notes.length === 0) return;
-
-  //   const newNotes = notes.filter((n) => !n.whispered);
-  //   if (newNotes.length === 0) return;
-
-  //   const monthName = game.i18n.localize(calendar.months.values[date.month].name);
-  //   const dayNum = date.day + 1;
-  //   let content = `<h4>Events for ${monthName} ${dayNum}, ${date.year}</h4>`;
-
-  //   newNotes.forEach((n) => {
-  //     content += `<p><strong>${n.title}</strong><br/>${n.content}</p>`;
-  //     n.whispered = true; // Mark as sent
-  //   });
-
-  //   whisperChat(content);
-
-  //   await this._saveNotesForDay(date, notes);
-  // }
 
   _activateListeners(html) {
     if (!html) return;
@@ -1259,6 +1274,448 @@ async _saveNotesForDay(date, notes) {
         }
     }
 }
+
+
+
+
+
+
+
+
+/**
+   * Shows the dialog to ADD or EDIT a single note using an HBS template.
+   */
+  async _showAddNoteDialog(date, noteToEdit = null, position = null, openViewNote = false) {
+    const calendar = game.time.calendar;
+    const hoursInDay = calendar.days.hoursPerDay || 24;
+    const minutesInHour = calendar.days.minutesPerHour || 60;
+    const moons = CONFIG.time.worldCalendarConfig.moons?.values || [];
+
+    const isEditing = noteToEdit !== null;
+    const title = isEditing ? "Edit Note" : "Add Note";
+    const isAllDay = noteToEdit ? (noteToEdit.hour === null || noteToEdit.hour === undefined) : true;
+    
+    const renderData = {
+        title: noteToEdit?.title || "",
+        currentIcon: noteToEdit?.icon || "",
+        pinTypes: PIN_TYPES,
+        
+        hasAdvanced: !!noteToEdit?.advancedRule && noteToEdit.advancedRule !== 'none',
+        repeatCount: noteToEdit?.repeatCount || 0,
+        repeatInterval: noteToEdit?.repeatInterval || 1,
+        selectedRepeatUnit: (!noteToEdit?.repeatUnit || noteToEdit.repeatUnit === 'none') ? 'none' : noteToEdit.repeatUnit,
+        repeatUnits: [
+            {value: "none", label: "Never"},
+            {value: "days", label: "Days"},
+            {value: "months", label: "Months"},
+            {value: "years", label: "Years"}
+        ],
+
+        selectedAdvancedRule: noteToEdit?.advancedRule || 'none',
+        advancedRules: [
+            {value: "lunar", label: "Lunar Phase"},
+            {value: "weekday", label: "Nth Weekday (e.g. 2nd Tues)"},
+            {value: "week_index", label: "Specific Week & Day"},
+            {value: "random", label: "Random Occurrences"}
+        ],
+        advParams: {
+            moonIndex: noteToEdit?.advParams?.moonIndex || 0,
+            phaseIndex: noteToEdit?.advParams?.phaseIndex, 
+            
+            // Lunar Month Range
+            lunarStartMonth: noteToEdit?.advParams?.lunarStartMonth || 0,
+            lunarEndMonth: noteToEdit?.advParams?.lunarEndMonth || (calendar.months.values.length - 1),
+
+            // Nth Weekday
+            monthIndex_wk: noteToEdit?.advParams?.monthIndex_wk ?? -1,
+            ordinal: noteToEdit?.advParams?.ordinal ?? 0,
+            weekdayIndex: noteToEdit?.advParams?.weekdayIndex || 0,
+            
+            // Week Index (Grid)
+            weekNum: noteToEdit?.advParams?.weekNum || 1,
+            dayNum: noteToEdit?.advParams?.dayNum || 0, // Now 0-based index from dropdown
+
+            // Random
+            count: noteToEdit?.advParams?.count || 5,
+            startMonth: noteToEdit?.advParams?.startMonth || 0,
+            endMonth: noteToEdit?.advParams?.endMonth || 0
+        },
+
+        moonOptions: moons.map((m, i) => ({index: i, name: m.name})),
+        monthOptions: calendar.months.values.map((m, i) => ({index: i, name: m.name})),
+        weekdayOptions: calendar.days.values.map((d, i) => ({index: i, name: game.i18n.localize(d.name)})),
+        ordinalOptions: [
+            {value: 0, label: "First"}, {value: 1, label: "Second"}, 
+            {value: 2, label: "Third"}, {value: 3, label: "Fourth"}, 
+            {value: -1, label: "Last"}
+        ],
+
+        allDay: isAllDay,
+        timeDisplay: isAllDay ? "none" : "flex",
+        selectedHour: noteToEdit?.hour || 0,
+        selectedMinute: noteToEdit?.minute || 0,
+        hourOptions: Array.from({length: hoursInDay}, (_, i) => ({value: i, label: String(i).padStart(2, "0")})),
+        minuteOptions: Array.from({length: Math.floor(minutesInHour/5) + 1}, (_, i) => {
+            const m = i * 5;
+            return m < minutesInHour ? {value: m, label: String(m).padStart(2, "0")} : null;
+        }).filter(x => x),
+
+        content: noteToEdit?.content || "",
+        playerVisible: noteToEdit?.playerVisible || false
+    };
+
+    const htmlContent = await foundry.applications.handlebars.renderTemplate("modules/wgtgm-mini-calendar/templates/add-note.hbs", renderData);
+
+    const result = await foundry.applications.api.DialogV2.prompt({
+      window: {title: title},
+      content: htmlContent,
+      classes: ["wgtngmMiniCalender-dialog", "dialog", "edit-note"],
+      modal: false,
+      render: (dialog) => {
+          const el = dialog.target.element;
+          const advCheck = el.querySelector("#use-advanced-check");
+          const stdRepeat = el.querySelector(".repeat-standard");
+          const advContainer = el.querySelector("#advanced-options-container");
+          const ruleSelect = el.querySelector("#adv-rule-select");
+          const subGroups = el.querySelectorAll(".adv-subgroup");
+          const moonSelect = el.querySelector("select[name='adv_moonIndex']");
+          const phaseSelect = el.querySelector("#adv-phase-select");
+
+          function updatePhases() {
+              if(!moonSelect) return;
+              const moonIdx = moonSelect.value;
+              const moon = moons[moonIdx];
+              let html = "";
+              if (moon && moon.phases) {
+                  moon.phases.forEach((p, i) => {
+                     html += `<option value="${i}">${p.name}</option>`; 
+                  });
+              }
+              phaseSelect.innerHTML = html;
+              if (noteToEdit?.advParams?.phaseIndex !== undefined) phaseSelect.value = noteToEdit.advParams.phaseIndex;
+          }
+
+          function toggleAdvanced() {
+              const isAdv = advCheck.checked;
+              stdRepeat.style.display = isAdv ? "none" : "flex";
+              advContainer.style.display = isAdv ? "block" : "none";
+          }
+
+          function toggleRules() {
+              const rule = ruleSelect.value;
+              subGroups.forEach(g => g.style.display = "none");
+              const active = el.querySelector(`.adv-subgroup[data-type="${rule}"]`);
+              if (active) active.style.display = "block";
+          }
+
+          if(moons.length > 0) updatePhases();
+          toggleAdvanced();
+          toggleRules();
+
+          advCheck.addEventListener("change", toggleAdvanced);
+          ruleSelect.addEventListener("change", toggleRules);
+          if(moonSelect) moonSelect.addEventListener("change", updatePhases);
+
+          const allDayBox = el.querySelector("#note-all-day");
+          const timeContainer = el.querySelector("#note-time-container");
+          allDayBox.addEventListener("change", (ev) => timeContainer.style.display = ev.target.checked ? "none" : "flex");
+          
+          const iconInput = el.querySelector("input[name='icon']");
+          const iconPreview = el.querySelector("#icon-preview");
+          iconInput.addEventListener("input", (ev) => iconPreview.className = ev.target.value);
+      },
+      ok: {
+        label: "Save",
+        icon: "fas fa-check",
+        callback: (event, button, dialog) => {
+          const form = button.form;
+          if (!form.title.value.trim()) { ui.notifications.warn("Title is required."); return false; }
+          
+          const useAdv = form.useAdvanced.checked;
+          const data = {
+             title: form.title.value.trim(),
+             icon: form.icon.value || "fas fa-book",
+             content: form.content.value,
+             hour: form.allDay.checked ? null : parseInt(form.hour.value),
+             minute: form.allDay.checked ? null : parseInt(form.minute.value),
+             playerVisible: form.playerVisible.checked,
+             startDate: date,
+             repeatUnit: 'none'
+          };
+
+          if (useAdv) {
+              data.advancedRule = form.advancedRule.value;
+              data.advParams = {};
+              if (data.advancedRule === 'lunar') {
+                  data.advParams = {
+                      moonIndex: parseInt(form.adv_moonIndex.value),
+                      phaseIndex: parseInt(form.adv_phaseIndex.value),
+                      lunarStartMonth: parseInt(form.adv_lunarStartMonth.value),
+                      lunarEndMonth: parseInt(form.adv_lunarEndMonth.value)
+                  };
+                  data.repeatUnit = 'advanced';
+              } else if (data.advancedRule === 'weekday') {
+                  data.advParams = {
+                      ordinal: parseInt(form.adv_ordinal.value),
+                      weekdayIndex: parseInt(form.adv_weekdayIndex.value),
+                      monthIndex_wk: parseInt(form.adv_monthIndex_wk.value)
+                  };
+                   data.repeatUnit = 'advanced';
+              } else if (data.advancedRule === 'week_index') {
+                  data.advParams = {
+                      weekNum: parseInt(form.adv_weekNum.value),
+                      dayNum: parseInt(form.adv_dayNum.value)
+                  };
+                   data.repeatUnit = 'advanced';
+              } else if (data.advancedRule === 'random') {
+                  data.advParams = {
+                      count: parseInt(form.adv_count.value),
+                      startMonth: parseInt(form.adv_startMonth.value),
+                      endMonth: parseInt(form.adv_endMonth.value)
+                  };
+                   data.repeatUnit = 'advanced';
+              }
+          } else {
+              data.repeatUnit = form.repeatUnit.value;
+              data.repeatInterval = parseInt(form.repeatInterval.value);
+              data.repeatCount = parseInt(form.repeatCount.value);
+          }
+          return data;
+        },
+      },
+    });
+
+    if (!result) return;
+
+    if (isEditing) {
+        const wasRecurring = noteToEdit.repeatUnit && noteToEdit.repeatUnit !== 'none';
+        const isNowRecurring = (result.repeatUnit && result.repeatUnit !== 'none') || result.advancedRule;
+        if (wasRecurring && (!isNowRecurring || isNowRecurring)) {
+            await this._removeRecurringNote(noteToEdit.id);
+        }
+    }
+
+    const freshNotes = await this._transactionalNoteUpdate(date, (notes) => {
+      const noteData = isEditing ? { ...noteToEdit, ...result } : { id: foundry.utils.randomID(), ...result };
+      if (isEditing) {
+          const idx = notes.findIndex(n => n.id === noteToEdit.id);
+          if (idx > -1) notes.splice(idx, 1);
+      }
+      notes.push(noteData);
+      return notes;
+    });
+
+    this.render();
+    if (openViewNote) this._showViewNotesDialog(date, freshNotes, position);
+  }
+
+
+  _checkRecurrence(note, targetDate) {
+    if (note.repeatUnit === 'advanced' && note.advancedRule) {
+        const p = note.advParams;
+        if (!p) return false;
+
+        const calendar = game.time.calendar;
+        const months = calendar.months.values;
+        const moons = CONFIG.time.worldCalendarConfig.moons?.values || [];
+        const daysInWeek = calendar.days.values.length || 7;
+
+        switch (note.advancedRule) {
+            case 'lunar': {
+                // Check Month Range
+                const start = p.lunarStartMonth;
+                const end = p.lunarEndMonth;
+                const inRange = (start <= end) 
+                    ? (targetDate.month >= start && targetDate.month <= end)
+                    : (targetDate.month >= start || targetDate.month <= end);
+                
+                if (!inRange) return false;
+
+                // Check Phase (Day 0 of phase)
+                let dayOfYear = 0;
+                const isLeap = calendar.isLeapYear(targetDate.year);
+                for (let i = 0; i < targetDate.month; i++) {
+                    const m = months[i];
+                    dayOfYear += (isLeap && m.leapDays !== undefined) ? m.leapDays : m.days;
+                }
+                dayOfYear += targetDate.day;
+                
+                const timestamp = calendar.componentsToTime({
+                    year: targetDate.year, day: dayOfYear, hour:0, minute:0, second:0
+                });
+
+                const moon = moons[p.moonIndex];
+                if (!moon) return false;
+                
+                const phaseData = this._calculateMoonPhase(timestamp, moon, calendar);
+                if (!phaseData) return false;
+
+                const targetPhaseName = moon.phases[p.phaseIndex]?.name;
+                return (phaseData.phaseName === targetPhaseName && phaseData.daysIntoPhase === 0);
+            }
+
+            case 'weekday': {
+                if (p.monthIndex_wk !== -1 && targetDate.month !== p.monthIndex_wk) return false;
+
+                // Determine Day of Week
+                let dayOfYear = 0;
+                const isLeap = calendar.isLeapYear(targetDate.year);
+                for (let i = 0; i < targetDate.month; i++) {
+                    const m = months[i];
+                    dayOfYear += (isLeap && m.leapDays !== undefined) ? m.leapDays : m.days;
+                }
+                dayOfYear += targetDate.day;
+                
+                const timestamp = calendar.componentsToTime({
+                    year: targetDate.year, day: dayOfYear, hour:0, minute:0, second:0
+                });
+                const comps = calendar.timeToComponents(timestamp);
+                
+                if (comps.dayOfWeek !== p.weekdayIndex) return false;
+                const dayOfMonth = targetDate.day + 1; // 1-based
+                const occurrence = Math.ceil(dayOfMonth / daysInWeek); 
+                
+                if (p.ordinal === -1) {
+                    const m = months[targetDate.month];
+                    const daysInMonth = (isLeap && m.leapDays !== undefined) ? m.leapDays : m.days;
+                    return (dayOfMonth + daysInWeek > daysInMonth);
+                } else {
+                    return (occurrence - 1) === p.ordinal;
+                }
+            }
+
+            case 'week_index': {
+                const currentWeek = Math.floor(targetDate.day / daysInWeek) + 1; 
+                const currentDayCol = targetDate.day % daysInWeek; 
+
+                return (currentWeek === p.weekNum && currentDayCol === p.dayNum);
+            }
+
+            case 'random': {
+                let startM = p.startMonth;
+                let endM = p.endMonth;
+                const inRange = (startM <= endM) 
+                    ? (targetDate.month >= startM && targetDate.month <= endM)
+                    : (targetDate.month >= startM || targetDate.month <= endM);
+                
+                if (!inRange) return false;
+
+                // Deterministic RNG seeded by Year+NoteID
+                const cyrb53 = (str, seed = 0) => {
+                    let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
+                    for (let i = 0, ch; i < str.length; i++) {
+                        ch = str.charCodeAt(i);
+                        h1 = Math.imul(h1 ^ ch, 2654435761);
+                        h2 = Math.imul(h2 ^ ch, 1597334677);
+                    }
+                    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+                    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+                    return 4294967296 * (2097151 & h2) + (h1 >>> 0);
+                };
+
+                const seed = cyrb53(`${note.id}-${targetDate.year}`);
+                let state = seed;
+                const nextRandom = () => {
+                     let t = state += 0x6D2B79F5;
+                    t = Math.imul(t ^ t >>> 15, t | 1);
+                    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+                    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+                };
+
+                const pool = [];
+                const isLeap = calendar.isLeapYear(targetDate.year);
+                const mCount = months.length;
+                for(let mIdx = 0; mIdx < mCount; mIdx++) {
+                    let active = (startM <= endM) ? (mIdx >= startM && mIdx <= endM) : (mIdx >= startM || mIdx <= endM);
+                    if(active) {
+                        const m = months[mIdx];
+                        const days = (isLeap && m.leapDays !== undefined) ? m.leapDays : m.days;
+                        for(let d = 0; d < days; d++) {
+                            pool.push({m: mIdx, d: d});
+                        }
+                    }
+                }
+                
+                let m = pool.length, t, i;
+                while (m) {
+                    i = Math.floor(nextRandom() * m--);
+                    t = pool[m];
+                    pool[m] = pool[i];
+                    pool[i] = t;
+                }
+
+                const selected = pool.slice(0, p.count);
+                return selected.some(x => x.m === targetDate.month && x.d === targetDate.day);
+            }
+        }
+        return false;
+    }
+
+    if (!note.repeatUnit || note.repeatUnit === 'none') return false;
+    const start = note.startDate;
+    const interval = parseInt(note.repeatInterval) || 1;
+    const count = parseInt(note.repeatCount) || 0;
+    const unit = String(note.repeatUnit).toLowerCase();
+    const calendar = game.time.calendar;
+    
+    if (targetDate.year < start.year) return false;
+    if (targetDate.year === start.year && targetDate.month < start.month) return false;
+    if (targetDate.year === start.year && targetDate.month === start.month && targetDate.day < start.day) return false;
+
+    let isMatch = false;
+    let occurrenceIndex = 0;
+
+    if (unit === 'years') {
+        const yearDiff = targetDate.year - start.year;
+        if (yearDiff >= 0 && yearDiff % interval === 0) {
+            if (targetDate.month === start.month && targetDate.day === start.day) {
+                isMatch = true;
+                occurrenceIndex = yearDiff / interval;
+            }
+        }
+    } else if (unit === 'months') {
+        const monthDiff = (targetDate.year - start.year) * calendar.months.values.length + (targetDate.month - start.month);
+        if (monthDiff >= 0 && monthDiff % interval === 0) {
+             if (targetDate.day === start.day) { 
+                 isMatch = true;
+                 occurrenceIndex = monthDiff / interval;
+             }
+        }
+    } else {
+        const getTimestamp = (d) => {
+            let dayOfYear = 0;
+            for (let i = 0; i < d.month; i++) {
+                const m = calendar.months.values[i];
+                const isLeap = calendar.isLeapYear(d.year);
+                const mDays = isLeap && m.leapDays != null ? m.leapDays : m.days;
+                dayOfYear += mDays;
+            }
+            dayOfYear += d.day;
+            return calendar.componentsToTime({
+                year: d.year, day: dayOfYear, hour: 0, minute: 0, second: 0
+            });
+        };
+
+        const startTime = getTimestamp(start);
+        const targetTime = getTimestamp(targetDate);
+        const secondsPerDay = calendar.days.hoursPerDay * calendar.days.minutesPerHour * calendar.days.secondsPerMinute;
+        const diffSeconds = targetTime - startTime;
+        const diffDays = Math.round(diffSeconds / secondsPerDay);
+        
+        if (diffDays >= 0 && diffDays % interval === 0) {
+            isMatch = true;
+            occurrenceIndex = diffDays / interval;
+        }
+    }
+
+    if (isMatch && count > 0 && occurrenceIndex >= count) return false;
+    return isMatch;
+  }
+
+
+
+
+
   /**
    * Helper to perform a safe Read-Modify-Write operation on notes.
    * This minimizes race conditions by applying changes to the latest data immediately before saving.
@@ -1273,226 +1730,219 @@ async _saveNotesForDay(date, notes) {
     return updatedNotes;
   }
 
-  /**
-   * Shows the dialog to ADD or EDIT a single note.
-   * @param {object} date - The date object {year, month, day}
-   * @param {object | null} noteToEdit - If editing, the note object to pre-fill.
-   */
-  async _showAddNoteDialog(date, noteToEdit = null, position = null, openViewNote = false) {
-    // --- Time & Dropdown Logic ---
-    const calendar = game.time.calendar;
-    const hoursInDay = calendar.days.hoursPerDay || 24;
-    const minutesInHour = calendar.days.minutesPerHour || 60;
+//   /**
+//    * Shows the dialog to ADD or EDIT a single note.
+//    * @param {object} date - The date object {year, month, day}
+//    * @param {object | null} noteToEdit - If editing, the note object to pre-fill.
+//    */
+//   async _showAddNoteDialog(date, noteToEdit = null, position = null, openViewNote = false) {
+//     // --- Time & Dropdown Logic ---
+//     const calendar = game.time.calendar;
+//     const hoursInDay = calendar.days.hoursPerDay || 24;
+//     const minutesInHour = calendar.days.minutesPerHour || 60;
 
-    const isAllDay = noteToEdit ? (noteToEdit.hour === null || noteToEdit.hour === undefined) : true;
-    const allDayChecked = isAllDay ? "checked" : "";
-    const timeDisplay = isAllDay ? "none" : "flex";
+//     const isAllDay = noteToEdit ? (noteToEdit.hour === null || noteToEdit.hour === undefined) : true;
+//     const allDayChecked = isAllDay ? "checked" : "";
+//     const timeDisplay = isAllDay ? "none" : "flex";
 
-    let hourOptions = "";
-    for (let h = 0; h < hoursInDay; h++) {
-        const val = h;
-        const label = String(h).padStart(2, "0");
-        const selected = (noteToEdit?.hour === h) ? "selected" : "";
-        hourOptions += `<option value="${val}" ${selected}>${label}</option>`;
-    }
+//     let hourOptions = "";
+//     for (let h = 0; h < hoursInDay; h++) {
+//         const val = h;
+//         const label = String(h).padStart(2, "0");
+//         const selected = (noteToEdit?.hour === h) ? "selected" : "";
+//         hourOptions += `<option value="${val}" ${selected}>${label}</option>`;
+//     }
 
-    let minuteOptions = "";
-    for (let m = 0; m < minutesInHour; m += 5) { 
-        const val = m;
-        const label = String(m).padStart(2, "0");
-        const selected = (noteToEdit?.minute === m) ? "selected" : "";
-        minuteOptions += `<option value="${val}" ${selected}>${label}</option>`;
-    }
+//     let minuteOptions = "";
+//     for (let m = 0; m < minutesInHour; m += 5) { 
+//         const val = m;
+//         const label = String(m).padStart(2, "0");
+//         const selected = (noteToEdit?.minute === m) ? "selected" : "";
+//         minuteOptions += `<option value="${val}" ${selected}>${label}</option>`;
+//     }
 
-    const isEditing = noteToEdit !== null;
-    const title = isEditing ? "Edit Note" : "Add Note";
-    const pinTypes = [
-      { key: "fas fa-book", label: "Note" },
-      { key: "fas fa-map-pin", label: "Pin" },
-      { key: "fas fa-scroll", label: "Quest" },
-      { key: "fas fa-skull-crossbones", label: "Danger" },
-      { key: "fas fa-gem", label: "Treasure" },
-      { key: "fas fa-beer", label: "Tavern" },
-      { key: "fas fa-home", label: "Village" },
-      { key: "fas fa-user", label: "NPC" },
-      { key: "fas fa-store", label: "Shop" },
-    ];
+//     const isEditing = noteToEdit !== null;
+//     const title = isEditing ? "Edit Note" : "Add Note";
+//     const currentIcon = noteToEdit?.icon || "fas fa-book";
 
-    const currentIcon = noteToEdit?.icon || "fas fa-book";
+//     const pinTypeOptions = PIN_TYPES
+//       .map(
+//         (type) =>
+//           `<option value="${type.key}" ${type.key === currentIcon ? "selected" : ""}>
+//                 <i class="${type.key}"></i> ${type.label}
+//             </option>`,
+//       )
+//       .join("");
 
-    const pinTypeOptions = pinTypes
-      .map(
-        (type) =>
-          `<option value="${type.key}" ${type.key === currentIcon ? "selected" : ""}>
-                <i class="${type.key}"></i> ${type.label}
-            </option>`,
-      )
-      .join("");
+//   const content = `
+//         <div class="form-group">
+//             <label>Title:</label>
+//             <input type="text" name="title" value="${foundry.utils.escapeHTML(noteToEdit?.title || "")}" autofocus/>
+//         </div>
+//         <div class="form-group">
+//             <label>Icon:</label>
+//             <div style="display:flex; align-items:center; gap:10px; flex:1;">
+//                 <div style="flex:1;">
+//                     <input type="text" name="icon" value="${currentIcon}" list="icon-list-dialog" style="width:100%;" placeholder="fas fa-star"/>
+//                     <datalist id="icon-list-dialog">
+//                         ${pinTypeOptions}
+//                     </datalist>
+//                 </div>
+//                 <div style="width: 30px; text-align: center; display: flex; justify-content: center;">
+//                     <i id="icon-preview" class="${currentIcon}" style="font-size: 1.5em; vertical-align: middle;"></i>
+//                 </div>
+//             </div>
+//         </div>
+//         <div class="form-group repeat-input">
+//             <label style="flex:0;">Repeat:</label>
+//             <input type="number" name="repeatCount" value="${noteToEdit?.repeatCount || 0}" min="0" style="" placeholder="∞" title="0 = Infinite">
+//             <label style="margin-left: 5px;margin-right: 5px; min-width: unset"> every </label>
+//             <input type="number" name="repeatInterval" value="${noteToEdit?.repeatInterval || 1}" min="1">
+//             <select name="repeatUnit" style="flex: 1;">
+//                 <option value="none" ${!noteToEdit?.repeatUnit || noteToEdit.repeatUnit === 'none' ? 'selected' : ''}>Never</option>
+//                 <option value="days" ${noteToEdit?.repeatUnit === 'days' ? 'selected' : ''}>Days</option>
+//                 <option value="months" ${noteToEdit?.repeatUnit === 'months' ? 'selected' : ''}>Months</option>
+//                 <option value="years" ${noteToEdit?.repeatUnit === 'years' ? 'selected' : ''}>Years</option>
+//             </select>
 
-  const content = `
-        <div class="form-group">
-            <label>Title:</label>
-            <input type="text" name="title" value="${foundry.utils.escapeHTML(noteToEdit?.title || "")}" autofocus/>
-        </div>
-        <div class="form-group">
-            <label>Icon:</label>
-            <div style="display:flex; align-items:center; gap:10px; flex:1;">
-                <select name="icon" style="flex:1;">${pinTypeOptions}</select>
-                <div style="width: 30px; text-align: center; display: flex; justify-content: center;">
-                    <i id="icon-preview" class="${currentIcon}" style="font-size: 1.5em; vertical-align: middle;"></i>
-                </div>
-            </div>
-        </div>
-        <div class="form-group repeat-input">
-            <label style="flex:0;">Repeat:</label>
-            <input type="number" name="repeatCount" value="${noteToEdit?.repeatCount || 0}" min="0" style="" placeholder="∞" title="0 = Infinite">
-            <label style="flex:1; margin-left: 5px;"> every </label>
-            <input type="number" name="repeatInterval" value="${noteToEdit?.repeatInterval || 1}" min="1">
-            <select name="repeatUnit" style="flex: 1;">
-                <option value="none" ${!noteToEdit?.repeatUnit || noteToEdit.repeatUnit === 'none' ? 'selected' : ''}>Never</option>
-                <option value="days" ${noteToEdit?.repeatUnit === 'days' ? 'selected' : ''}>Days</option>
-                <option value="months" ${noteToEdit?.repeatUnit === 'months' ? 'selected' : ''}>Months</option>
-                <option value="years" ${noteToEdit?.repeatUnit === 'years' ? 'selected' : ''}>Years</option>
-            </select>
+//         </div>
+//         <div class="form-group">
+//             <label>Time:</label>
+//             <div style="flex: 0; display: flex; flex-direction: column; gap: 5px;">
+//                 <div id="note-time-container" style="display: ${timeDisplay}; align-items: center; gap: 5px;">
+//                     <select name="hour" style="width: 60px;">${hourOptions}</select>
+//                     <span>:</span>
+//                     <select name="minute" style="width: 60px;">${minuteOptions}</select>
+//                 </div>
+//             </div>
+//                 <div style="display: flex; align-items: center; gap: 5px;">
+//                     <input type="checkbox" name="allDay" id="note-all-day" ${allDayChecked}>
+//                     <label for="note-all-day" style="flex: 1;">All Day Event</label>
+//                 </div>
+//         </div>
+//         <div class="form-group">
+//             <label>Note:</label>
+//             <textarea name="content" placeholder="Enter note content..." style="width: 100%; height: 100px; resize: vertical;">${foundry.utils.escapeHTML(noteToEdit?.content || "")}</textarea>
+//         </div>
+//         <div class="form-group repeat-input">
+//         <div class="form-group" style="display: flex; align-items: center; gap: 5px;">
+//              <label style="flex:none; white-space:nowrap;">Player Visible:</label>
+//              <input type="checkbox" name="playerVisible" style="flex:1;" ${noteToEdit?.playerVisible ? "checked" : ""} />
+//         </div>
+//     `;
 
-        </div>
-        <div class="form-group">
-            <label>Time:</label>
-            <div style="flex: 0; display: flex; flex-direction: column; gap: 5px;">
-                <div id="note-time-container" style="display: ${timeDisplay}; align-items: center; gap: 5px;">
-                    <select name="hour" style="width: 60px;">${hourOptions}</select>
-                    <span>:</span>
-                    <select name="minute" style="width: 60px;">${minuteOptions}</select>
-                </div>
-            </div>
-                <div style="display: flex; align-items: center; gap: 5px;">
-                    <input type="checkbox" name="allDay" id="note-all-day" ${allDayChecked}>
-                    <label for="note-all-day" style="flex: 1;">All Day Event</label>
-                </div>
-        </div>
-        <div class="form-group">
-            <label>Note:</label>
-            <textarea name="content" placeholder="Enter note content..." style="width: 100%; height: 100px; resize: vertical;">${foundry.utils.escapeHTML(noteToEdit?.content || "")}</textarea>
-        </div>
-        <div class="form-group repeat-input">
-        <div class="form-group" style="display: flex; align-items: center; gap: 5px;">
-             <label style="flex:none; white-space:nowrap;">Player Visible:</label>
-             <input type="checkbox" name="playerVisible" style="flex:1;" ${noteToEdit?.playerVisible ? "checked" : ""} />
-        </div>
-    `;
-
-    const result = await foundry.applications.api.DialogV2.prompt({
-      title: title,
-      content: content,
-      classes: ["wgtngmMiniCalender-dialog", "dialog", "edit-note"],
-      modal: false,
-      render: (dialog) => {
-          const allDayBox = dialog.target.element.querySelector("#note-all-day");
-          const timeContainer = dialog.target.element.querySelector("#note-time-container");
+//     const result = await foundry.applications.api.DialogV2.prompt({
+//       title: title,
+//       content: content,
+//       classes: ["wgtngmMiniCalender-dialog", "dialog", "edit-note"],
+//       modal: false,
+//       render: (dialog) => {
+//           const allDayBox = dialog.target.element.querySelector("#note-all-day");
+//           const timeContainer = dialog.target.element.querySelector("#note-time-container");
           
-          if(allDayBox && timeContainer) {
-              allDayBox.addEventListener("change", (ev) => {
-                  timeContainer.style.display = ev.target.checked ? "none" : "flex";
-              });
-          }
-          const iconSelect = dialog.target.element.querySelector("select[name='icon']");
-          const iconPreview = dialog.target.element.querySelector("#icon-preview");
-          if (iconSelect && iconPreview) {
-              iconSelect.addEventListener("change", (ev) => {
-                  iconPreview.className = ev.target.value;
-              });
-          }
-      },
-      ok: {
-        label: "Save",
-        icon: "fas fa-check",
-        callback: (event, button, dialog) => {
-          const form = button.form;
-          const newTitle = form.title.value.trim();
-          if (!newTitle) {
-            ui.notifications.warn("Title is required.");
-            return false;
-          }
-          const isAllDayResult = form.allDay.checked;
-          const selectedHour = isAllDayResult ? null : parseInt(form.hour.value);
-          const selectedMinute = isAllDayResult ? null : parseInt(form.minute.value);
-          return {
-             title: newTitle,
-              icon: form.icon.value,
-              content: form.content.value,
-              repeatInterval: parseInt(form.repeatInterval.value),
-              repeatUnit: form.repeatUnit.value,
-              repeatCount: parseInt(form.repeatCount.value),
-              hour: selectedHour,
-              minute: selectedMinute,
-              startDate: date,
-              playerVisible: form.playerVisible.checked 
-          };
-        },
-      },
-    });
+//           if(allDayBox && timeContainer) {
+//               allDayBox.addEventListener("change", (ev) => {
+//                   timeContainer.style.display = ev.target.checked ? "none" : "flex";
+//               });
+//           }
+//           const iconInput = dialog.target.element.querySelector("input[name='icon']");
+//           const iconPreview = dialog.target.element.querySelector("#icon-preview");
+//           if (iconInput && iconPreview) {
+//               iconInput.addEventListener("input", (ev) => {
+//                   iconPreview.className = ev.target.value;
+//               });
+//           }
+//       },
+//       ok: {
+//         label: "Save",
+//         icon: "fas fa-check",
+//         callback: (event, button, dialog) => {
+//           const form = button.form;
+//           const newTitle = form.title.value.trim();
+//           if (!newTitle) {
+//             ui.notifications.warn("Title is required.");
+//             return false;
+//           }
+//           const isAllDayResult = form.allDay.checked;
+//           const selectedHour = isAllDayResult ? null : parseInt(form.hour.value);
+//           const selectedMinute = isAllDayResult ? null : parseInt(form.minute.value);
+//           return {
+//              title: newTitle,
+//               icon: form.icon.value,
+//               content: form.content.value,
+//               repeatInterval: parseInt(form.repeatInterval.value),
+//               repeatUnit: form.repeatUnit.value,
+//               repeatCount: parseInt(form.repeatCount.value),
+//               hour: selectedHour,
+//               minute: selectedMinute,
+//               startDate: date,
+//               playerVisible: form.playerVisible.checked 
+//           };
+//         },
+//       },
+//     });
 
-if (!result) return;
-if (isEditing) {
-        const wasRecurring = noteToEdit.repeatUnit && noteToEdit.repeatUnit !== 'none';
-        const isNowRecurring = result.repeatUnit && result.repeatUnit !== 'none';
+// if (!result) return;
+// if (isEditing) {
+//         const wasRecurring = noteToEdit.repeatUnit && noteToEdit.repeatUnit !== 'none';
+//         const isNowRecurring = result.repeatUnit && result.repeatUnit !== 'none';
 
-        if (wasRecurring && !isNowRecurring) {
-            await this._removeRecurringNote(noteToEdit.id);
-        }
-    }
+//         if (wasRecurring && !isNowRecurring) {
+//             await this._removeRecurringNote(noteToEdit.id);
+//         }
+//     }
 
-    const freshNotes = await this._transactionalNoteUpdate(date, (notes) => {
-      if (isEditing) {
-        let index = notes.findIndex((n) => n.id === noteToEdit.id);
+//     const freshNotes = await this._transactionalNoteUpdate(date, (notes) => {
+//       if (isEditing) {
+//         let index = notes.findIndex((n) => n.id === noteToEdit.id);
         
-        if (index === -1) {
-             const restoredNote = {
-                 id: noteToEdit.id,
-                 ...noteToEdit
-             };
-             notes.push(restoredNote);
-             index = notes.length - 1;
-        }
+//         if (index === -1) {
+//              const restoredNote = {
+//                  id: noteToEdit.id,
+//                  ...noteToEdit
+//              };
+//              notes.push(restoredNote);
+//              index = notes.length - 1;
+//         }
 
-        if (index > -1) {
-          notes[index].title = result.title;
-          notes[index].icon = result.icon;
-          notes[index].content = result.content;
-          notes[index].repeatInterval = result.repeatInterval;
-          notes[index].repeatUnit = result.repeatUnit;
-          notes[index].repeatCount = result.repeatCount;
-          notes[index].hour = result.hour;
-          notes[index].minute = result.minute;
-          notes[index].startDate = result.startDate;
-          notes[index].playerVisible = result.playerVisible;
-          delete notes[index].isRecurringInstance; 
-        }
-      } else {
-        const newNote = {
-          id: foundry.utils.randomID(),
-          title: result.title,
-          icon: result.icon,
-          content: result.content,
-          repeatInterval: result.repeatInterval,
-          repeatUnit: result.repeatUnit,
-          repeatCount: result.repeatCount,
-          hour: result.hour,
-          minute: result.minute,              
-          startDate: result.startDate, 
-          playerVisible: result.playerVisible,
-        };
-        notes.push(newNote);
-      }
-      return notes;
-    });
+//         if (index > -1) {
+//           notes[index].title = result.title;
+//           notes[index].icon = result.icon;
+//           notes[index].content = result.content;
+//           notes[index].repeatInterval = result.repeatInterval;
+//           notes[index].repeatUnit = result.repeatUnit;
+//           notes[index].repeatCount = result.repeatCount;
+//           notes[index].hour = result.hour;
+//           notes[index].minute = result.minute;
+//           notes[index].startDate = result.startDate;
+//           notes[index].playerVisible = result.playerVisible;
+//           delete notes[index].isRecurringInstance; 
+//         }
+//       } else {
+//         const newNote = {
+//           id: foundry.utils.randomID(),
+//           title: result.title,
+//           icon: result.icon,
+//           content: result.content,
+//           repeatInterval: result.repeatInterval,
+//           repeatUnit: result.repeatUnit,
+//           repeatCount: result.repeatCount,
+//           hour: result.hour,
+//           minute: result.minute,              
+//           startDate: result.startDate, 
+//           playerVisible: result.playerVisible,
+//         };
+//         notes.push(newNote);
+//       }
+//       return notes;
+//     });
 
-    this.render();
+//     this.render();
     
-    if (openViewNote) {
-      this._showViewNotesDialog(date, freshNotes, position);
-    }
-}
+//     if (openViewNote) {
+//       this._showViewNotesDialog(date, freshNotes, position);
+//     }
+// }
   /**
    * Shows the "List" dialog for all notes on a given day.
    * @param {object} date - The date object {year, month, day}
@@ -1507,22 +1957,45 @@ if (isEditing) {
       position = openPosition;
     }
 
+  const isGM = game.user.isGM;
+
+  notes.sort((a, b) => {
+      const aAllDay = a.hour === null || a.hour === undefined;
+      const bAllDay = b.hour === null || b.hour === undefined;
+      
+      if (aAllDay && !bAllDay) return -1;
+      if (!aAllDay && bAllDay) return 1;
+      if (aAllDay && bAllDay) return a.title.localeCompare(b.title); // Alphabetical for all-day
+
+      if (a.hour !== b.hour) return a.hour - b.hour;
+      return (a.minute || 0) - (b.minute || 0);
+  });
+
   let notesHTML = notes
       .map(
         (note) => {
+            const hasTime = note.hour !== null && note.hour !== undefined;
+            const noteTime = hasTime ? `${String(note.hour).padStart(2, '0')}:${String(note.minute || 0).padStart(2, '0')}` : '';
+            
             const isRepeating = note.repeatUnit && note.repeatUnit !== 'none';
             const repeatIcon = isRepeating ? '<i class="fas fa-repeat" title="Repeating Event" style="margin-right: 5px; font-size: 0.8em; opacity: 0.7;"></i>' : '<span></span>';
             const isHidden = note?.playerVisible ? '':'-slash';
             const isVisibleIcon = `<i class="fas fa-eye${isHidden} note-control" title="playerVisible" data-action="visible-toggle" data-note-id="${note.id}" style="margin-right: 5px; font-size: 0.8em; opacity: 0.7;"></i>`;
+            
             return `
-            <div class="calendar-note-item" data-note-id="${note.id}" data-action="edit-note">
+            <div class="calendar-note-item" data-note-id="${note.id}" ${isGM ? `data-action="edit-note"`:''}>
+                <span class="note-header">
                 <span class="note-title">
                     <i class="${note.icon || "fas fa-book"}"></i>
-                    ${foundry.utils.escapeHTML(note.title)}
+                    ${foundry.utils.escapeHTML(note.title)}</span>
+                  ${noteTime ? `<span class="note-time">
+                    <i class="fas fa-clock"></i> ${noteTime}
+                  </span>`:''}
                     ${repeatIcon}
-                    ${isVisibleIcon}
-                    <i class="fas fa-trash note-control" data-action="delete-note" title="Delete Note"></i>
+                    ${isGM ? isVisibleIcon :''}
+                    ${isGM ? `<i class="fas fa-trash note-control" data-action="delete-note" title="Delete Note"></i>`:''}
                 </span>
+
                 <div class="note-content">
                     ${foundry.utils.escapeHTML(note.content) || "<em>No content.</em>"}
                 </div>
@@ -1543,6 +2016,25 @@ if (isEditing) {
     const content = `
                 ${notesHTML}
         `;
+    const prepareButtons = [
+      {
+        action: "cancel",
+        label: "Close",
+        callback: () => null,
+      }
+    ];
+
+    if (game.user.isGM) {
+      prepareButtons.push({
+        action: "export",
+        label: "Add Note",
+        icon: "fas fa-calendar-plus",
+        default: true,
+        callback: (event, button, data) => {
+          this._showAddNoteDialog(date, null, data?.position, true);
+        },
+      });
+    }
 
     const data = await foundry.applications.api.DialogV2.wait({
       window: {
@@ -1554,22 +2046,7 @@ if (isEditing) {
       id: `Notes for ${monthName} ${day}, ${date.year}`,
       classes: ["wgtngmMiniCalender-dialog", "dialog", "add-note"],
       modal: false,
-      buttons: [
-        {
-          action: "cancel",
-          label: "Close",
-          callback: () => null,
-        },
-        {
-          action: "export",
-          label: "Add Note",
-          icon: "fas fa-calendar-plus",
-          default: true,
-          callback: (event, button, data) => {
-            this._showAddNoteDialog(date, null, data?.position, true);
-          },
-        },
-      ],
+      buttons: prepareButtons,
       close: () => {
         this.render();
       },
@@ -1604,82 +2081,6 @@ if (isEditing) {
           });
         });
       // 
-      },
-    }).catch(() => null);
-  }
-
-
-  /**
-   * Shows the "List" dialog for all notes on a given day.
-   * @param {object} date - The date object {year, month, day}
-   * @param {Array} notes - The array of note objects for that day.
-   */
-  async _showViewNotesDialogPlayer (date, notes, openPosition = null) {
-    if (!notes) {
-        notes = await this._getNotesForDay(date);
-    }
-    let position = {};
-    if (openPosition) {
-      position = openPosition;
-    }
-    
-  let notesHTML = notes
-      .map(
-        (note) => {
-            const isRepeating = note.repeatUnit && note.repeatUnit !== 'none';
-            const repeatIcon = isRepeating ? '<i class="fas fa-repeat" title="Repeating Event" style="margin-right: 5px; font-size: 0.8em; opacity: 0.7;"></i>' : '<span></span>';
-            const playerVisible = note?.playerVisible; 
-            const isHidden = note?.playerVisible ? '':'-slash';
-            return playerVisible ? `
-            <div class="calendar-note-item" data-note-id="${note.id}">
-                <span class="note-title">
-                    <i class="${note.icon || "fas fa-book"}"></i>
-                    ${foundry.utils.escapeHTML(note.title)}
-                    <span></span><span></span>
-                    ${repeatIcon}
-                  </span>
-                <div class="note-content">
-                    ${foundry.utils.escapeHTML(note.content) || "<em>No content.</em>"}
-                </div>
-            </div>
-        `:'';
-        }
-      )
-      .join("");
-
-    if (notes.length === 0) {
-      notesHTML = "<p class='no-notes'><em>No notes for this day.</em></p>";
-    }
-
-    const calendar = game.time.calendar;
-    const monthName = game.i18n.localize(calendar.months.values[date.month].name);
-    const day = date.day + 1;
-
-    const content = `
-                ${notesHTML}
-        `;
-
-    const data = await foundry.applications.api.DialogV2.wait({
-      window: {
-        title: `Notes for ${monthName} ${day}, ${date.year}`,
-        resizable: true,
-      },
-      position: position,
-      content: content,
-      id: `Notes for ${monthName} ${day}, ${date.year}`,
-      classes: ["wgtngmMiniCalender-dialog", "dialog", "add-note"],
-      modal: false,
-      buttons: [
-        {
-          action: "cancel",
-          label: "Close",
-          callback: () => null,
-        },
-      ],
-      close: () => {
-        this.render();
-      },
-      render: (dialog) => {
       },
     }).catch(() => null);
   }
@@ -1763,76 +2164,76 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
   }
 
 
-  _checkRecurrence(note, targetDate) {
-    if (!note.repeatUnit || note.repeatUnit === 'none') return false;
+//   _checkRecurrence(note, targetDate) {
+//     if (!note.repeatUnit || note.repeatUnit === 'none') return false;
     
-    const start = note.startDate;
-    const interval = parseInt(note.repeatInterval) || 1;
-    const count = parseInt(note.repeatCount) || 0;
+//     const start = note.startDate;
+//     const interval = parseInt(note.repeatInterval) || 1;
+//     const count = parseInt(note.repeatCount) || 0;
     
-    const unit = String(note.repeatUnit).toLowerCase();
-    const calendar = game.time.calendar;
+//     const unit = String(note.repeatUnit).toLowerCase();
+//     const calendar = game.time.calendar;
     
-    if (targetDate.year < start.year) return false;
-    if (targetDate.year === start.year && targetDate.month < start.month) return false;
-    if (targetDate.year === start.year && targetDate.month === start.month && targetDate.day < start.day) return false;
+//     if (targetDate.year < start.year) return false;
+//     if (targetDate.year === start.year && targetDate.month < start.month) return false;
+//     if (targetDate.year === start.year && targetDate.month === start.month && targetDate.day < start.day) return false;
 
-    let isMatch = false;
-    let occurrenceIndex = 0;
+//     let isMatch = false;
+//     let occurrenceIndex = 0;
 
-    if (unit === 'years') {
-        const yearDiff = targetDate.year - start.year;
-        if (yearDiff >= 0 && yearDiff % interval === 0) {
-            if (targetDate.month === start.month && targetDate.day === start.day) {
-                isMatch = true;
-                occurrenceIndex = yearDiff / interval;
-            }
-        }
-    } else if (unit === 'months') {
-        const monthDiff = (targetDate.year - start.year) * calendar.months.values.length + (targetDate.month - start.month);
-        if (monthDiff >= 0 && monthDiff % interval === 0) {
-             if (targetDate.day === start.day) { 
-                 isMatch = true;
-                 occurrenceIndex = monthDiff / interval;
-             }
-        }
-    } else {
-        const getTimestamp = (d) => {
-            let dayOfYear = 0;
-            for (let i = 0; i < d.month; i++) {
-                const m = calendar.months.values[i];
-                const isLeap = calendar.isLeapYear(d.year);
-                const mDays = isLeap && m.leapDays != null ? m.leapDays : m.days;
-                dayOfYear += mDays;
-            }
-            dayOfYear += d.day;
-            return calendar.componentsToTime({
-                year: d.year,
-                day: dayOfYear, 
-                hour: 0, minute: 0, second: 0
-            });
-        };
+//     if (unit === 'years') {
+//         const yearDiff = targetDate.year - start.year;
+//         if (yearDiff >= 0 && yearDiff % interval === 0) {
+//             if (targetDate.month === start.month && targetDate.day === start.day) {
+//                 isMatch = true;
+//                 occurrenceIndex = yearDiff / interval;
+//             }
+//         }
+//     } else if (unit === 'months') {
+//         const monthDiff = (targetDate.year - start.year) * calendar.months.values.length + (targetDate.month - start.month);
+//         if (monthDiff >= 0 && monthDiff % interval === 0) {
+//              if (targetDate.day === start.day) { 
+//                  isMatch = true;
+//                  occurrenceIndex = monthDiff / interval;
+//              }
+//         }
+//     } else {
+//         const getTimestamp = (d) => {
+//             let dayOfYear = 0;
+//             for (let i = 0; i < d.month; i++) {
+//                 const m = calendar.months.values[i];
+//                 const isLeap = calendar.isLeapYear(d.year);
+//                 const mDays = isLeap && m.leapDays != null ? m.leapDays : m.days;
+//                 dayOfYear += mDays;
+//             }
+//             dayOfYear += d.day;
+//             return calendar.componentsToTime({
+//                 year: d.year,
+//                 day: dayOfYear, 
+//                 hour: 0, minute: 0, second: 0
+//             });
+//         };
 
-        const startTime = getTimestamp(start);
-        const targetTime = getTimestamp(targetDate);
+//         const startTime = getTimestamp(start);
+//         const targetTime = getTimestamp(targetDate);
         
-        const secondsPerDay = calendar.days.hoursPerDay * calendar.days.minutesPerHour * calendar.days.secondsPerMinute;
+//         const secondsPerDay = calendar.days.hoursPerDay * calendar.days.minutesPerHour * calendar.days.secondsPerMinute;
         
-        const diffSeconds = targetTime - startTime;
-        const diffDays = Math.round(diffSeconds / secondsPerDay);
+//         const diffSeconds = targetTime - startTime;
+//         const diffDays = Math.round(diffSeconds / secondsPerDay);
         
-        if (diffDays >= 0 && diffDays % interval === 0) {
-            isMatch = true;
-            occurrenceIndex = diffDays / interval;
-        }
-    }
+//         if (diffDays >= 0 && diffDays % interval === 0) {
+//             isMatch = true;
+//             occurrenceIndex = diffDays / interval;
+//         }
+//     }
 
-    if (isMatch && count > 0 && occurrenceIndex >= count) {
-        return false;
-    }
+//     if (isMatch && count > 0 && occurrenceIndex >= count) {
+//         return false;
+//     }
 
-    return isMatch;
-}
+//     return isMatch;
+// }
 
   async close(options= {}) {
      if ( options.closeKey ) {
@@ -1867,7 +2268,8 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
     const notes = await this._getNotesForDay(date);
     if (!game.user.isGM){
       if (notes.length > 0 && notes.some(n => n.playerVisible)) {
-        this._showViewNotesDialogPlayer(date, notes);
+                this._showViewNotesDialog(date, notes);
+        // this._showViewNotesDialogPlayer(date, notes);
       }
     } else {
       if (notes.length === 0) {
@@ -2211,6 +2613,15 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
   /** Start the loop for automatic time advancement (Recursive Timeout Pattern) */
   _startTime() {
     if (!game.user.isGM) return;
+
+    if (game.paused) {
+        this.wasPausedForGame = true;
+        return;
+    }
+    
+    if (this.wasPausedForCombat && game.combat?.started) {
+        return;
+    }
 
     this._stopTime();
 
@@ -2661,7 +3072,7 @@ async _showWeatherOverrideDialog(targetDate) {
                 ${buttonsHtml}
             </div>
             
-            <p class="notes" style="font-size:0.8em; color: var(--color-text-light-2); margin-top: 5px; text-align: center;">
+            <p class="notes" style="font-size:0.8em; margin-top: 5px; text-align: center;">
                 <em>Click a timeline card above to target it, then select a condition below.</em>
             </p>
         </div>
@@ -2683,7 +3094,6 @@ async _showWeatherOverrideDialog(targetDate) {
 
             // Function to redraw the visual cards based on current 'selections'
             const updateVisuals = () => {
-                // 1. Determine effective weather for each slot
                 const morningVal = selections.morning;
                 const morningData = uiMap[morningVal] || uiMap["none"];
 
@@ -2764,9 +3174,9 @@ async _showWeatherOverrideDialog(targetDate) {
 }
 
 Hooks.on("closeCalendarConfig", () => {
-  const calendarApp =
-    game.wgtngmMiniCalender?.calendarInstance ??
-    Object.values(ui.windows).find((win) => win instanceof wgtngmMiniCalender);
+  const calendarApp = game.wgtngmMiniCalender?.calendarInstance 
+    // game.wgtngmMiniCalender?.calendarInstance ??
+    // Object.values(ui.windows).find((win) => win instanceof wgtngmMiniCalender);
 
   if (calendarApp instanceof wgtngmMiniCalender) {
     console.log("Mini Calendar | Handling config close, re-rendering calendar.");
@@ -2778,9 +3188,9 @@ Hooks.on("closeCalendarConfig", () => {
 Hooks.on("combatStart", (combat, updateData) => {
   if (!game.user.isGM) return;
   const pauseOnCombat = game.settings.get(MODULE_NAME, "pauseOnCombat");
-  const calendarApp =
-    game.wgtngmMiniCalender?.calendarInstance ??
-    Object.values(ui.windows).find((win) => win instanceof wgtngmMiniCalender);
+  const calendarApp = game.wgtngmMiniCalender?.calendarInstance 
+    // game.wgtngmMiniCalender?.calendarInstance ??
+    // Object.values(ui.windows).find((win) => win instanceof wgtngmMiniCalender);
 
   if (pauseOnCombat && calendarApp instanceof wgtngmMiniCalender && calendarApp.isRunning) {
     calendarApp._stopTime();
@@ -2793,9 +3203,9 @@ Hooks.on("combatStart", (combat, updateData) => {
 Hooks.on("deleteCombat", (combat, options, userId) => {
   if (!game.user.isGM) return;
   const resumeAfterCombat = game.settings.get(MODULE_NAME, "resumeAfterCombat");
-  const calendarApp =
-    game.wgtngmMiniCalender?.calendarInstance ??
-    Object.values(ui.windows).find((win) => win instanceof wgtngmMiniCalender);
+  const calendarApp = game.wgtngmMiniCalender?.calendarInstance 
+    // game.wgtngmMiniCalender?.calendarInstance ??
+    // Object.values(ui.windows).find((win) => win instanceof wgtngmMiniCalender);
 
   if (resumeAfterCombat && calendarApp instanceof wgtngmMiniCalender && calendarApp.wasPausedForCombat) {
     calendarApp._startTime();
@@ -2822,7 +3232,7 @@ Hooks.on("updateScene", async (scene, changes, options, userId) => {
 
           }
         if (myFlags.enableWeather !== undefined) {
-          if (!myFlags.enableWeather) await WeatherEngine.playWeatherSound("none");
+          if (!myFlags.enableWeather) await WeatherEngine.disableWeatherEffect();
                 else WeatherEngine.refreshWeather(); 
           }
     }
@@ -2837,9 +3247,8 @@ Hooks.on("canvasReady", async (canvas) => {
 Hooks.on("pauseGame", (paused) => {
   if (!game.user.isGM) return;
   
-  const calendarApp =
-    game.wgtngmMiniCalender?.calendarInstance ??
-    Object.values(ui.windows).find((win) => win instanceof wgtngmMiniCalender);
+  const calendarApp = game.wgtngmMiniCalender?.calendarInstance 
+  // ?? Object.values(ui.windows).find((win) => win instanceof wgtngmMiniCalender);
 
   if (calendarApp instanceof wgtngmMiniCalender) {
     if (paused) {
@@ -2850,7 +3259,6 @@ Hooks.on("pauseGame", (paused) => {
       }
     } else {
       if (calendarApp.wasPausedForGame) {
-        // Double check we aren't in combat before resuming
         if (!calendarApp.wasPausedForCombat) {
             calendarApp._startTime();
         }

@@ -391,12 +391,15 @@
 }
 
 .wgtngmMiniCalender-dialog.dialog.add-note footer.form-footer {
-  width: calc(100% - 20px);
-  margin-left: 10px;
+    width: calc(100% - 20px);
+    margin-left: 10px;
+    position: absolute;
+    bottom: 10px;
 }
 .wgtngmMiniCalender-dialog.dialog.add-note footer.form-footer button {
-  height: 32px;
-  border: 1px dotted;
+    height: 32px !important;
+    border: 1px dotted;
+    --button-size: unset;
 }
 .wgtngmMiniCalender-dialog.dialog.add-note form.standard-form {
   display: flex;
@@ -411,59 +414,71 @@
 }
 
 .wgtngmMiniCalender-dialog.dialog.add-note .dialog-content {
-  height: 100%;
-  overflow-y: auto;
-  margin-right: 0px;
-  display: flex;
-  gap: 8px;
-  padding: 10px 10px 0px 10px;
+    height: 100%;
+    overflow-y: auto;
+    margin-right: 0px;
+    display: flex;
+    gap: 8px;
+    padding: 10px 10px 0px 10px;
+    margin-bottom: 42px;
 }
 
 .wgtngmMiniCalender-dialog.dialog.add-note .calendar-note-item {
-  padding: 8px;
-  border: 1px dotted var(--wgtgm-primary);
-  max-height: 150px;
-  overflow: hidden;
+    border-bottom: 1px dotted var(--wgtgm-primary);
+    padding-bottom: 10px;
 }
 
 .wgtngmMiniCalender-dialog.dialog.add-note .calendar-note-item:hover {
-  border: 1px solid var(--wgtgm-primary);
+/*  border: 1px solid var(--wgtgm-primary);*/
 }
 .wgtngmMiniCalender-dialog.dialog.add-note .no-notes {
   text-align: center;
   font-style: italic;
   margin-top: 10px;
 }
+.wgtngmMiniCalender-dialog.dialog.add-note .note-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: bold;
+    color: var(--color-text-primary);
+    font-size: 14px;
+    justify-content: space-around;
+    flex-direction: row;
+}
+
+.wgtngmMiniCalender-dialog.dialog.add-note .note-time {
+    flex: 0;
+    white-space: nowrap;
+}
+
 .wgtngmMiniCalender-dialog.dialog.add-note .note-title {
-  display: grid;
-  align-items: center;
-  gap: 6px;
-  margin: 0 0 5px 0;
-  font-weight: bold;
-  color: var(--color-text-primary);
-  font-size: 14px;
-  grid-template-columns: 16px 1fr 16px 16px 16px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    flex: 1;
 }
+
+.wgtngmMiniCalender-dialog.dialog.add-note .note-time i,
 .wgtngmMiniCalender-dialog.dialog.add-note .note-title i {
-  color: var(--color-text-primary);
-  font-size: 14px;
+    color: var(--color-text-primary);
+    font-size: 14px;
+    flex: 0 0 14px;
 }
-.wgtngmMiniCalender-dialog.dialog.add-note .note-title .note-control {
+
+.wgtngmMiniCalender-dialog.dialog.add-note .note-header.note-control {
   margin-left: 0;
   cursor: pointer;
   color: #7a6a5a;
   font-size: 0.9em;
 }
 
-.wgtngmMiniCalender-dialog.dialog.add-note .note-title a:first-of-type {
-  margin-left: auto;
-}
 
-.wgtngmMiniCalender-dialog.dialog.add-note .note-title .note-control:hover {
+.wgtngmMiniCalender-dialog.dialog.add-note .note-header .note-control:hover {
   color: #c02020;
 }
 
-.wgtngmMiniCalender-dialog.dialog.add-note .note-title .note-control[data-action="edit-note"]:hover {
+.wgtngmMiniCalender-dialog.dialog.add-note .note-header .note-control[data-action="edit-note"]:hover {
   color: #20c020;
 }
 
@@ -485,10 +500,10 @@
   margin-top: 10px;
 }
 .application.wgtngmMiniCalender-dialog.dialog.add-note {
-  min-width: 340px;
-  max-width: 440px;
-  height: 300px;
-  min-height: 200px;
+    min-width: 340px;
+    max-width: 440px;
+    min-height: 200px;
+    max-height: 800px;
 }
 
 .application.wgtngmMiniCalender-dialog .repeat-input {
@@ -795,7 +810,7 @@
   /* width: calc(100% - 60px); */
   overflow: hidden;
 }
-
+.wgtngmMiniCalender .window-header .fa-map:not(.true),
 .wgtngmMiniCalender .window-header .fa-cloud-sun-rain:not(.true) {
   opacity: 0.5;
 }
@@ -910,8 +925,8 @@
 
 /* Active Target State */
 .wgtngmMiniCalender-dialog .slot-card.active {
-  border-color: var(--color-primary);
-  background: rgba(255, 255, 255, 0.05);
+    border-color: var(--color-border);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .wgtngmMiniCalender-dialog .slot-header {
@@ -1060,4 +1075,273 @@ position: absolute; font-size: 12px; bottom: 5px; color: #555;
     background: var(--color-level-warning);
     color: white;
     border-color: none;
+}
+
+
+/*
+
+EDITOR
+
+*/
+
+.application.wgtngmMiniCalenderMaker{
+    max-height: 1250px;
+    max-width: 800px;
+}
+.wgtngmMiniCalenderMaker table,
+.wgtngmMiniCalenderMaker thead {
+background: none;
+    border: none;
+}
+.wgtngmMiniCalenderMaker tr {
+  background: none;
+}  
+.wgtngmMiniCalenderMaker th,
+.wgtngmMiniCalenderMaker td {
+    padding: 10px 5px;
+}
+
+
+.wgtngmMiniCalenderMaker .editor-card {
+    padding-bottom: 1rem;
+    padding-right: 5px;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    border-bottom: 1px dashed var(--color-tabs-border);
+}
+
+.wgtngmMiniCalenderMaker .editor-card:last-child {
+    border-bottom: none;
+}
+
+.wgtngmMiniCalenderMaker .editor-card h2 {
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+}
+.wgtngmMiniCalenderMaker .grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+      margin-bottom: 10px;
+}
+.wgtngmMiniCalenderMaker .grid-3 { 
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; 
+      margin-bottom: 10px;
+}
+
+
+.wgtngmMiniCalenderMaker .grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+      margin-bottom: 10px;
+}
+.wgtngmMiniCalenderMaker .grid-6 {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr 1fr;
+    gap: 10px;
+    align-items: center;
+  }
+.wgtngmMiniCalenderMaker .timeline-container {
+  display: flex;
+  width: 100%;
+  height: 30px;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+.wgtngmMiniCalenderMaker .timeline-segment {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: bold;
+  border-right: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  text-shadow: 0 1px 2px black;
+}
+.wgtngmMiniCalenderMaker .seg-empty {
+  background-color: #eee;
+  color: #999;
+  text-shadow: none;
+}
+.wgtngmMiniCalenderMaker .seg-ok {
+  background-color: #2e8b57;
+}
+.wgtngmMiniCalenderMaker .seg-conflict {
+  background-color: #b22222;
+}
+.wgtngmMiniCalenderMaker .btn-sm {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.8rem;
+}
+.wgtngmMiniCalenderMaker .input-group label {
+  font-weight: bold;
+  font-size: 0.8em;
+      line-height: 1.6em;
+}
+
+.wgtngmMiniCalenderMaker .error-box { 
+    color: var(--color-level-error);
+    padding: 0.5rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    border: 1px solid var(--color-level-error);
+     }
+.wgtngmMiniCalenderMaker .error-border { 
+    border-radius: 4px;
+    border: 1px solid var(--color-level-error) !important;
+  }
+
+
+
+.wgtngmMiniCalenderMaker .window-content {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+        "nav content"
+        "side content"
+        "footer content";
+    height: 100%;
+    overflow: hidden;
+}
+
+.wgtngmMiniCalenderMaker .sheet-tabs {
+    grid-area: nav;
+    display: flex;
+    flex-direction: column;
+    border: none;
+    padding: 0;
+    align-items: flex-start;
+    width: 150px;
+    gap: 5px;
+    height: fit-content;
+}
+
+.wgtngmMiniCalenderMaker .sheet-tabs a {
+}
+
+.wgtngmMiniCalenderMaker .sheet-tabs a.active {
+    border-left: 4px solid var(--color-text-accent);
+    margin-left: -14px;
+    padding-left: 10px;
+}
+
+.wgtngmMiniCalenderMaker .sidebar-list {
+    grid-area: side;
+    border-top: 1px dashed var(--color-tabs-border);
+    overflow-y: auto;
+    padding-top: 10px;
+    margin-top: 15px;
+    margin-right: 0px;
+    border-right: none;
+}
+
+.wgtngmMiniCalenderMaker .sidebar-list .sidebar-buttons{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  padding-bottom: 10px;
+  gap:5px;
+}
+
+.wgtngmMiniCalenderMaker .sidebar-list .sidebar-buttons button{
+    flex: 1;
+}
+.wgtngmMiniCalenderMaker .sidebar-list h4{
+
+}
+
+.wgtngmMiniCalenderMaker .tab {
+    grid-area: content;
+    overflow-y: auto;
+    height: 100%;
+    padding-left: 15px;
+    margin-right: -15px;
+    padding-right: 5px;
+    border-left: 1px dashed var(--color-tabs-border);
+    margin-left: 10px;
+  }
+
+.wgtngmMiniCalenderMaker .sidebar-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9em;
+    gap: 4px;
+    padding-bottom: 5px;
+    padding-top: 5px;
+    border-bottom: 1px dotted var(--color-tabs-border);
+    margin-bottom: 5px;
+    margin-top: -5px;
+    padding-left: 5px;
+}
+
+.wgtngmMiniCalenderMaker .sidebar-item:hover {
+  background: var(--color-text-selection-bg);
+}
+
+.wgtngmMiniCalenderMaker .sidebar-item span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+}
+
+.wgtngmMiniCalenderMaker .sidebar-item a {
+  width:16px;
+}
+
+.wgtngmMiniCalenderMaker .sidebar-item a[data-action="deleteCalendar"]:hover {
+    color: var(--color-level-error);
+}
+.wgtngmMiniCalenderMaker .sidebar-item a[data-action="exportCalendar"]:hover {
+    color: var(--color-level-success);
+}
+
+
+.wgtngmMiniCalenderMaker .form-footer {
+    grid-area: footer;
+    display: flex;
+    gap: 5px;
+    padding-top: 10px;
+    flex-wrap: wrap;
+}
+
+
+.wgtngmMiniCalenderMaker .form-footer button{
+  flex:1 1 100%;
+}
+.wgtngmMiniCalenderMaker .moon-card,
+.wgtngmMiniCalenderMaker .season-card,
+.wgtngmMiniCalenderMaker .event-card{
+    border-bottom: 1px dotted var(--color-tabs-border); padding:5px; margin-bottom:5px;
+}
+
+
+.application.wgtngmMiniCalenderMaker:not(.minimized, .minimizing, .maximizing) {
+  min-width: 700px;
+  min-height: 600px;
+}
+
+.wgtngmMiniCalender-dialog.edit-note [id="advanced-options-container"]{
+
+}
+
+
+.application.wgtngmMiniCalender-dialog.edit-note [id="advanced-options-container"] label{
+    flex: 0 0 25%;
+}
+
+.application.wgtngmMiniCalender-dialog.edit-note [id="advanced-options-container"] .adv-subgroup{
+  margin-top: 10px;
+}
+
+
+.application.wgtngmMiniCalender-dialog.edit-note [id="advanced-options-container"] .form-group{
+  padding-bottom: 5px;
 }

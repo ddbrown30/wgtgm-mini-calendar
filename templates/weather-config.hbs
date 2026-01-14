@@ -30,6 +30,14 @@
         </div>
         <p class="notes">Play weather sound effects on the environment channel.</p>
     </div>
+        <label>Use Celsius</label>
+    <div class="form-group">
+        <div class="form-fields">
+            <input type="checkbox" name="useCelsius" {{#if useCelsius}}checked{{/if}}>
+        </div>
+        <p class="notes">Display temperatures in Celsius instead of Fahrenheit.</p>
+    </div>   
+<hr>
 <label>Enable Forecasts</label>
     <div class="form-group">
         <div class="form-fields">
@@ -37,13 +45,6 @@
         </div>
         <p class="notes">Generate and display weather for upcoming days.</p>
     </div>
-    <label>Use Celsius</label>
-    <div class="form-group">
-        <div class="form-fields">
-            <input type="checkbox" name="useCelsius" {{#if useCelsius}}checked{{/if}}>
-        </div>
-        <p class="notes">Display temperatures in Celsius instead of Fahrenheit.</p>
-    </div>    
     <label>Broadcast weather to chat</label>
     <div class="form-group">
         <div class="form-fields">
@@ -51,6 +52,14 @@
         </div>
         <p class="notes">Sends a Message to Chat with the days weather on date change.</p>
     </div>
+    <label>Hide Weather Forecasting from players</label>
+    <div class="form-group">
+        <div class="form-fields">
+            <input type="checkbox" name="hideWeatherPlayer" {{#if hideWeatherPlayer}}checked{{/if}}>
+        </div>
+        <p class="notes">If enabled, weather forecasts will be disabled on the calendar</p>
+    </div>
+<hr>
     <label>Non Seasonal Aurora</label>
     <div class="form-group">
         <div class="form-fields">
@@ -65,6 +74,7 @@
             <input type="range" min="0" max="1" step="0.05"><input type="number" min="0" max="1" step="0.05"></range-picker>
         </div>
     </div>
+ 
 
 </div>
 

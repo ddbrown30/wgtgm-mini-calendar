@@ -3,6 +3,7 @@ export const MODULE_NAME = "wgtgm-mini-calendar";
 import { CalendarConfig } from "./calendar-config.js";
 import { WeatherEngine } from "./weather.js";
 import { WeatherConfig } from "./weather-config.js";
+import { CalendarMaker } from "./calendar-maker.js"; 
 export default async function minicalendarSettings() {
     game.settings.register(MODULE_NAME, "runonlyonce", {
         name: "Welcome message",
@@ -14,7 +15,40 @@ export default async function minicalendarSettings() {
         default: false,
     });
 
+    game.settings.register(MODULE_NAME, "lastWeatherBroadcastDate", {
+        scope: "world", 
+        config: false,
+        type: String,
+        default: ""
+    });
+    
+    game.settings.register(MODULE_NAME, "savedCalendars", {
+        name: "Saved Custom Calendars",
+        scope: "world",
+        config: false,
+        type: Object,
+        default: {},
+        requiresReload: false
+    });
 
+    // game.settings.registerMenu(MODULE_NAME, "calendarMakerMenu", {
+    //     name: "Calendar Maker",
+    //     label: "Open Calendar Maker",
+    //     hint: "Create and edit custom calendars to be used in the configuration.",
+    //     icon: "fas fa-edit",
+    //     type: CalendarMaker,
+    //     restricted: true
+    // });
+
+    game.settings.registerMenu(MODULE_NAME, "calendarConfigMenu", {
+        name: "Calendar Configuration",
+        label: "Configure Active Calendar",
+        hint: "Select and apply a preset or custom calendar.",
+        icon: "fas fa-cog",
+        type: CalendarConfig,
+        restricted: true
+    });
+    
     game.settings.register(MODULE_NAME, "calSheetDimensions", {
         name: localize("settings.calSheetDimensions"),
         hint: localize("settings.calSheetDimensionsHint"),
@@ -110,7 +144,7 @@ game.settings.register(MODULE_NAME, "use12hour", {
     });
 
     game.settings.register(MODULE_NAME, "timeIsRunning", {
-        scope: "client", 
+        scope: "world", 
         config: false,
         type: Boolean,
         default: false
@@ -119,7 +153,7 @@ game.settings.register(MODULE_NAME, "use12hour", {
     game.settings.register(MODULE_NAME, "fadedUI", {
         name: localize("settings.fadedUI"), 
         hint: localize("settings.fadedUIHint"), 
-        scope: "cliebt",
+        scope: "client",
         config: true,
         type: Boolean,
         default: true,
@@ -137,7 +171,25 @@ game.settings.register(MODULE_NAME, "use12hour", {
         config: true,
         type: Boolean,
         default: true,
-        requiresReload: false 
+        requiresReload: false,
+        onChange: (value) => {
+            if (!game.user.isGM) return;
+            const calendarApp = game.wgtngmMiniCalender?.calendarInstance;
+            if (!calendarApp) return;
+            if (value) { 
+                if (game.combat?.started) {
+                    calendarApp.wasPausedForCombat = true;
+                    calendarApp._stopTime();
+                    console.log("Mini Calendar | Pause on Combat enabled while in combat. Stopping time.");
+                }
+            } else { 
+                if (calendarApp.wasPausedForCombat) {
+                    calendarApp.wasPausedForCombat = false;
+                    calendarApp._startTime(); 
+                    console.log("Mini Calendar | Pause on Combat disabled. Resuming time.");
+                }
+            }
+        }
     });
 
     game.settings.register(MODULE_NAME, "resumeAfterCombat", {
@@ -226,12 +278,11 @@ game.settings.register(MODULE_NAME, "use12hour", {
         default: ""
     });
 
-    
     // WEATHER
     game.settings.register(MODULE_NAME, "useCelsius", {
         name: "Use Celsius",
         hint: "Display temperatures in Celsius instead of Fahrenheit.",
-        scope: "client",
+        scope: "world",
         config: true,
         type: Boolean,
         default: false,
@@ -243,6 +294,20 @@ game.settings.register(MODULE_NAME, "use12hour", {
     });
 
 
+    game.settings.register(MODULE_NAME, "hideWeatherPlayer", {
+        name: "Hide Weather Forecasting from players",
+        hint: "If enabled, weather forecasts will be disabled on the calendar",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: false,
+        onChange: () => {
+             if (game.wgtngmMiniCalender?.calendarInstance?.rendered) {
+                 game.wgtngmMiniCalender.calendarInstance.render();
+         }
+     }
+    });
+
     game.settings.register(MODULE_NAME, "sceneDefaultWeather", {
         name: "Enable Weather on Scenes",
         hint: "If enabled, created scenes will have weather enabled by default",
@@ -251,6 +316,7 @@ game.settings.register(MODULE_NAME, "use12hour", {
         type: Boolean,
         default: false
     });
+
 
     game.settings.register(MODULE_NAME, "broadcastWeather", {
         name: "Broadcast weather to chat",
@@ -329,7 +395,12 @@ game.settings.register(MODULE_NAME, "use12hour", {
         scope: "world",
         config: false,
         type: Boolean,
-        default: true
+        default: true,
+        onChange: () => {
+             if (game.wgtngmMiniCalender?.calendarInstance?.rendered) {
+                 game.wgtngmMiniCalender.calendarInstance.render();
+             }
+         }
     });
 
     game.settings.register(MODULE_NAME, "enableWeatherSound", {

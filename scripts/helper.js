@@ -12,6 +12,37 @@ export const format = (key, data) =>
 
 export const calendarJournal = "Calendar Events - Mini Calendar";
 
+export const PIN_TYPES = [
+    { key: "fas fa-book", label: "Note" },
+    { key: "fas fa-map-pin", label: "Pin" },
+    { key: "fas fa-scroll", label: "Quest" },
+    { key: "fas fa-skull-crossbones", label: "Danger" },
+    { key: "fas fa-gem", label: "Treasure" },
+    { key: "fas fa-beer", label: "Tavern" },
+    { key: "fas fa-home", label: "Village" },
+    { key: "fas fa-user", label: "NPC" },
+    { key: "fas fa-store", label: "Shop" },
+    { key: "fas fa-sun", label: "Sun" },
+    { key: "fas fa-moon", label: "Moon/Eclipse" },
+    { key: "fas fa-star", label: "Star" },
+    { key: "fas fa-snowflake", label: "Snow" },
+    { key: "fas fa-glass-cheers", label: "Festival" },
+    { key: "fas fa-tree", label: "Nature" },
+    { key: "fas fa-wheat", label: "Harvest" },
+    { key: "fas fa-leaf", label: "Leaf" },
+    { key: "fas fa-balance-scale", label: "Balance" },
+    { key: "fas fa-campground", label: "Camp" },
+    { key: "fas fa-chess-rook", label: "Castle" },
+    { key: "fas fa-place-of-worship", label: "Temple" },
+    { key: "fas fa-dungeon", label: "Dungeon" },
+    { key: "fas fa-dragon", label: "Monster" },
+    { key: "fas fa-hand-holding-magic", label: "Magic" },
+    { key: "fas fa-fist-raised", label: "Battle" },
+    { key: "fas fa-shield-alt", label: "Shield" },
+    { key: "fas fa-water", label: "Water/Sea" },
+    { key: "fas fa-anchor", label: "Port" }
+];
+
 export function handleMPClick(event) {
     const target = event.currentTarget;
     const handler = target.dataset.wgtngm;

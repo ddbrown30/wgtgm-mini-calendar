@@ -1,11 +1,11 @@
-<div class="form-body scrollable" >
+<div class="form-body scrollable">
     <p class="notes">
-        Configure the calendar source. Select a preset, or choose "Custom"
-        to paste your own CalendarData JSON configuration.
+        Configure the calendar source. Select a preset, a saved custom calendar (created in the Calendar Maker), or use "Custom" for manual JSON.
     </p>
+    
     <input type="file" id="wgtgm-import-file" accept=".json" style="display:none;" />
-
     <input type="file" id="wgtgm-import-notes-file" accept=".json" style="display:none;" />
+
     <div class="form-group">
         <label for="calendar-source">Calendar Source</label>
         <div class="form-fields">
@@ -23,14 +23,13 @@
         <label for="time-multiplier">Time Multiplier</label>
         <div class="form-fields">
             <input type="number" name="timeMultiplier" id="time-multiplier" value="{{this.timeMultiplier}}" min="0" step="1">
-            <p class="notes">
-                Set game time passage x times real time (e.g., 2 = 2 game seconds per 1 real second).
-            </p>
+            <p class="notes">Set game time passage x times real time.</p>
         </div>
     </div>
 
     <div class="form-group" id="wgtngm-custom-json-area">
-        <label for="calendar-json">Calendar Configuration JSON (Full Format)</label>
-        <textarea name="calendarJson" id="calendar-json" placeholder="Paste full Foundry CalendarData JSON here...">{{this.calendarJson}}</textarea>
+        <label for="calendar-json">Calendar Configuration JSON</label>
+        <p class="notes">View only for presets/saved calendars. Editable for "Custom (Manual JSON)".</p>
+        <textarea name="calendarJson" id="calendar-json" style="height:300px;">{{this.calendarJson}}</textarea>
     </div>
 </div>

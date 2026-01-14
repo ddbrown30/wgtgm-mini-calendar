@@ -7,9 +7,12 @@ export class WeatherConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         tag: "form",
         id: "wgtgm-weather-config",
         classes: ["wgtngmWeatherConfig"],
+        window: { 
+      icon: 'fas fa-cloud-sun',
         title: "Weather Configuration",
-        window: { resizable: false },
-        position: { width: 400, height: "auto" },
+        resizable: false 
+        },
+        position: { width: 440, height: "auto" },
         actions:{
             openBiomeEditor: () => new BiomeConfig().render(true)
         },
@@ -27,6 +30,7 @@ export class WeatherConfig extends HandlebarsApplicationMixin(ApplicationV2) {
 
     async _prepareContext(options) {
         return {
+            hideWeatherPlayer: game.settings.get(MODULE_NAME, "hideWeatherPlayer"),
             broadcastWeather: game.settings.get(MODULE_NAME, "broadcastWeather"),
             biome: game.settings.get(MODULE_NAME, "biome"),
             auroraChance: game.settings.get(MODULE_NAME, "auroraChance"),
@@ -46,6 +50,7 @@ export class WeatherConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     static async #onSubmit(event, form, formData) {
+        await game.settings.set(MODULE_NAME, "hideWeatherPlayer", formData.object.hideWeatherPlayer);
         await game.settings.set(MODULE_NAME, "broadcastWeather", formData.object.broadcastWeather);
         await game.settings.set(MODULE_NAME, "biome", formData.object.biome);
         await game.settings.set(MODULE_NAME, "auroraChance", formData.object.auroraChance);

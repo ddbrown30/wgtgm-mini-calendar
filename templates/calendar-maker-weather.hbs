@@ -1,0 +1,53 @@
+
+
+<div class="tab{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
+
+
+
+            <div class="editor-card">
+                <h2>Weather <button type="button" data-action="addWeather" class="btn-sm"><i class="fas fa-plus"></i> Add</button></h2>
+                
+                <div class="timeline-container">
+                    {{#each months}}<div class="timeline-segment {{weatherClass}}">{{abbreviation}}</div>{{/each}}
+                </div>
+                {{#if weatherErrors.length}}<div class="error-box">Overlap Detected in Weather!</div>{{/if}}
+                {{#if weather}}
+
+                <table>
+                    <thead><tr><th>Use</th><th>Type</th><th>Start</th><th>End</th><th>Off.</th><th></th></tr></thead>
+                    <tbody>
+                        {{#each weather}}
+                        <tr class="{{#if isOverlapping}}error-border{{/if}}">
+                            <td><input type="checkbox" name="weather.values.{{index}}.included" {{#if included}}checked{{/if}}></td>
+                            <td>
+                                <select name="weather.values.{{index}}.name" {{#unless included}}disabled{{/unless}}>
+                                    {{#each ../weatherTypes}}
+                                    <option value="{{this}}" {{#if (eq this ../name)}}selected{{/if}}>{{this}}</option>
+                                    {{/each}}
+                                </select>
+                            </td>
+                            <td>
+                                <select name="weather.values.{{index}}.monthStart" {{#unless included}}disabled{{/unless}}>
+                                    {{#each ../uniqueMonthOrdinals}}
+                                    <option value="{{ordinal}}" {{#if (eq ordinal ../monthStart)}}selected{{/if}}>{{displayName}}</option>
+                                    {{/each}}
+                                </select>
+                            </td>
+                            <td>
+                                <select name="weather.values.{{index}}.monthEnd" {{#unless included}}disabled{{/unless}}>
+                                    {{#each ../uniqueMonthOrdinals}}
+                                    <option value="{{ordinal}}" {{#if (eq ordinal ../monthEnd)}}selected{{/if}}>{{displayName}}</option>
+                                    {{/each}}
+                                </select>
+                            </td>
+                            <td><input type="number" name="weather.values.{{index}}.tempOffset" value="{{tempOffset}}" {{#unless included}}disabled{{/unless}}></td>
+                            <td><a data-action="removeWeather" data-index="{{index}}" style="color:red;"><i class="fas fa-trash"></i></a></td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+                {{/if}}
+            </div>
+        </div>
+
+  

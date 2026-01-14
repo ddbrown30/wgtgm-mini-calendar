@@ -1,0 +1,25 @@
+
+
+<div class="tab{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
+            <div class="editor-card">
+                <h2>Weekdays <button type="button" data-action="addDay" class="btn-sm"><i class="fas fa-plus"></i> Add</button></h2>
+                                {{#if days}}
+
+                <table>
+                    <thead><tr><th>Ord</th><th>Name</th><th>Abbr</th><th></th></tr></thead>
+                    <tbody>
+                        {{#each days}}
+                        <tr>
+                            <td style="width:40px;"><input type="number" name="days.values.{{index}}.ordinal" value="{{ordinal}}"></td>
+                            <td><input type="text" name="days.values.{{index}}.name" value="{{name}}"></td>
+                            <td><input type="text" name="days.values.{{index}}.abbreviation" value="{{abbreviation}}"></td>
+                            <td style="width:30px;"><a data-action="removeDay" data-index="{{index}}" style="color:red;"><i class="fas fa-trash"></i></a></td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+                {{/if}}
+            </div>
+        </div>
+  
+      

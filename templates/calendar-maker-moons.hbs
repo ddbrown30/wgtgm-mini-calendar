@@ -1,0 +1,49 @@
+
+
+<div class="tab{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
+
+            <div class="editor-card">
+                <h2>Moons <button type="button" data-action="addMoon" class="btn-sm"><i class="fas fa-plus"></i> Add</button></h2>
+                {{#each moons}}
+                <div class="moon-card">
+                     <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                        <input type="text" name="moons.values.{{index}}.name" value="{{name}}" style="font-weight:bold; width:50%;" placeholder="Moon Name">
+                        <a data-action="removeMoon" data-index="{{index}}" style="color:red;"><i class="fas fa-trash"></i> Remove Moon</a>
+                    </div>
+                    <div class="grid-3">
+                        <div class="input-group"><label>Cycle (Days)</label><input type="number" step="0.01" name="moons.values.{{index}}.cycleLength" value="{{cycleLength}}"></div>
+                        <div class="input-group"><label>Offset</label><input type="number" name="moons.values.{{index}}.offset" value="{{offset}}"></div>
+                        <div class="input-group"><label>Color</label><input type="color" name="moons.values.{{index}}.color" value="{{color}}" style="height:30px; width:100%;"></div>
+                    </div>
+                     <div class="input-group" style="margin-top:5px;">
+                        <label>First New Moon (Year / Month / Day)</label>
+                        <div style="display:flex; gap:5px;">
+                            <input type="number" name="moons.values.{{index}}.firstNewMoon.year" value="{{firstNewMoon.year}}">
+                            <input type="number" name="moons.values.{{index}}.firstNewMoon.month" value="{{firstNewMoon.month}}">
+                            <input type="number" name="moons.values.{{index}}.firstNewMoon.day" value="{{firstNewMoon.day}}">
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top:5px; padding-top:5px;">
+                        <label>Phases</label>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                        {{#each phases as |phase pIndex|}}
+                            <div style="display:flex; gap:5px; align-items:center;">
+                                 <input type="hidden" name="moons.values.{{../index}}.phases.{{pIndex}}.name" value="{{phase.name}}">
+                                 <input type="hidden" name="moons.values.{{../index}}.phases.{{pIndex}}.icon" value="{{phase.icon}}">
+
+                                 <input type="checkbox" name="moons.values.{{../index}}.phases.{{pIndex}}.included" {{#if phase.included}}checked{{/if}}>
+                                 <span style="font-size:0.8em; flex:0.4;">{{phase.name}}</span>
+                                 
+                                 <input type="text" name="moons.values.{{../index}}.phases.{{pIndex}}.display" value="{{phase.display}}" placeholder="Display Name" style="flex:1;" {{#unless phase.included}}disabled{{/unless}}>
+                                 <input type="number" step="0.1" name="moons.values.{{../index}}.phases.{{pIndex}}.length" value="{{phase.length}}" style="width:50px;" {{#unless phase.included}}disabled{{/unless}}>
+                            </div>
+                        {{/each}}
+                        </div>
+                    </div>
+                </div>
+                {{/each}}
+            </div>
+        </div>
+
+  

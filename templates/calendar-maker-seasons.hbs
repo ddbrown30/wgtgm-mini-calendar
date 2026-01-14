@@ -1,0 +1,44 @@
+
+
+<div class="tab{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
+
+
+            <div class="editor-card">
+                <h2>Seasons <button type="button" data-action="addSeason" class="btn-sm"><i class="fas fa-plus"></i> Add</button></h2>
+                
+                <div class="timeline-container">
+                    {{#each months}}<div class="timeline-segment {{seasonClass}}">{{abbreviation}}</div>{{/each}}
+                </div>
+                {{#if seasonErrors.length}}<div class="error-box">Overlap Detected in Seasons!</div>{{/if}}
+
+                {{#each seasons}}
+                <div class="season-card {{#if isOverlapping}}error-border{{/if}}">
+                    <div style="display:flex; justify-content:space-between; margin-bottom: 5px;">
+                        <div style="display:flex; gap: 5px; align-items:center;">
+                            <input type="checkbox" name="seasons.values.{{index}}.included" {{#if included}}checked{{/if}} title="Include in Export">
+                            <strong>Season {{index}}</strong>
+                        </div>
+                        <a data-action="removeSeason" data-index="{{index}}" style="color:red;"><i class="fas fa-trash"></i></a>
+                    </div>
+                    <div class="grid-2">
+                         <input type="text" name="seasons.values.{{index}}.name" value="{{name}}" placeholder="Season Name" {{#unless included}}disabled{{/unless}}>
+                         <div style="display:flex; gap:5px;">
+                            <select name="seasons.values.{{index}}.monthStart" {{#unless included}}disabled{{/unless}}>
+                                {{#each ../uniqueMonthOrdinals}}
+                                <option value="{{ordinal}}" {{#if (eq ordinal ../monthStart)}}selected{{/if}}>{{displayName}}</option>
+                                {{/each}}
+                            </select>
+                            <span style="align-self:center;">to</span>
+                            <select name="seasons.values.{{index}}.monthEnd" {{#unless included}}disabled{{/unless}}>
+                                {{#each ../uniqueMonthOrdinals}}
+                                <option value="{{ordinal}}" {{#if (eq ordinal ../monthEnd)}}selected{{/if}}>{{displayName}}</option>
+                                {{/each}}
+                            </select>
+                         </div>
+                    </div>
+                </div>
+                {{/each}}
+            </div>
+        </div>
+   
+ 

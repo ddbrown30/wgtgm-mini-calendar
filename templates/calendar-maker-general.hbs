@@ -1,0 +1,36 @@
+
+
+<div class="tab{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
+            <div class="editor-card">
+                <h2>General Information</h2>
+                <div class="grid-2">
+                    <div class="input-group"><label>Name</label><input type="text" name="name" value="{{config.name}}"></div>
+                    <div class="input-group"><label>Unique ID</label><input type="text" name="id" value="{{config.id}}"></div>
+                </div>
+                <div class="input-group"><label>Description</label><input type="text" name="description" value="{{config.description}}"></div>
+            </div>
+
+                        <div class="editor-card">
+                <h2>Mechanics</h2>
+                <div class="grid-4">
+                    <div class="input-group"><label>Hrs/Day</label><input type="number" name="days.hoursPerDay" value="{{config.days.hoursPerDay}}"></div>
+                    <div class="input-group"><label>Min/Hr</label><input type="number" name="days.minutesPerHour" value="{{config.days.minutesPerHour}}"></div>
+                    <div class="input-group"><label>Sec/Min</label><input type="number" name="days.secondsPerMinute" value="{{config.days.secondsPerMinute}}"></div>
+                    <div class="input-group"><label>Year 0</label><input type="number" name="years.yearZero" value="{{config.years.yearZero}}"></div>
+                </div>
+                <div class="grid-4" style="margin-top:10px;">
+                    <div class="input-group"><label>Leap Int.</label><input type="number" name="years.leapYear.leapInterval" value="{{config.years.leapYear.leapInterval}}"></div>
+                    <div class="input-group"><label>Leap Start</label><input type="number" name="years.leapYear.leapStart" value="{{config.years.leapYear.leapStart}}"></div>
+                    <div class="input-group"><label>1st WkDay</label><input type="number" name="years.firstWeekday" value="{{config.years.firstWeekday}}"></div>
+                    <div class="input-group" style="display:flex; align-items:center;">
+                        <label style="margin-right:5px;">Fixed Cal</label>
+                        <input type="checkbox" name="years.resetWeekdays" {{#if config.years.resetWeekdays}}checked{{/if}}>
+                    </div>
+                </div>
+                <div style="margin-top:10px; padding:5px; background:rgba(0,0,0,0.05); border-radius:4px;">
+                    <label style="font-weight:bold;">Calculated Days / Year: </label>
+                    <span>{{config.days.daysPerYear}}</span>
+                </div>
+            </div>
+        </div>
+
