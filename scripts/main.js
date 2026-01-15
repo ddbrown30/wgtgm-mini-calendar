@@ -64,7 +64,6 @@ Hooks.on("renderSceneConfig", (app, html, data) => {
     const defaultEnabled = game.settings.get(MODULE_NAME, "defaultSceneDarkness");
     const currentFlag = app.document.getFlag(MODULE_NAME, "enableDarkness");
     const weatherFlag = app.document.getFlag(MODULE_NAME, "enableWeather");
-    console.log(app);
     const isEnabled = currentFlag !== undefined ? currentFlag : defaultEnabled;
     const isWeatherEnabled = weatherFlag !== undefined ? weatherFlag : sceneDefaultWeather;
     const injection = `
@@ -84,12 +83,12 @@ Hooks.on("renderSceneConfig", (app, html, data) => {
             </div>
         </fieldset>
     `;
-    const $html = $(html);
-    const $lightingTab = $html.find('div[data-tab="ambience"]');
-    if ($lightingTab.length > 0) {
-        $lightingTab.append(injection);
-        app.setPosition({ height: "auto" });
-    }
+    // const $html = $(html);
+    const target = html.querySelector('div[data-tab="ambience"] > div[data-tab="basic"] > fieldset:last-of-type');
+      if (target) {
+        target.insertAdjacentHTML("afterend", injection);
+      }
+
 });
 
 Hooks.once("init", async function () {

@@ -1,3 +1,7 @@
+#3.1
+- fixed potential clash with scene config 
+
+
 #3.0
 - Added Calendar Wizard
 - Added New Event repetition options
