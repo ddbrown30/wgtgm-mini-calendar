@@ -4,11 +4,6 @@ import { PIN_TYPES,confirmationDialog } from "./helper.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
-
-
-// var ApplicationV2 = foundry.applications.api.ApplicationV2;
-// var HandlebarsApplicationMixin = foundry.applications.api.HandlebarsApplicationMixin;
-// const calendarFormMaker = HandlebarsApplicationMixin(ApplicationV2);
     
 export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
     static DEFAULT_OPTIONS = {
@@ -78,35 +73,35 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
 
         general: {
             template: `modules/wgtgm-mini-calendar/templates/calendar-maker-general.hbs`,
-            scrollable: [".editor-main"],
+            scrollable: ["",".scrollable",".editor-main"],
         },
         months: {
             template: `modules/wgtgm-mini-calendar/templates/calendar-maker-months.hbs`,
-            scrollable: [".editor-main"],
+            scrollable: ["",".scrollable",".editor-main"],
         },
         weekdays: {
             template: `modules/wgtgm-mini-calendar/templates/calendar-maker-weekdays.hbs`,
-            scrollable: [".editor-main"],
+            scrollable: ["",".scrollable",".editor-main"],
         },
         events: {
             template: `modules/wgtgm-mini-calendar/templates/calendar-maker-events.hbs`,
-            scrollable: [".editor-main"],
+            scrollable: ["",".scrollable",".editor-main"],
         },
         seasons: {
             template: `modules/wgtgm-mini-calendar/templates/calendar-maker-seasons.hbs`,
-            scrollable: [".editor-main"],
+            scrollable: ["",".scrollable",".editor-main"],
         },
         sun: {
             template: `modules/wgtgm-mini-calendar/templates/calendar-maker-sun.hbs`,
-            scrollable: [".editor-main"],
+            scrollable: ["",".scrollable",".editor-main"],
         },
         weather: {
             template: `modules/wgtgm-mini-calendar/templates/calendar-maker-weather.hbs`,
-            scrollable: [".editor-main"],
+            scrollable: ["",".scrollable",".editor-main"],
         },
         moons: {
             template: `modules/wgtgm-mini-calendar/templates/calendar-maker-moons.hbs`,
-            scrollable: [".editor-main"],
+            scrollable: ["",".scrollable",".editor-main"],
         },
         footer: {
             template: "templates/generic/form-footer.hbs",

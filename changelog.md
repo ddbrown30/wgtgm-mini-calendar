@@ -1,3 +1,6 @@
+#3.2
+- fixed creator scroll
+
 #3.1
 - fixed potential clash with scene config 
 
