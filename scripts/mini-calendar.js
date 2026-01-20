@@ -698,10 +698,14 @@ static async #_toggleWeatherSound(event, target) {
 
     const uiConfig = game.settings.get("core", "uiConfig") || {};
     const colorScheme = uiConfig.colorScheme;
-    const interfaceTheme = colorScheme?.interface ? `theme-${colorScheme.interface}` : "";
+    const systemTheme = matchMedia("(prefers-color-scheme: dark)").matches ? 'dark' : 'light';
+    const activeTheme = colorScheme?.interface || systemTheme;
+    const dockedTheme = `theme-${activeTheme}`;
+    
+
     if (dockSidebar) {
         if (players && players.parentNode) {
-            this.element.classList.add("docked", interfaceTheme);
+            this.element.classList.add("docked", dockedTheme);
             if (this.element.parentNode !== players.parentNode) {
                 players.parentNode.insertBefore(this.element, players);
             }
