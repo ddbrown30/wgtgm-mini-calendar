@@ -1,5 +1,32 @@
 <div class="form-body">
     <div class="form-group biomes">
+        <label>Weather Engine</label>
+        <div class="form-fields">
+            <select name="weatherEngine">
+                <option value="default" {{#unless useHistoricalData}}selected{{/unless}}>Biomes</option>
+                <option value="historical" {{#if useHistoricalData}}selected{{/if}}>Earth Historical Weather</option>
+            </select>
+        </div>
+        <p class="notes">Determines how weather is generated.</p>
+        {{#if useHistoricalData}}
+        <div class="flexrow hist-coords">
+            <div class="flexcolumn">
+                <label>Latitude</label>
+                <input type="text" name="historicalDataLat" value="{{historicalDataLat}}" />
+            </div>
+
+            <div class="flexcolumn">
+                <label>Longitude</label>
+                <input type="text" name="historicalDataLong" value="{{historicalDataLong}}" />
+            </div>
+        </div>
+        <p class="notes">The real world WGS84 latitude and longitude to use for historical weather data.</p>
+
+        <label>Year</label>
+        <input type="text" name="historicalDataYear" value="{{historicalDataYear}}" />
+        <p class="notes">The real world year to use for historical weather data.</p>
+        <p class="notes">Data goes back as far as 1940. Using the current year is not recommended so as not to request data from the future.</p>
+        {{else}}
         <label>Current Biome</label>
         <div class="form-fields">
             <select name="biome">
@@ -9,13 +36,14 @@
             </select>
         </div>
         <p class="notes">Determines weather patterns and temperature ranges.</p>
-    <label>Biome Configuration</label>
-    <button type="button" data-action="openBiomeEditor">
-        <i class="fas fa-hexagon"></i> Open Hex Map Editor
-    </button>
-    <p class="notes">Edit the weather map and unpredictability settings.</p>
-</div>
-<hr>
+        <label>Biome Configuration</label>
+        <button type="button" data-action="openBiomeEditor">
+            <i class="fas fa-hexagon"></i> Open Hex Map Editor
+        </button>
+        <p class="notes">Edit the weather map and unpredictability settings.</p>
+        {{/if}}
+    </div>
+    <hr>
     <label>Enable Visual Effects</label>
     <div class="form-group">
         <div class="form-fields">
@@ -30,15 +58,15 @@
         </div>
         <p class="notes">Play weather sound effects on the environment channel.</p>
     </div>
-        <label>Use Celsius</label>
+    <label>Use Celsius</label>
     <div class="form-group">
         <div class="form-fields">
             <input type="checkbox" name="useCelsius" {{#if useCelsius}}checked{{/if}}>
         </div>
         <p class="notes">Display temperatures in Celsius instead of Fahrenheit.</p>
-    </div>   
-<hr>
-<label>Enable Forecasts</label>
+    </div>
+    <hr>
+    <label>Enable Forecasts</label>
     <div class="form-group">
         <div class="form-fields">
             <input type="checkbox" name="enableWeatherForecast" {{#if enableWeatherForecast}}checked{{/if}}>
@@ -59,7 +87,8 @@
         </div>
         <p class="notes">If enabled, weather forecasts will be disabled on the calendar</p>
     </div>
-<hr>
+    {{#unless useHistoricalData}}
+    <hr>
     <label>Non Seasonal Aurora</label>
     <div class="form-group">
         <div class="form-fields">
@@ -71,11 +100,8 @@
     <div class="form-group">
         <div class="form-fields" style="flex-grow: 1;">
             <range-picker name="auroraChance" value="{{auroraChance}}" min="0" max="1" step="0.05">
-            <input type="range" min="0" max="1" step="0.05"><input type="number" min="0" max="1" step="0.05"></range-picker>
+                <input type="range" min="0" max="1" step="0.05"><input type="number" min="0" max="1" step="0.05"></range-picker>
         </div>
     </div>
- 
-
+    {{/unless}}
 </div>
-
-

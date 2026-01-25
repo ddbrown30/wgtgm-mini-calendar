@@ -815,6 +815,14 @@
   opacity: 0.5;
 }
 
+.wgtngmWeatherConfig .window-content {
+  overflow-y: auto;
+}
+
+.wgtngmWeatherConfig .hist-coords {
+  gap: 10px;
+}
+
 .wgtngmWeatherConfig .form-group:not(.biomes) {
   display: flex;
   gap: 8px;
@@ -1042,23 +1050,23 @@
     flex: 1;
 }
 
-.wgtngmBiomeConfig .hex-cell { 
+.wgtngmBiomeConfig .hex-cell {
     background: var(--color-light-1);
     z-index: 10;
     transform: scale(1);
 }
-.wgtngmBiomeConfig .hex-cell.active { 
+.wgtngmBiomeConfig .hex-cell.active {
     background-color: var(--color-level-warning);
     transform: scale(1.1);
 }
 
-.wgtngmBiomeConfig .hex-cell.active i { 
-  color: white !important; 
+.wgtngmBiomeConfig .hex-cell.active i {
+  color: white !important;
 }
-.wgtngmBiomeConfig .hex-cell i { 
+.wgtngmBiomeConfig .hex-cell i {
 font-size: 32px; color: #333; pointer-events: none;
 }
-.wgtngmBiomeConfig .hex-cell span { 
+.wgtngmBiomeConfig .hex-cell span {
 position: absolute; font-size: 12px; bottom: 5px; color: #555;
 }
 
@@ -1068,7 +1076,7 @@ position: absolute; font-size: 12px; bottom: 5px; color: #555;
     gap: 5px;
 }
 
-.wgtngmBiomeConfig .weather-btn:hover { 
+.wgtngmBiomeConfig .weather-btn:hover {
   background: rgba(0,0,0,0.1); }
 
 .wgtngmBiomeConfig .weather-btn.active {
@@ -1095,7 +1103,7 @@ background: none;
 }
 .wgtngmMiniCalenderMaker tr {
   background: none;
-}  
+}
 .wgtngmMiniCalenderMaker th,
 .wgtngmMiniCalenderMaker td {
     padding: 10px 5px;
@@ -1126,8 +1134,8 @@ background: none;
   gap: 10px;
       margin-bottom: 10px;
 }
-.wgtngmMiniCalenderMaker .grid-3 { 
-  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; 
+.wgtngmMiniCalenderMaker .grid-3 {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
       margin-bottom: 10px;
 }
 
@@ -1184,14 +1192,14 @@ background: none;
       line-height: 1.6em;
 }
 
-.wgtngmMiniCalenderMaker .error-box { 
+.wgtngmMiniCalenderMaker .error-box {
     color: var(--color-level-error);
     padding: 0.5rem;
     border-radius: 4px;
     margin-bottom: 1rem;
     border: 1px solid var(--color-level-error);
      }
-.wgtngmMiniCalenderMaker .error-border { 
+.wgtngmMiniCalenderMaker .error-border {
     border-radius: 4px;
     border: 1px solid var(--color-level-error) !important;
   }

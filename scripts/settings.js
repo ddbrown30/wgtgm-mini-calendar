@@ -3,7 +3,7 @@ export const MODULE_NAME = "wgtgm-mini-calendar";
 import { CalendarConfig } from "./calendar-config.js";
 import { WeatherEngine } from "./weather.js";
 import { WeatherConfig } from "./weather-config.js";
-import { CalendarMaker } from "./calendar-maker.js"; 
+import { CalendarMaker } from "./calendar-maker.js";
 export default async function minicalendarSettings() {
     game.settings.register(MODULE_NAME, "runonlyonce", {
         name: "Welcome message",
@@ -16,12 +16,12 @@ export default async function minicalendarSettings() {
     });
 
     game.settings.register(MODULE_NAME, "lastWeatherBroadcastDate", {
-        scope: "world", 
+        scope: "world",
         config: false,
         type: String,
         default: ""
     });
-    
+
     game.settings.register(MODULE_NAME, "savedCalendars", {
         name: "Saved Custom Calendars",
         scope: "world",
@@ -48,14 +48,14 @@ export default async function minicalendarSettings() {
         type: CalendarConfig,
         restricted: true
     });
-    
+
     game.settings.register(MODULE_NAME, "calSheetDimensions", {
         name: localize("settings.calSheetDimensions"),
         hint: localize("settings.calSheetDimensionsHint"),
         scope: "client",
-        config: false,  
+        config: false,
         type: Object,
-        default: { width: 400, height: 450, top: 100, left: 100 } 
+        default: { width: 400, height: 450, top: 100, left: 100 }
     });
 
     game.settings.register(MODULE_NAME, "calSheetOpened", {
@@ -94,9 +94,9 @@ export default async function minicalendarSettings() {
         scope: "client",
         config: false,
         type: Boolean,
-        default: false 
+        default: false
     });
-    
+
     game.settings.register(MODULE_NAME, "calendarConfiguration", {
         scope: "world",
         config: false,
@@ -110,7 +110,7 @@ export default async function minicalendarSettings() {
         config: false,
         type: String,
         default: "world",
-        requiresReload: true 
+        requiresReload: true
     });
 
     game.settings.registerMenu(MODULE_NAME, "calendarConfigMenu", {
@@ -124,7 +124,7 @@ export default async function minicalendarSettings() {
 
     game.settings.register(MODULE_NAME, "timeMultiplier", {
           scope: "world",
-        config: false, 
+        config: false,
         type: Number,
         default: 1
     });
@@ -135,7 +135,7 @@ game.settings.register(MODULE_NAME, "use12hour", {
         scope: "client",
         config: true,
         type: Boolean,
-        default: false, 
+        default: false,
         onChange: () => {
              if (game.wgtngmMiniCalender?.calendarInstance?.rendered) {
                  game.wgtngmMiniCalender.calendarInstance.render();
@@ -144,15 +144,15 @@ game.settings.register(MODULE_NAME, "use12hour", {
     });
 
     game.settings.register(MODULE_NAME, "timeIsRunning", {
-        scope: "world", 
+        scope: "world",
         config: false,
         type: Boolean,
         default: false
     });
 
     game.settings.register(MODULE_NAME, "fadedUI", {
-        name: localize("settings.fadedUI"), 
-        hint: localize("settings.fadedUIHint"), 
+        name: localize("settings.fadedUI"),
+        hint: localize("settings.fadedUIHint"),
         scope: "client",
         config: true,
         type: Boolean,
@@ -165,8 +165,8 @@ game.settings.register(MODULE_NAME, "use12hour", {
     });
 
     game.settings.register(MODULE_NAME, "pauseOnCombat", {
-        name: localize("settings.pauseOnCombat"), 
-        hint: localize("settings.pauseOnCombatHint"), 
+        name: localize("settings.pauseOnCombat"),
+        hint: localize("settings.pauseOnCombatHint"),
         scope: "world",
         config: true,
         type: Boolean,
@@ -176,16 +176,16 @@ game.settings.register(MODULE_NAME, "use12hour", {
             if (!game.user.isGM) return;
             const calendarApp = game.wgtngmMiniCalender?.calendarInstance;
             if (!calendarApp) return;
-            if (value) { 
+            if (value) {
                 if (game.combat?.started) {
                     calendarApp.wasPausedForCombat = true;
                     calendarApp._stopTime();
                     console.log("Mini Calendar | Pause on Combat enabled while in combat. Stopping time.");
                 }
-            } else { 
+            } else {
                 if (calendarApp.wasPausedForCombat) {
                     calendarApp.wasPausedForCombat = false;
-                    calendarApp._startTime(); 
+                    calendarApp._startTime();
                     console.log("Mini Calendar | Pause on Combat disabled. Resuming time.");
                 }
             }
@@ -193,13 +193,13 @@ game.settings.register(MODULE_NAME, "use12hour", {
     });
 
     game.settings.register(MODULE_NAME, "resumeAfterCombat", {
-        name: localize("settings.resumeAfterCombat"), 
-        hint: localize("settings.resumeAfterCombatHint"), 
+        name: localize("settings.resumeAfterCombat"),
+        hint: localize("settings.resumeAfterCombatHint"),
         scope: "world",
-        config: true, 
+        config: true,
         type: Boolean,
         default: false,
-        requiresReload: false 
+        requiresReload: false
     });
 
     game.settings.register(MODULE_NAME, "enableDarknessControl", {
@@ -272,7 +272,7 @@ game.settings.register(MODULE_NAME, "use12hour", {
 
 
     game.settings.register(MODULE_NAME, "customCalendarDraft", {
-        scope: "world", 
+        scope: "world",
         config: false,
         type: String,
         default: ""
@@ -367,7 +367,7 @@ game.settings.register(MODULE_NAME, "use12hour", {
     game.settings.register(MODULE_NAME, "biome", {
         name: "Current Biome",
         scope: "world",
-        config: false, 
+        config: false,
         type: String,
         default: "temperate"
     });
@@ -375,13 +375,13 @@ game.settings.register(MODULE_NAME, "use12hour", {
     game.settings.register(MODULE_NAME, "enableWeatherEffects", {
         name: "Enable Visual Effects",
         scope: "world",
-        config: false, 
+        config: false,
         type: Boolean,
         default: true,
         onChange: (value) => {
             import("./weather.js").then(({WeatherEngine}) => {
-                if (!value) WeatherEngine.applyWeatherEffect("none");
-                else WeatherEngine.refreshWeather(); 
+                if (!value) game.wgtngmMiniCalender.weatherEngine.applyWeatherEffect("none");
+                else game.wgtngmMiniCalender.weatherEngine.refreshWeather();
             });
             if (game.wgtngmMiniCalender.calendarInstance && game.user.isGM) {
                 const fxIcon = game.wgtngmMiniCalender.calendarInstance.element.querySelector('[data-action="toggle-weather-fx"]');
@@ -406,23 +406,51 @@ game.settings.register(MODULE_NAME, "use12hour", {
     game.settings.register(MODULE_NAME, "enableWeatherSound", {
         name: "Enable Weather Sounds",
         hint: "Play ambient sound effects matching the current weather.",
-        scope: "world", 
+        scope: "world",
         config: false,
         type: Boolean,
         default: true,
         onChange: (value) => {
              if (!value) {
                  import("./weather.js").then(({WeatherEngine}) => {
-                    WeatherEngine.stopWeatherSounds();
+                    game.wgtngmMiniCalender.weatherEngine.stopWeatherSounds();
                  });
              }
             if (game.wgtngmMiniCalender.calendarInstance && game.user.isGM) {
-                WeatherEngine.refreshWeather();
+                game.wgtngmMiniCalender.weatherEngine.refreshWeather();
                 const soundIcon = game.wgtngmMiniCalender.calendarInstance.element.querySelector('[data-action="toggle-weather-sound"]');
-                soundIcon.classList.toggle('fa-volume-high', value);      
+                soundIcon.classList.toggle('fa-volume-high', value);
                 soundIcon.classList.toggle('fa-volume-xmark', !value);
             }
         }
+    });
+
+    game.settings.register(MODULE_NAME, "useHistoricalData", {
+        scope: "world",
+        config: false,
+        type: Boolean,
+        default: false,
+    });
+
+    game.settings.register(MODULE_NAME, "historicalDataLat", {
+        scope: "world",
+        config: false,
+        type: Number,
+        default: 0,
+    });
+
+    game.settings.register(MODULE_NAME, "historicalDataLong", {
+        scope: "world",
+        config: false,
+        type: Number,
+        default: 0,
+    });
+
+    game.settings.register(MODULE_NAME, "historicalDataYear", {
+        scope: "world",
+        config: false,
+        type: Number,
+        default: 2000,
     });
 
 game.settings.register(MODULE_NAME, "customBiomeMap", {

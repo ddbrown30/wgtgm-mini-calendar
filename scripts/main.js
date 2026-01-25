@@ -3,8 +3,9 @@ import { wgtngmMiniCalender } from "./mini-calendar.js";
 import { handleMPClick, localize, openwgtngmMiniCalendarSheet,openwgtngmMiniCalendarAPI } from "./helper.js";
 import { CalendarConfig } from "./calendar-config.js";
 import { createMiniCalendarClass } from "./CalendarClass.js";
-import { weatherEffects, WeatherEngine } from "./weather.js"; 
+import { weatherEffects, WeatherEngine } from "./weather.js";
 import { PlaylistImporter } from "./playlist-importer.js"; // <--- New Import
+import { HistoricalDataWeatherEngine } from "./historical-data-engine.js";
 let DEFAULT_CALENDAR;
 
 export function setCalendarJSON(firstTime = false) {
@@ -35,7 +36,7 @@ export function setCalendarJSON(firstTime = false) {
             }
         }
     }
-    
+
     if (!firstTime) {
         game.time.initializeCalendar();
     }
@@ -109,7 +110,7 @@ Hooks.once("init", async function () {
          * @param {number} temp - Temperature value
          */
         overrideWeather: async (type, temp, dayDelta) => {
-            await WeatherEngine.setWeatherOverride(type, temp, dayDelta);
+            await game.wgtngmMiniCalender.weatherEngine.setWeatherOverride(type, temp, dayDelta);
         },
         /**
        * Sets the game time to a specific hour of the current (or offset) day.
@@ -129,9 +130,9 @@ Hooks.once("init", async function () {
         Handlebars.registerHelper('json', function(context) {
         return JSON.stringify(context);
     });
-        setCalendarJSON(true); 
+        setCalendarJSON(true);
 
-    
+
     const templatePaths = [
         `modules/${MODULE_NAME}/templates/wgtgm_calendar.hbs`,
         `modules/${MODULE_NAME}/templates/wgtgm-calendar-config.hbs`
@@ -147,7 +148,10 @@ Hooks.once("i18nInit", async function () {
 Hooks.once("ready", async function () {
 
     game.wgtngmMiniCalender = new wgtngmMiniCalender();
-    game.wgtngmMiniCalender.calendarInstance = null; 
+    game.wgtngmMiniCalender.calendarInstance = null;
+
+    game.wgtngmMiniCalender.weatherEngine = game.settings.get(MODULE_NAME, "useHistoricalData") ? new HistoricalDataWeatherEngine() : new WeatherEngine();
+
     if (game.settings.get(MODULE_NAME, "calSheetOpened")) {
         openwgtngmMiniCalendarSheet();
     }
@@ -155,7 +159,8 @@ Hooks.once("ready", async function () {
         const importer = new PlaylistImporter();
         await importer.importFromDirectory();
     }
-    await WeatherEngine.updateForecasts();
+
+    await game.wgtngmMiniCalender.weatherEngine.updateForecasts();
     if (game.user.isGM) {
         if (game.settings.get(MODULE_NAME, "runonlyonce") === false) {
             await ChatMessage.create(
@@ -169,6 +174,8 @@ Hooks.once("ready", async function () {
             await game.settings.set(MODULE_NAME, "runonlyonce", true);
         }
     }
+
+    game.wgtngmMiniCalender.weatherEngine.refreshWeather();
 });
 
 

@@ -78,7 +78,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
   _throttledDarknessUpdate = foundry.utils.throttle(this._updateSceneDarkness.bind(this), 1000);
   _debouncedRender = foundry.utils.debounce(this.render.bind(this), 100);
   _positionObserver = null;
-  
+
 _debouncedSavePosition = foundry.utils.debounce(async () => {
     if (!this.element || !this.position) return;
     if (this.element && this.element.classList.contains("docked")) return;
@@ -110,7 +110,7 @@ _debouncedSavePosition = foundry.utils.debounce(async () => {
       let h = comps.hour;
       const m = String(comps.minute).padStart(2, "0");
       const s = String(comps.second).padStart(2, "0");
-      
+
       if (game.settings.get(MODULE_NAME, "use12hour")) {
           const ampm = h >= 12 ? "PM" : "AM";
           h = h % 12;
@@ -120,7 +120,7 @@ _debouncedSavePosition = foundry.utils.debounce(async () => {
 
       const hString = String(h).padStart(2, "0");
       return `${hString}:${m}:${s}`;
-      
+
     } catch (e) {
       console.error("Mini Calendar | Error formatting time:", e, { seconds });
       return "--:--:--";
@@ -213,12 +213,11 @@ _getEntryContextOptions() {
           const dateStr = li.dataset.date;
           if (!dateStr) return;
           const date = JSON.parse(dateStr);
-          WeatherEngine.createForecasts(date);
+          game.wgtngmMiniCalender.weatherEngine.createForecasts(date);
       }}].concat();
 }
 
-
-  _getFirstDayOfMonth(year, monthIndex) {
+  static getFirstDayOfMonth(year, monthIndex) {
     const calendar = game.time.calendar;
 
     let dayOfYear = 0;
@@ -229,15 +228,21 @@ _getEntryContextOptions() {
       dayOfYear += days;
     }
 
+    return dayOfYear;
+  }
+
+
+  _getFirstDayOfMonthTimestamp(year, monthIndex) {
     const components = {
       year: year,
-      day: dayOfYear,
+      day: wgtngmMiniCalender.getFirstDayOfMonth(year, monthIndex),
       hour: 0,
       minute: 0,
       second: 0,
     };
 
     try {
+      const calendar = game.time.calendar;
       return calendar.componentsToTime(components);
     } catch (e) {
       console.error("Mini Calendar | Error calculating first day of month:", e);
@@ -358,7 +363,7 @@ async _getNotesForDay(date, preFetchedJournal = null, preFetchedPageMap = null) 
 
     const recurringPageName = "0000-Recurring";
     const recurringPage = preFetchedPageMap ? preFetchedPageMap.get(recurringPageName) : journal.pages.getName(recurringPageName);
-    
+
     if (recurringPage) {
         const recurringNotes = recurringPage.flags?.[MODULE_NAME]?.notes || [];
         const matches = recurringNotes.filter(n => this._checkRecurrence(n, date));
@@ -391,22 +396,22 @@ async _getNotesForDay(date, preFetchedJournal = null, preFetchedPageMap = null) 
 
 
   }
-  
+
   /** @inheritDoc */
   async _renderFrame(options) {
     const frame = await super._renderFrame(options);
     if ( !this.hasFrame ) return frame;
-    
+
     let copyId = ``;
     const dockedState = game.settings.get(MODULE_NAME, "dockSidebar") ? "window-maximize" : "anchor";
 
-    if (game.user.isGM) 
+    if (game.user.isGM)
     {
       const weatherEnabled = game.settings.get(MODULE_NAME, "enableWeatherEffects");
       const weatherTooltip = weatherEnabled ? "Disable Weather FX" : "Enable Weather FX";
       const currentState = game.settings.get(MODULE_NAME, "enableWeatherEffects");
       const soundEnabled = game.settings.get(MODULE_NAME, "enableWeatherSound");
-      
+
       const soundTooltip = soundEnabled ? "Disable Weather Sounds" : "Enable Weather Sounds";
       const soundIcon = soundEnabled ? "fa-volume-high" : "fa-volume-xmark";
 
@@ -416,10 +421,10 @@ async _getNotesForDay(date, preFetchedJournal = null, preFetchedPageMap = null) 
 
 
       copyId = `
-          <button type="button" class="header-control fa-solid fa-calendar-plus icon" data-action="add-note-header" 
+          <button type="button" class="header-control fa-solid fa-calendar-plus icon" data-action="add-note-header"
                   data-tooltip="Create Note" aria-label="Create Note"></button>
           <button type="button" class="header-control fa-solid ${soundIcon} icon" data-action="toggle-weather-sound"
-                  data-tooltip="Stop Sound Effects" aria-label="Stop Sound Effects"></button>        
+                  data-tooltip="Stop Sound Effects" aria-label="Stop Sound Effects"></button>
           <button type="button" class="header-control fa-solid fa-cloud-sun-rain icon ${currentState}" data-action="toggle-weather-fx"
                   data-tooltip="${weatherTooltip}" aria-label="Toggle Weather"></button>
           <button type="button" class="header-control fa-solid fa-map ${sceneFlag} icon" data-action="toggle-scene-fx"
@@ -435,8 +440,8 @@ async _getNotesForDay(date, preFetchedJournal = null, preFetchedPageMap = null) 
 static async #_toggleDock(event, target) {
     const dockedState = game.settings.get(MODULE_NAME, "dockSidebar");
     await game.settings.set(MODULE_NAME, "dockSidebar", !dockedState);
-    target.classList.toggle("fa-window-maximize", !dockedState);    
-    target.classList.toggle("fa-anchor", dockedState);    
+    target.classList.toggle("fa-window-maximize", !dockedState);
+    target.classList.toggle("fa-anchor", dockedState);
     this.render(true);
 }
 
@@ -445,16 +450,16 @@ static async #_toggleSceneFX(event, target) {
       if (!canvas.scene || !game.user.isGM) return;
       const currentState = canvas.scene.getFlag(MODULE_NAME, "enableWeather");
       const newState = !currentState;
-      
+
       await canvas.scene.setFlag(MODULE_NAME, "enableWeather", newState);
-      target.classList.toggle('true', newState);      
-      
+      target.classList.toggle('true', newState);
+
       if (newState) {
           ui.notifications.info("Weather Scene Effects Enabled");
-          await WeatherEngine.refreshWeather();
+          await game.wgtngmMiniCalender.weatherEngine.refreshWeather();
       } else {
           ui.notifications.info("Weather Scene Effects Disabled");
-          await WeatherEngine.disableWeatherEffect();
+          await game.wgtngmMiniCalender.weatherEngine.disableWeatherEffect();
 
       }
       this.render();
@@ -464,16 +469,16 @@ static async #_toggleSceneFX(event, target) {
 static async #_toggleWeatherFX(event, target) {
       const currentState = game.settings.get(MODULE_NAME, "enableWeatherEffects");
       const newState = !currentState;
-      
+
       await game.settings.set(MODULE_NAME, "enableWeatherEffects", newState);
-      target.classList.toggle('true', newState);      
-      
+      target.classList.toggle('true', newState);
+
       if (newState) {
           ui.notifications.info("Weather Effects Enabled");
-          await WeatherEngine.refreshWeather();
+          await game.wgtngmMiniCalender.weatherEngine.refreshWeather();
       } else {
           ui.notifications.info("Weather Effects Disabled");
-          await WeatherEngine.applyWeatherEffect("none");
+          await game.wgtngmMiniCalender.weatherEngine.applyWeatherEffect("none");
       }
       this.render();
   }
@@ -484,17 +489,17 @@ static async #_toggleWeatherSound(event, target) {
       const currentState = game.settings.get(MODULE_NAME, "enableWeatherSound");
       const newState = !currentState;
 
-      target.classList.toggle('fa-volume-high', newState);      
+      target.classList.toggle('fa-volume-high', newState);
       target.classList.toggle('fa-volume-xmark', !newState);
       await game.settings.set(MODULE_NAME, "enableWeatherSound", newState);
-      
+
       if (newState) {
           ui.notifications.info("Weather Sounds Enabled");
-          await WeatherEngine.refreshWeather();
+          await game.wgtngmMiniCalender.weatherEngine.refreshWeather();
       } else {
           ui.notifications.info("Weather Sounds Disabled");
           // Stop immediately
-          await WeatherEngine.stopWeatherSounds();
+          await game.wgtngmMiniCalender.weatherEngine.stopWeatherSounds();
       }
 
       if (game.wgtngmMiniCalender.calendarInstance) {
@@ -511,7 +516,7 @@ static async #_toggleWeatherSound(event, target) {
     }
 
     this._initializeViewState();
-    
+
 
     let weatherHistory = {};
         const hideWeatherPlayer = game.settings.get(MODULE_NAME, "hideWeatherPlayer");
@@ -530,16 +535,16 @@ static async #_toggleWeatherSound(event, target) {
 
     const currentMonth = calendar.months.values[this.#viewMonth];
     const rawMonthConfig = CONFIG.time.worldCalendarConfig.months.values[this.#viewMonth];
-    const isIntercalary = rawMonthConfig?.intercalary === true;    
+    const isIntercalary = rawMonthConfig?.intercalary === true;
     const nowComponents = calendar.timeToComponents(game.time.worldTime);
     const isCurrentGameMonthAndYear = this.#viewYear === nowComponents.year && this.#viewMonth === nowComponents.month;
     const mph = calendar.days.minutesPerHour;
     const spm = calendar.days.secondsPerMinute;
     const hpd = calendar.days.hoursPerDay;
-    
+
     // Calculate current seconds elapsed in the day
     const currentSeconds = (nowComponents.hour * mph * spm) + (nowComponents.minute * spm) + nowComponents.second;
-    
+
     // Calculate total seconds in a day for the slider max
     // const maxSeconds = (hpd * mph * spm) - 1;
     // const stepSeconds = (mph / 2) * spm;
@@ -570,7 +575,7 @@ static async #_toggleWeatherSound(event, target) {
     const isLeap = calendar.isLeapYear(this.#viewYear);
     const daysInMonth = isLeap && currentMonth.leapDays != null ? currentMonth.leapDays : currentMonth.days;
 
-    const firstDayTimestamp = this._getFirstDayOfMonth(this.#viewYear, this.#viewMonth);
+    const firstDayTimestamp = this._getFirstDayOfMonthTimestamp(this.#viewYear, this.#viewMonth);
     const firstDayComponents = calendar.timeToComponents(firstDayTimestamp);
     const startingWeekday = firstDayComponents.dayOfWeek;
 
@@ -606,11 +611,11 @@ static async #_toggleWeatherSound(event, target) {
         }
         const noteTooltip = hasEvent ? notes.map((n) => `<p>${n.title}</p>`).join("") : "";
         const noteTooltipPlayerVisible = hasEvent ? notes.filter(n => n.playerVisible).map((n) => `<p>${n.title}</p>`).join("") : "";
-    
+
         const key = `${this.#viewYear}-${this.#viewMonth}-${dayOfMonth}`;
         const weather = weatherHistory[key] || null;
         const weatherIcon = weather ? weather.icon : "";
-        const weatherTooltip = weather ? `${weather.label} (${WeatherEngine.getTempDisplay(weather.temp)})` : "";
+        const weatherTooltip = weather ? `${weather.label} (${game.wgtngmMiniCalender.weatherEngine.getTempDisplay(weather.temp)})` : "";
 
         days.push({
           isBlank: false,
@@ -656,7 +661,7 @@ static async #_toggleWeatherSound(event, target) {
     const key = `${nowComponents.year}-${nowComponents.month}-${nowComponents.dayOfMonth}`;
     const currentWeather = weatherHistory[key] || null;
     const currentWeatherIcon = currentWeather ? currentWeather.icon : "";
-    const currentWeatherTooltip = currentWeather ? `${currentWeather.label} (${WeatherEngine.getTempDisplay(currentWeather.temp)})` : "";
+    const currentWeatherTooltip = currentWeather ? `${currentWeather.label} (${game.wgtngmMiniCalender.weatherEngine.getTempDisplay(currentWeather.temp)})` : "";
 
 
     return {
@@ -701,7 +706,7 @@ static async #_toggleWeatherSound(event, target) {
     const systemTheme = matchMedia("(prefers-color-scheme: dark)").matches ? 'dark' : 'light';
     const activeTheme = colorScheme?.interface || systemTheme;
     const dockedTheme = `theme-${activeTheme}`;
-    
+
 
     if (dockSidebar) {
         if (players && players.parentNode) {
@@ -746,7 +751,7 @@ static async #_toggleWeatherSound(event, target) {
 
     const slider = this.element.querySelector(".mini-time-slider");
     if (slider) {
-      
+
 
       slider.addEventListener("input", (event) => {
         const val = parseInt(event.target.value);
@@ -805,7 +810,7 @@ static async #_toggleWeatherSound(event, target) {
           minute: m,
           second: s
         };
-  
+
         if (isNaN(h) || isNaN(m) || isNaN(s)) {
             console.error("Mini Calendar | Attempted to set NaN time:", { h, m, s });
             ui.notifications.error("Mini Calendar: Calculation Error. Time not set.");
@@ -825,12 +830,12 @@ static async #_toggleWeatherSound(event, target) {
             for (const mutation of mutations) {
                 if (mutation.attributeName === "style") {
                     this._debouncedSavePosition();
-                    return; 
+                    return;
                 }
             }
         });
     }
-    
+
     this._positionObserver.disconnect(); // Prevent duplicates
     this._positionObserver.observe(this.element, { attributes: true, attributeFilter: ["style"] });
 
@@ -865,7 +870,7 @@ static async #_toggleWeatherSound(event, target) {
           });
         }
         this._updateTimeOfDayClass(currentWorldTime);
-        
+
         const calendar = game.time.calendar;
         if (!calendar) return;
         const currentComps = calendar.timeToComponents(currentWorldTime);
@@ -936,7 +941,7 @@ static async #_toggleWeatherSound(event, target) {
       const parts = page.name.split("-");
       if (parts.length >= 2) {
         const noteYear = parseInt(parts[0]);
-        const noteMonthIndex = parseInt(parts[1]) - 1; 
+        const noteMonthIndex = parseInt(parts[1]) - 1;
         if (noteYear === this.#viewYear && noteMonthIndex === this.#viewMonth) {
           this._debouncedRender();
         }
@@ -955,7 +960,7 @@ _onUpdateWorldTime = async (worldTime, dt) => {
     this._throttledDarknessUpdate(worldTime)
     }
     if (game.user.isGM) {
-        await WeatherEngine.updateForecasts();
+        await game.wgtngmMiniCalender.weatherEngine.updateForecasts();
     }
     await this._weatherToChat();
     const slider = this.element.querySelector(".mini-time-slider");
@@ -964,7 +969,7 @@ _onUpdateWorldTime = async (worldTime, dt) => {
         const c = calendar.timeToComponents(worldTime);
         const mph = calendar.days.minutesPerHour;
         const spm = calendar.days.secondsPerMinute;
-        
+
         const seconds = (c.hour * mph * spm) + (c.minute * spm) + c.second;
         slider.value = seconds;
     }
@@ -1012,7 +1017,7 @@ _onUpdateWorldTime = async (worldTime, dt) => {
         this.#lastWeatherBroadcastDate = dateKey;
         return;
     }
-    await game.settings.set(MODULE_NAME, "lastWeatherBroadcastDate", dateKey); 
+    await game.settings.set(MODULE_NAME, "lastWeatherBroadcastDate", dateKey);
     this.#lastWeatherBroadcastDate = dateKey;
 
     const page = game.journal.getName(calendarJournal)?.pages.getName("Weather History");
@@ -1022,7 +1027,7 @@ _onUpdateWorldTime = async (worldTime, dt) => {
     if (!currentWeather) return;
 
     const currentWeatherIcon = currentWeather.icon ? `<i class="${currentWeather.icon}"></i>` : "";
-    const currentTemp = WeatherEngine.getTempDisplay(currentWeather.temp) || "";
+    const currentTemp = game.wgtngmMiniCalender.weatherEngine.getTempDisplay(currentWeather.temp) || "";
     const weatherLabel = currentWeather.label === "Aurora" ? "Clear" : currentWeather.label;
 
     let content = `<h3>${currentWeatherIcon} ${currentTemp}</h3><span style="font-size:16px">${weatherLabel}</span>`;
@@ -1057,18 +1062,18 @@ async _checkDailyEvents() {
         if (n.hour !== null && n.hour !== undefined) {
             const noteHour = n.hour;
             const noteMinute = n.minute || 0;
-            
+
             if (currentComps.hour > noteHour || (currentComps.hour === noteHour && currentComps.minute >= noteMinute)) {
                 shouldSend = true;
             }
-        } 
+        }
         else {
             shouldSend = true;
         }
 
         if (shouldSend) {
             notesToWhisper.push(n);
-            n.whispered = true; 
+            n.whispered = true;
             updateNeeded = true;
         }
     }
@@ -1079,8 +1084,8 @@ async _checkDailyEvents() {
         let content = `<h4>Events for ${monthName} ${dayNum}, ${date.year}</h4>`;
 
         notesToWhisper.forEach((n) => {
-            const timeStr = (n.hour !== null && n.hour !== undefined) 
-                ? ` [${String(n.hour).padStart(2, '0')}:${String(n.minute||0).padStart(2, '0')}]` 
+            const timeStr = (n.hour !== null && n.hour !== undefined)
+                ? ` [${String(n.hour).padStart(2, '0')}:${String(n.minute||0).padStart(2, '0')}]`
                 : "";
             content += `<p><strong>${n.title}${timeStr}</strong><br/>${n.content}</p>`;
         });
@@ -1224,7 +1229,7 @@ async _saveNotesForDay(date, notes) {
     }
     const dailyNotes = notes.filter(n => !n.repeatUnit || n.repeatUnit === 'none');
     const recurringNotesToSave = notes.filter(n => n.repeatUnit && n.repeatUnit !== 'none');
-    const day = date.day + 1; 
+    const day = date.day + 1;
     const pageName = `${date.year}-${String(date.month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     let page = journal.pages.getName(pageName);
 
@@ -1232,8 +1237,8 @@ async _saveNotesForDay(date, notes) {
         if (page) await page.delete();
     } else {
         let htmlContent = "";
-        for (const note of dailyNotes) { 
-             htmlContent += `<h2><i class="${note.icon}"></i> ${note.title}</h2><p>${note.content}</p><hr>`; 
+        for (const note of dailyNotes) {
+             htmlContent += `<h2><i class="${note.icon}"></i> ${note.title}</h2><p>${note.content}</p><hr>`;
         }
         const pageData = {
             "text.content": htmlContent,
@@ -1298,12 +1303,12 @@ async _saveNotesForDay(date, notes) {
     const isEditing = noteToEdit !== null;
     const title = isEditing ? "Edit Note" : "Add Note";
     const isAllDay = noteToEdit ? (noteToEdit.hour === null || noteToEdit.hour === undefined) : true;
-    
+
     const renderData = {
         title: noteToEdit?.title || "",
         currentIcon: noteToEdit?.icon || "",
         pinTypes: PIN_TYPES,
-        
+
         hasAdvanced: !!noteToEdit?.advancedRule && noteToEdit.advancedRule !== 'none',
         repeatCount: noteToEdit?.repeatCount || 0,
         repeatInterval: noteToEdit?.repeatInterval || 1,
@@ -1324,8 +1329,8 @@ async _saveNotesForDay(date, notes) {
         ],
         advParams: {
             moonIndex: noteToEdit?.advParams?.moonIndex || 0,
-            phaseIndex: noteToEdit?.advParams?.phaseIndex, 
-            
+            phaseIndex: noteToEdit?.advParams?.phaseIndex,
+
             // Lunar Month Range
             lunarStartMonth: noteToEdit?.advParams?.lunarStartMonth || 0,
             lunarEndMonth: noteToEdit?.advParams?.lunarEndMonth || (calendar.months.values.length - 1),
@@ -1334,7 +1339,7 @@ async _saveNotesForDay(date, notes) {
             monthIndex_wk: noteToEdit?.advParams?.monthIndex_wk ?? -1,
             ordinal: noteToEdit?.advParams?.ordinal ?? 0,
             weekdayIndex: noteToEdit?.advParams?.weekdayIndex || 0,
-            
+
             // Week Index (Grid)
             weekNum: noteToEdit?.advParams?.weekNum || 1,
             dayNum: noteToEdit?.advParams?.dayNum || 0, // Now 0-based index from dropdown
@@ -1349,8 +1354,8 @@ async _saveNotesForDay(date, notes) {
         monthOptions: calendar.months.values.map((m, i) => ({index: i, name: m.name})),
         weekdayOptions: calendar.days.values.map((d, i) => ({index: i, name: game.i18n.localize(d.name)})),
         ordinalOptions: [
-            {value: 0, label: "First"}, {value: 1, label: "Second"}, 
-            {value: 2, label: "Third"}, {value: 3, label: "Fourth"}, 
+            {value: 0, label: "First"}, {value: 1, label: "Second"},
+            {value: 2, label: "Third"}, {value: 3, label: "Fourth"},
             {value: -1, label: "Last"}
         ],
 
@@ -1392,7 +1397,7 @@ async _saveNotesForDay(date, notes) {
               let html = "";
               if (moon && moon.phases) {
                   moon.phases.forEach((p, i) => {
-                     html += `<option value="${i}">${p.name}</option>`; 
+                     html += `<option value="${i}">${p.name}</option>`;
                   });
               }
               phaseSelect.innerHTML = html;
@@ -1423,7 +1428,7 @@ async _saveNotesForDay(date, notes) {
           const allDayBox = el.querySelector("#note-all-day");
           const timeContainer = el.querySelector("#note-time-container");
           allDayBox.addEventListener("change", (ev) => timeContainer.style.display = ev.target.checked ? "none" : "flex");
-          
+
           const iconInput = el.querySelector("input[name='icon']");
           const iconPreview = el.querySelector("#icon-preview");
           iconInput.addEventListener("input", (ev) => iconPreview.className = ev.target.value);
@@ -1434,7 +1439,7 @@ async _saveNotesForDay(date, notes) {
         callback: (event, button, dialog) => {
           const form = button.form;
           if (!form.title.value.trim()) { ui.notifications.warn("Title is required."); return false; }
-          
+
           const useAdv = form.useAdvanced.checked;
           const data = {
              title: form.title.value.trim(),
@@ -1529,10 +1534,10 @@ async _saveNotesForDay(date, notes) {
                 // Check Month Range
                 const start = p.lunarStartMonth;
                 const end = p.lunarEndMonth;
-                const inRange = (start <= end) 
+                const inRange = (start <= end)
                     ? (targetDate.month >= start && targetDate.month <= end)
                     : (targetDate.month >= start || targetDate.month <= end);
-                
+
                 if (!inRange) return false;
 
                 // Check Phase (Day 0 of phase)
@@ -1543,14 +1548,14 @@ async _saveNotesForDay(date, notes) {
                     dayOfYear += (isLeap && m.leapDays !== undefined) ? m.leapDays : m.days;
                 }
                 dayOfYear += targetDate.day;
-                
+
                 const timestamp = calendar.componentsToTime({
                     year: targetDate.year, day: dayOfYear, hour:0, minute:0, second:0
                 });
 
                 const moon = moons[p.moonIndex];
                 if (!moon) return false;
-                
+
                 const phaseData = this._calculateMoonPhase(timestamp, moon, calendar);
                 if (!phaseData) return false;
 
@@ -1569,16 +1574,16 @@ async _saveNotesForDay(date, notes) {
                     dayOfYear += (isLeap && m.leapDays !== undefined) ? m.leapDays : m.days;
                 }
                 dayOfYear += targetDate.day;
-                
+
                 const timestamp = calendar.componentsToTime({
                     year: targetDate.year, day: dayOfYear, hour:0, minute:0, second:0
                 });
                 const comps = calendar.timeToComponents(timestamp);
-                
+
                 if (comps.dayOfWeek !== p.weekdayIndex) return false;
                 const dayOfMonth = targetDate.day + 1; // 1-based
-                const occurrence = Math.ceil(dayOfMonth / daysInWeek); 
-                
+                const occurrence = Math.ceil(dayOfMonth / daysInWeek);
+
                 if (p.ordinal === -1) {
                     const m = months[targetDate.month];
                     const daysInMonth = (isLeap && m.leapDays !== undefined) ? m.leapDays : m.days;
@@ -1589,8 +1594,8 @@ async _saveNotesForDay(date, notes) {
             }
 
             case 'week_index': {
-                const currentWeek = Math.floor(targetDate.day / daysInWeek) + 1; 
-                const currentDayCol = targetDate.day % daysInWeek; 
+                const currentWeek = Math.floor(targetDate.day / daysInWeek) + 1;
+                const currentDayCol = targetDate.day % daysInWeek;
 
                 return (currentWeek === p.weekNum && currentDayCol === p.dayNum);
             }
@@ -1598,10 +1603,10 @@ async _saveNotesForDay(date, notes) {
             case 'random': {
                 let startM = p.startMonth;
                 let endM = p.endMonth;
-                const inRange = (startM <= endM) 
+                const inRange = (startM <= endM)
                     ? (targetDate.month >= startM && targetDate.month <= endM)
                     : (targetDate.month >= startM || targetDate.month <= endM);
-                
+
                 if (!inRange) return false;
 
                 // Deterministic RNG seeded by Year+NoteID
@@ -1639,7 +1644,7 @@ async _saveNotesForDay(date, notes) {
                         }
                     }
                 }
-                
+
                 let m = pool.length, t, i;
                 while (m) {
                     i = Math.floor(nextRandom() * m--);
@@ -1661,7 +1666,7 @@ async _saveNotesForDay(date, notes) {
     const count = parseInt(note.repeatCount) || 0;
     const unit = String(note.repeatUnit).toLowerCase();
     const calendar = game.time.calendar;
-    
+
     if (targetDate.year < start.year) return false;
     if (targetDate.year === start.year && targetDate.month < start.month) return false;
     if (targetDate.year === start.year && targetDate.month === start.month && targetDate.day < start.day) return false;
@@ -1680,7 +1685,7 @@ async _saveNotesForDay(date, notes) {
     } else if (unit === 'months') {
         const monthDiff = (targetDate.year - start.year) * calendar.months.values.length + (targetDate.month - start.month);
         if (monthDiff >= 0 && monthDiff % interval === 0) {
-             if (targetDate.day === start.day) { 
+             if (targetDate.day === start.day) {
                  isMatch = true;
                  occurrenceIndex = monthDiff / interval;
              }
@@ -1705,7 +1710,7 @@ async _saveNotesForDay(date, notes) {
         const secondsPerDay = calendar.days.hoursPerDay * calendar.days.minutesPerHour * calendar.days.secondsPerMinute;
         const diffSeconds = targetTime - startTime;
         const diffDays = Math.round(diffSeconds / secondsPerDay);
-        
+
         if (diffDays >= 0 && diffDays % interval === 0) {
             isMatch = true;
             occurrenceIndex = diffDays / interval;
@@ -1758,7 +1763,7 @@ async _saveNotesForDay(date, notes) {
 //     }
 
 //     let minuteOptions = "";
-//     for (let m = 0; m < minutesInHour; m += 5) { 
+//     for (let m = 0; m < minutesInHour; m += 5) {
 //         const val = m;
 //         const label = String(m).padStart(2, "0");
 //         const selected = (noteToEdit?.minute === m) ? "selected" : "";
@@ -1843,7 +1848,7 @@ async _saveNotesForDay(date, notes) {
 //       render: (dialog) => {
 //           const allDayBox = dialog.target.element.querySelector("#note-all-day");
 //           const timeContainer = dialog.target.element.querySelector("#note-time-container");
-          
+
 //           if(allDayBox && timeContainer) {
 //               allDayBox.addEventListener("change", (ev) => {
 //                   timeContainer.style.display = ev.target.checked ? "none" : "flex";
@@ -1880,7 +1885,7 @@ async _saveNotesForDay(date, notes) {
 //               hour: selectedHour,
 //               minute: selectedMinute,
 //               startDate: date,
-//               playerVisible: form.playerVisible.checked 
+//               playerVisible: form.playerVisible.checked
 //           };
 //         },
 //       },
@@ -1899,7 +1904,7 @@ async _saveNotesForDay(date, notes) {
 //     const freshNotes = await this._transactionalNoteUpdate(date, (notes) => {
 //       if (isEditing) {
 //         let index = notes.findIndex((n) => n.id === noteToEdit.id);
-        
+
 //         if (index === -1) {
 //              const restoredNote = {
 //                  id: noteToEdit.id,
@@ -1920,7 +1925,7 @@ async _saveNotesForDay(date, notes) {
 //           notes[index].minute = result.minute;
 //           notes[index].startDate = result.startDate;
 //           notes[index].playerVisible = result.playerVisible;
-//           delete notes[index].isRecurringInstance; 
+//           delete notes[index].isRecurringInstance;
 //         }
 //       } else {
 //         const newNote = {
@@ -1932,8 +1937,8 @@ async _saveNotesForDay(date, notes) {
 //           repeatUnit: result.repeatUnit,
 //           repeatCount: result.repeatCount,
 //           hour: result.hour,
-//           minute: result.minute,              
-//           startDate: result.startDate, 
+//           minute: result.minute,
+//           startDate: result.startDate,
 //           playerVisible: result.playerVisible,
 //         };
 //         notes.push(newNote);
@@ -1942,7 +1947,7 @@ async _saveNotesForDay(date, notes) {
 //     });
 
 //     this.render();
-    
+
 //     if (openViewNote) {
 //       this._showViewNotesDialog(date, freshNotes, position);
 //     }
@@ -1966,7 +1971,7 @@ async _saveNotesForDay(date, notes) {
   notes.sort((a, b) => {
       const aAllDay = a.hour === null || a.hour === undefined;
       const bAllDay = b.hour === null || b.hour === undefined;
-      
+
       if (aAllDay && !bAllDay) return -1;
       if (!aAllDay && bAllDay) return 1;
       if (aAllDay && bAllDay) return a.title.localeCompare(b.title); // Alphabetical for all-day
@@ -1980,12 +1985,12 @@ async _saveNotesForDay(date, notes) {
         (note) => {
             const hasTime = note.hour !== null && note.hour !== undefined;
             const noteTime = hasTime ? `${String(note.hour).padStart(2, '0')}:${String(note.minute || 0).padStart(2, '0')}` : '';
-            
+
             const isRepeating = note.repeatUnit && note.repeatUnit !== 'none';
             const repeatIcon = isRepeating ? '<i class="fas fa-repeat" title="Repeating Event" style="margin-right: 5px; font-size: 0.8em; opacity: 0.7;"></i>' : '<span></span>';
             const isHidden = note?.playerVisible ? '':'-slash';
             const isVisibleIcon = `<i class="fas fa-eye${isHidden} note-control" title="playerVisible" data-action="visible-toggle" data-note-id="${note.id}" style="margin-right: 5px; font-size: 0.8em; opacity: 0.7;"></i>`;
-            
+
             return `
             <div class="calendar-note-item" data-note-id="${note.id}" ${isGM ? `data-action="edit-note"`:''}>
                 <span class="note-header">
@@ -2084,7 +2089,7 @@ async _saveNotesForDay(date, notes) {
             }
           });
         });
-      // 
+      //
       },
     }).catch(() => null);
   }
@@ -2093,25 +2098,25 @@ async _saveNotesForDay(date, notes) {
 
   async _toggleVisibility(parentDialog, date, notes, noteId) {
     const note = notes.find(n => n.id === noteId);
-    
+
     if (note && note.repeatUnit && note.repeatUnit !== 'none') {
          const journal = game.journal.getName(calendarJournal);
          const recPage = journal?.pages.getName("0000-Recurring");
-         
+
          if (recPage) {
              let recNotes = recPage.flags[MODULE_NAME]?.notes || [];
              const index = recNotes.findIndex(n => n.id === noteId);
-             
+
              if (index > -1) {
                  recNotes[index].playerVisible = !recNotes[index].playerVisible;
                  await recPage.update({
                       flags: { [MODULE_NAME]: { notes: recNotes } }
                  });
-               
+
                  note.playerVisible = recNotes[index].playerVisible;
              }
          }
-    } 
+    }
     else {
         await this._transactionalNoteUpdate(date, (currentNotes) => {
             const index = currentNotes.findIndex((n) => n.id === noteId);
@@ -2123,7 +2128,7 @@ async _saveNotesForDay(date, notes) {
     }
 
     this.render();
-    
+
     if (parentDialog) {
       this._showViewNotesDialog(date, null, parentDialog);
     }
@@ -2132,13 +2137,13 @@ async _saveNotesForDay(date, notes) {
   async _removeRecurringNote(noteId) {
       const journal = game.journal.getName(calendarJournal);
       if (!journal) return;
-      
+
       const recPage = journal.pages.getName("0000-Recurring");
       if (!recPage) return;
 
       let recNotes = recPage.flags[MODULE_NAME]?.notes || [];
       const initialLength = recNotes.length;
-      
+
       recNotes = recNotes.filter(n => n.id !== noteId);
 
       if (recNotes.length !== initialLength) {
@@ -2152,7 +2157,7 @@ async _saveNotesForDay(date, notes) {
 
 async _handleDeleteNote(parentDialog, date, notes, noteId) {
     const noteToDelete = notes.find(n => n.id === noteId);
-    
+
     if (noteToDelete && noteToDelete.repeatUnit && noteToDelete.repeatUnit !== 'none') {
         await this._removeRecurringNote(noteId);
     } else {
@@ -2160,7 +2165,7 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
             return currentNotes.filter((n) => n.id !== noteId);
         });
     }
-    
+
     this.render();
     if (parentDialog) {
       this._showViewNotesDialog(date, null, parentDialog);
@@ -2170,14 +2175,14 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
 
 //   _checkRecurrence(note, targetDate) {
 //     if (!note.repeatUnit || note.repeatUnit === 'none') return false;
-    
+
 //     const start = note.startDate;
 //     const interval = parseInt(note.repeatInterval) || 1;
 //     const count = parseInt(note.repeatCount) || 0;
-    
+
 //     const unit = String(note.repeatUnit).toLowerCase();
 //     const calendar = game.time.calendar;
-    
+
 //     if (targetDate.year < start.year) return false;
 //     if (targetDate.year === start.year && targetDate.month < start.month) return false;
 //     if (targetDate.year === start.year && targetDate.month === start.month && targetDate.day < start.day) return false;
@@ -2196,7 +2201,7 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
 //     } else if (unit === 'months') {
 //         const monthDiff = (targetDate.year - start.year) * calendar.months.values.length + (targetDate.month - start.month);
 //         if (monthDiff >= 0 && monthDiff % interval === 0) {
-//              if (targetDate.day === start.day) { 
+//              if (targetDate.day === start.day) {
 //                  isMatch = true;
 //                  occurrenceIndex = monthDiff / interval;
 //              }
@@ -2213,19 +2218,19 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
 //             dayOfYear += d.day;
 //             return calendar.componentsToTime({
 //                 year: d.year,
-//                 day: dayOfYear, 
+//                 day: dayOfYear,
 //                 hour: 0, minute: 0, second: 0
 //             });
 //         };
 
 //         const startTime = getTimestamp(start);
 //         const targetTime = getTimestamp(targetDate);
-        
+
 //         const secondsPerDay = calendar.days.hoursPerDay * calendar.days.minutesPerHour * calendar.days.secondsPerMinute;
-        
+
 //         const diffSeconds = targetTime - startTime;
 //         const diffDays = Math.round(diffSeconds / secondsPerDay);
-        
+
 //         if (diffDays >= 0 && diffDays % interval === 0) {
 //             isMatch = true;
 //             occurrenceIndex = diffDays / interval;
@@ -2299,11 +2304,11 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
         dayOfYear += daysInMonth;
       }
       dayOfYear += date.day;
-      
+
       const yearZero = CONFIG.time.worldCalendarConfig?.years?.yearZero || 0;
       const systemYear = date.year;
       // const systemYear = date.year - yearZero;
-      
+
       const newTimeComps = {
         year: systemYear,
         day: dayOfYear,
@@ -2351,8 +2356,8 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
 
     const currentMonthData = calendar.months.values[this.#viewMonth];
     const isLeap = calendar.isLeapYear(this.#viewYear);
-    const daysInMonth = isLeap && currentMonthData.leapDays != null 
-        ? currentMonthData.leapDays 
+    const daysInMonth = isLeap && currentMonthData.leapDays != null
+        ? currentMonthData.leapDays
         : currentMonthData.days;
 
     if (daysInMonth === 0) {
@@ -2559,8 +2564,8 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
           if (mode === "dawn") targetHour = dawn;
           else if (mode === "dusk") targetHour = dusk;
           else if (mode === "noon") targetHour = Math.floor(game.time.calendar.days.hoursPerDay / 2);
-          else if (mode === "midnight") targetHour = 0; 
-          else targetHour = parseFloat(hour) || 0; 
+          else if (mode === "midnight") targetHour = 0;
+          else targetHour = parseFloat(hour) || 0;
       }
 
       await instance._onSetTimeOfDay(targetHour, day);
@@ -2622,7 +2627,7 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
         this.wasPausedForGame = true;
         return;
     }
-    
+
     if (this.wasPausedForCombat && game.combat?.started) {
         return;
     }
@@ -2680,12 +2685,12 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
     if (!game.user.isGM) return;
     try {
       const currentTime = game.time.worldTime;
-     
+
       if (typeof seconds !== "number" || isNaN(seconds)) {
         console.warn("Mini Calendar | Invalid time advancement amount:", seconds);
         return;
       }
-     
+
       const newTime = currentTime + seconds;
 
       if (isNaN(newTime)) {
@@ -2820,7 +2825,7 @@ async _handleDeleteNote(parentDialog, date, notes, noteId) {
       this.#lastTimeState = newState;
 
       const icon = this.element.querySelector(".window-header i.window-icon");
-    
+
       const stateConfig = {
         dawn: { class: "dawn", icon: "fa-sun", colorClass: "icon-dawn" },
         midday: { class: "midday", icon: "fa-sun", colorClass: "icon-midday" },
@@ -2862,14 +2867,14 @@ async _updateSceneDarkness(worldTime) {
       const currentHour = comps.hour + (comps.minute / mph) + (comps.second / (mph * spm));
       const { dawn, dusk } = this._getSunTimes(worldTime);
 
-      let levelHigh = game.settings.get(MODULE_NAME, "darknessLevelHigh"); 
-      const levelLow = game.settings.get(MODULE_NAME, "darknessLevelLow");   
+      let levelHigh = game.settings.get(MODULE_NAME, "darknessLevelHigh");
+      const levelLow = game.settings.get(MODULE_NAME, "darknessLevelLow");
       const moons = CONFIG.time.worldCalendarConfig.moons?.values ?? [];
       const currentMoon = moons
         .map((moon) => this._calculateMoonPhase(game.time.worldTime, moon, calendar))
         .filter((phase) => phase !== null);
       if (currentMoon?.[0]?.phaseName?.toLowerCase().includes("full")) {
-          levelHigh = Math.min(levelHigh, moonOverride); 
+          levelHigh = Math.min(levelHigh, moonOverride);
       }
 
       if (canvas.scene.weather === "aurora") {
@@ -2879,18 +2884,18 @@ async _updateSceneDarkness(worldTime) {
       const currentDarkness = canvas.scene.environment.darknessLevel;
       const globalLight = canvas.scene.environment.globalLight;
 
-      const transitionHalf = 1.0; 
+      const transitionHalf = 1.0;
 
       let targetDarkness;
 
       if (currentHour < (dawn - transitionHalf) || currentHour > (dusk + transitionHalf)) {
           if (Math.abs(currentDarkness - levelHigh) < 0.01) return;
           targetDarkness = levelHigh;
-      } 
+      }
       else if (currentHour > (dawn + transitionHalf) && currentHour < (dusk - transitionHalf)) {
           if (Math.abs(currentDarkness - levelLow) < 0.01) return;
           targetDarkness = levelLow;
-      } 
+      }
       else {
           if (currentHour <= (dawn + transitionHalf)) {
               const pct = (currentHour - (dawn - transitionHalf)) / (transitionHalf * 2);
@@ -2923,10 +2928,10 @@ async _updateSceneDarkness(worldTime) {
   static isNightTime(worldTime = game.time.worldTime) {
     const calendar = game.time.calendar;
     if (!calendar) return false;
-    
+
     const { dawn, dusk } = this.getSunTimes(worldTime);
     const comps = calendar.timeToComponents(worldTime);
-    
+
     const mph = calendar.days.minutesPerHour;
     const spm = calendar.days.secondsPerMinute;
     const currentHour = comps.hour + (comps.minute / mph) + (comps.second / (mph * spm));
@@ -2990,17 +2995,17 @@ async _showWeatherOverrideDialog(targetDate) {
     const tempUnitLabel = useCelsius ? "°C" : "°F";
     const defaultTemp = useCelsius ? 20 : 70;
 
-    const existingWeather = await WeatherEngine.getWeatherForDate(targetDate.year, targetDate.month, targetDate.day);
+    const existingWeather = await game.wgtngmMiniCalender.weatherEngine.getWeatherForDate(targetDate.year, targetDate.month, targetDate.day);
     const existingTemp = existingWeather?.temp;
     const parsedExistingTemp = !isNaN(existingTemp)
-      ? (useCelsius 
-          ? Math.round((existingTemp - 32) / 1.8) 
+      ? (useCelsius
+          ? Math.round((existingTemp - 32) / 1.8)
           : Math.round(existingTemp))
       : defaultTemp;
-  
+
     const selections = {
         morning: existingWeather?.type || "none",
-        midday: existingWeather?.variations?.midday?.type || null, 
+        midday: existingWeather?.variations?.midday?.type || null,
         evening: existingWeather?.variations?.evening?.type || null
     };
 
@@ -3050,7 +3055,7 @@ async _showWeatherOverrideDialog(targetDate) {
                         <span class="label">--</span>
                     </div>
                 </div>
-                
+
                 <div class="slot-card" data-mode="midday">
                     <div class="slot-header"><i class="fas fa-cloud-sun"></i> Midday</div>
                     <div class="slot-content">
@@ -3075,12 +3080,12 @@ async _showWeatherOverrideDialog(targetDate) {
             <div id="weather-tag-container">
                 ${buttonsHtml}
             </div>
-            
+
             <p class="notes" style="font-size:0.8em; margin-top: 5px; text-align: center;">
                 <em>Click a timeline card above to target it, then select a condition below.</em>
             </p>
         </div>
-        
+
 
     `;
 
@@ -3093,7 +3098,7 @@ async _showWeatherOverrideDialog(targetDate) {
             const root = html.target.element;
             const slots = root.querySelectorAll(".slot-card");
             const btns = root.querySelectorAll(".weather-tag-btn");
-            
+
             let currentMode = "morning";
 
             // Function to redraw the visual cards based on current 'selections'
@@ -3112,7 +3117,7 @@ async _showWeatherOverrideDialog(targetDate) {
                 const mSlot = root.querySelector(`.slot-card[data-mode="morning"]`);
                 mSlot.querySelector(".icon").className = `icon ${morningData.icon}`;
                 mSlot.querySelector(".label").textContent = morningData.label;
-                
+
                 const midSlot = root.querySelector(`.slot-card[data-mode="midday"]`);
                 midSlot.querySelector(".icon").className = `icon ${middayData.icon}`;
                 midSlot.querySelector(".label").textContent = middayData.label;
@@ -3146,7 +3151,7 @@ async _showWeatherOverrideDialog(targetDate) {
                         selections[currentMode] = null;
                     } else {
                         selections[currentMode] = val;
-                        
+
                         if (currentMode === "morning") setTarget("midday");
                         else if (currentMode === "midday") setTarget("evening");
                     }
@@ -3162,7 +3167,7 @@ async _showWeatherOverrideDialog(targetDate) {
             callback: async (event, button, dialog) => {
                 let tempInput = parseFloat(button.form.querySelector("input[name='temperature']").value);
                 if (isNaN(tempInput)) tempInput = defaultTemp;
-                
+
                 let finalTempF = tempInput;
                 if (useCelsius) finalTempF = (tempInput * 9/5) + 32;
 
@@ -3170,7 +3175,7 @@ async _showWeatherOverrideDialog(targetDate) {
                 if (selections.midday) variations.midday = selections.midday;
                 if (selections.evening) variations.evening = selections.evening;
 
-                await WeatherEngine.setWeatherOverride(selections.morning, finalTempF, 0, targetDate, variations);
+                await game.wgtngmMiniCalender.weatherEngine.setWeatherOverride(selections.morning, finalTempF, 0, targetDate, variations);
             }
         }
     });
@@ -3178,7 +3183,7 @@ async _showWeatherOverrideDialog(targetDate) {
 }
 
 Hooks.on("closeCalendarConfig", () => {
-  const calendarApp = game.wgtngmMiniCalender?.calendarInstance 
+  const calendarApp = game.wgtngmMiniCalender?.calendarInstance
     // game.wgtngmMiniCalender?.calendarInstance ??
     // Object.values(ui.windows).find((win) => win instanceof wgtngmMiniCalender);
 
@@ -3192,7 +3197,7 @@ Hooks.on("closeCalendarConfig", () => {
 Hooks.on("combatStart", (combat, updateData) => {
   if (!game.user.isGM) return;
   const pauseOnCombat = game.settings.get(MODULE_NAME, "pauseOnCombat");
-  const calendarApp = game.wgtngmMiniCalender?.calendarInstance 
+  const calendarApp = game.wgtngmMiniCalender?.calendarInstance
     // game.wgtngmMiniCalender?.calendarInstance ??
     // Object.values(ui.windows).find((win) => win instanceof wgtngmMiniCalender);
 
@@ -3207,7 +3212,7 @@ Hooks.on("combatStart", (combat, updateData) => {
 Hooks.on("deleteCombat", (combat, options, userId) => {
   if (!game.user.isGM) return;
   const resumeAfterCombat = game.settings.get(MODULE_NAME, "resumeAfterCombat");
-  const calendarApp = game.wgtngmMiniCalender?.calendarInstance 
+  const calendarApp = game.wgtngmMiniCalender?.calendarInstance
     // game.wgtngmMiniCalender?.calendarInstance ??
     // Object.values(ui.windows).find((win) => win instanceof wgtngmMiniCalender);
 
@@ -3224,7 +3229,7 @@ Hooks.on("updateScene", async (scene, changes, options, userId) => {
     if (foundry.utils.hasProperty(changes, "flags.wgtgm-mini-calendar")) {
         const myFlags = changes.flags["wgtgm-mini-calendar"];
         console.log("Mini Calendar flags were updated:", myFlags);
-        if (myFlags.enableDarkness !== undefined){ 
+        if (myFlags.enableDarkness !== undefined){
           if (game.wgtngmMiniCalender) {
                     await game.wgtngmMiniCalender._updateSceneDarkness(game.time.worldTime);
                  } else {
@@ -3236,22 +3241,24 @@ Hooks.on("updateScene", async (scene, changes, options, userId) => {
 
           }
         if (myFlags.enableWeather !== undefined) {
-          if (!myFlags.enableWeather) await WeatherEngine.disableWeatherEffect();
-                else WeatherEngine.refreshWeather(); 
+          if (!myFlags.enableWeather) await game.wgtngmMiniCalender.weatherEngine.disableWeatherEffect();
+                else game.wgtngmMiniCalender.weatherEngine.refreshWeather();
           }
     }
 });
 
 Hooks.on("canvasReady", async (canvas) => {
-      WeatherEngine.refreshWeather(); 
-      // await WeatherEngine.playWeatherSound(canvas.scene.weather);
-  });
+  if (game.wgtngmMiniCalender?.weatherEngine) {
+    game.wgtngmMiniCalender.weatherEngine.refreshWeather();
+    // await game.wgtngmMiniCalender.weatherEngine.playWeatherSound(canvas.scene.weather);
+  }
+});
 
 
 Hooks.on("pauseGame", (paused) => {
   if (!game.user.isGM) return;
-  
-  const calendarApp = game.wgtngmMiniCalender?.calendarInstance 
+
+  const calendarApp = game.wgtngmMiniCalender?.calendarInstance
   // ?? Object.values(ui.windows).find((win) => win instanceof wgtngmMiniCalender);
 
   if (calendarApp instanceof wgtngmMiniCalender) {
