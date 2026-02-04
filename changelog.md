@@ -1,3 +1,12 @@
+#3.5
+- backend rewrite
+- calendar hud
+- scene icons includes hud and calendar
+- player notes
+- pf2e compatability
+- aurora rewrite
+
+
 #3.2
 - fixed creator scroll
 
