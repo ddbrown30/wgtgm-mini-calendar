@@ -146,3 +146,28 @@
         </div>
     </div>
 </div>
+
+{{#if isEditing}}
+<div class="form-group">
+    <label>Date:</label>
+    <div style="display: flex; gap: 5px;">
+        <select name="editDay">
+            {{#each dayOptions}}
+            <option value="{{this.value}}" {{#if (eq this.value ../editDate.day)}}selected{{/if}}>{{this.label}}</option>
+            {{/each}}
+        </select>
+        <select name="editMonth">
+            {{#each monthOptions}}
+            <option value="{{this.index}}" {{#if (eq this.index ../editDate.month)}}selected{{/if}}>{{this.name}}</option>
+            {{/each}}
+        </select>
+        <select name="editYear">
+            {{#each yearOptions}}
+            <option value="{{this.value}}" {{#if (eq this.value ../editDate.year)}}selected{{/if}}>{{this.value}}</option>
+            {{/each}}
+        </select>
+
+    </div>
+</div>
+{{/if}}
+

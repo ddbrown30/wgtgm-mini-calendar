@@ -1,19 +1,20 @@
 import { MODULE_NAME } from "./settings.js";
 import { BiomeConfig } from "./biome-config.js";
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
+import { renderHelper } from "./helper.js";
 
 export class WeatherConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     static DEFAULT_OPTIONS = {
         tag: "form",
         id: "wgtgm-weather-config",
         classes: ["wgtngmWeatherConfig"],
-        window: { 
-      icon: 'fas fa-cloud-sun',
-        title: "Weather Configuration",
-        resizable: false 
+        window: {
+            icon: 'fas fa-cloud-sun',
+            title: "Weather Configuration",
+            resizable: false
         },
         position: { width: 440, height: "auto" },
-        actions:{
+        actions: {
             openBiomeEditor: () => new BiomeConfig().render(true)
         },
         form: { handler: this.#onSubmit, closeOnSubmit: true }
@@ -23,7 +24,7 @@ export class WeatherConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         form: {
             template: `modules/wgtgm-mini-calendar/templates/weather-config.hbs`,
 
-        },            footer: { template: "modules/wgtgm-mini-calendar/templates/weather-config-footer.hbs" },
+        }, footer: { template: "modules/wgtgm-mini-calendar/templates/weather-config-footer.hbs" },
 
     };
 
@@ -60,10 +61,8 @@ export class WeatherConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         await game.settings.set(MODULE_NAME, "enableWeatherSound", formData.object.enableWeatherSound);
         await game.settings.set(MODULE_NAME, "enableWeatherForecast", formData.object.enableWeatherForecast);
         ui.notifications.info("Weather Settings Saved.");
-        if (game.wgtngmMiniCalender.calendarInstance && game.wgtngmMiniCalender.calendarInstance.rendered) {
-            game.wgtngmMiniCalender.calendarInstance.render();
-        return;
-    }
+        renderHelper();
+            return;
     }
 }
 

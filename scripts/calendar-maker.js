@@ -1,10 +1,10 @@
 import { MODULE_NAME } from "./settings.js";
-import { PIN_TYPES,confirmationDialog } from "./helper.js"; 
+import { PIN_TYPES, confirmationDialog } from "./helper.js";
 
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
-    
+
 export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
     static DEFAULT_OPTIONS = {
         tag: "form",
@@ -12,7 +12,7 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
         classes: ["wgtngmMiniCalenderMaker"],
         window: {
             title: "Calendar Maker",
-              icon: 'fas fa-hat-wizard',
+            icon: 'fas fa-hat-wizard',
             resizable: true
         },
         position: { width: 800, height: 750 },
@@ -22,41 +22,55 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
             submitOnChange: false,
         },
         actions: {
-            importCalendar: function() { this.element.querySelector("#wgtgm-maker-import-file").click(); },
-            addMonth: function() { this._modifyCollection('months.values', (arr) => {
-                const last = arr[arr.length - 1];
-                arr.push({ name: "New Month", abbreviation: "NM", ordinal: last ? last.ordinal + 1 : 1, days: 30, intercalary: false });
-            })},
-            removeMonth: function(e, t) { this._modifyCollection('months.values', (arr) => arr.splice(t.dataset.index, 1)); },
-            addDay: function() { this._modifyCollection('days.values', (arr) => {
-                const last = arr[arr.length - 1];
-                arr.push({ name: "New Day", abbreviation: "Nd", ordinal: last ? last.ordinal + 1 : 1 });
-            })},
-            removeDay: function(e, t) { this._modifyCollection('days.values', (arr) => arr.splice(t.dataset.index, 1)); },
-            addSeason: function() { this._modifyCollection('seasons.values', (arr) => {
-                arr.push({ name: "New Season", monthStart: 1, monthEnd: 1, included: true });
-            })},
-            removeSeason: function(e, t) { this._modifyCollection('seasons.values', (arr) => arr.splice(t.dataset.index, 1)); },
-            addSun: function() { this._modifyCollection('sun.values', (arr) => {
-                arr.push({ dawn: 6, dusk: 18, monthStart: 1, monthEnd: 1, included: true });
-            })},
-            removeSun: function(e, t) { this._modifyCollection('sun.values', (arr) => arr.splice(t.dataset.index, 1)); },
-            addWeather: function() { this._modifyCollection('weather.values', (arr) => {
-                arr.push({ name: "Winter", monthStart: 1, monthEnd: 1, tempOffset: 0, included: true });
-            })},
-            removeWeather: function(e, t) { this._modifyCollection('weather.values', (arr) => arr.splice(t.dataset.index, 1)); },
-            addMoon: function() { this._modifyCollection('moons.values', (arr) => {
-                arr.push({
-                    name: "Luna", cycleLength: 29.5, offset: 0, color: "#e0e0e0",
-                    firstNewMoon: { year: 0, month: 1, day: 1 },
-                    phases: this._getDefaultPhases()
-                });
-            })},
-            removeMoon: function(e, t) { this._modifyCollection('moons.values', (arr) => arr.splice(t.dataset.index, 1)); },
-            addNote: function() { this._modifyCollection('notes', (arr) => {
-                arr.push({ title: "New Event", content: "", icon: "", date: { year: 1, month: 0, day: 0 }, repeatUnit: "none", isPreset: true, playerVisible: false });
-            })},
-            removeNote: function(e, t) { this._modifyCollection('notes', (arr) => arr.splice(t.dataset.index, 1)); },
+            importCalendar: function () { this.element.querySelector("#wgtgm-maker-import-file").click(); },
+            addMonth: function () {
+                this._modifyCollection('months.values', (arr) => {
+                    const last = arr[arr.length - 1];
+                    arr.push({ name: "New Month", abbreviation: "NM", ordinal: last ? last.ordinal + 1 : 1, days: 30, intercalary: false });
+                })
+            },
+            removeMonth: function (e, t) { this._modifyCollection('months.values', (arr) => arr.splice(t.dataset.index, 1)); },
+            addDay: function () {
+                this._modifyCollection('days.values', (arr) => {
+                    const last = arr[arr.length - 1];
+                    arr.push({ name: "New Day", abbreviation: "Nd", ordinal: last ? last.ordinal + 1 : 1 });
+                })
+            },
+            removeDay: function (e, t) { this._modifyCollection('days.values', (arr) => arr.splice(t.dataset.index, 1)); },
+            addSeason: function () {
+                this._modifyCollection('seasons.values', (arr) => {
+                    arr.push({ name: "New Season", monthStart: 1, monthEnd: 1, included: true });
+                })
+            },
+            removeSeason: function (e, t) { this._modifyCollection('seasons.values', (arr) => arr.splice(t.dataset.index, 1)); },
+            addSun: function () {
+                this._modifyCollection('sun.values', (arr) => {
+                    arr.push({ dawn: 6, dusk: 18, monthStart: 1, monthEnd: 1, included: true });
+                })
+            },
+            removeSun: function (e, t) { this._modifyCollection('sun.values', (arr) => arr.splice(t.dataset.index, 1)); },
+            addWeather: function () {
+                this._modifyCollection('weather.values', (arr) => {
+                    arr.push({ name: "Winter", monthStart: 1, monthEnd: 1, tempOffset: 0, included: true });
+                })
+            },
+            removeWeather: function (e, t) { this._modifyCollection('weather.values', (arr) => arr.splice(t.dataset.index, 1)); },
+            addMoon: function () {
+                this._modifyCollection('moons.values', (arr) => {
+                    arr.push({
+                        name: "Luna", cycleLength: 29.5, offset: 0, color: "#e0e0e0",
+                        firstNewMoon: { year: 0, month: 1, day: 1 },
+                        phases: this._getDefaultPhases()
+                    });
+                })
+            },
+            removeMoon: function (e, t) { this._modifyCollection('moons.values', (arr) => arr.splice(t.dataset.index, 1)); },
+            addNote: function () {
+                this._modifyCollection('notes', (arr) => {
+                    arr.push({ title: "New Event", content: "", icon: "", date: { year: 1, month: 0, day: 0 }, repeatUnit: "none", isPreset: true, playerVisible: false });
+                })
+            },
+            removeNote: function (e, t) { this._modifyCollection('notes', (arr) => arr.splice(t.dataset.index, 1)); },
             exportCalendar: this.#exportSavedCalendar,
             loadCalendar: this.#loadCalendar,
             deleteCalendar: this.#deleteCalendar,
@@ -69,39 +83,39 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
         tabs: {
             template: "modules/wgtgm-mini-calendar/templates/calendar-maker-nav.hbs",
         },
-                sidebar: {template: "modules/wgtgm-mini-calendar/templates/calendar-maker-sidebar.hbs"},
+        sidebar: { template: "modules/wgtgm-mini-calendar/templates/calendar-maker-sidebar.hbs" },
 
         general: {
             template: `modules/wgtgm-mini-calendar/templates/calendar-maker-general.hbs`,
-            scrollable: ["",".scrollable",".editor-main"],
+            scrollable: ["", ".scrollable", ".editor-main"],
         },
         months: {
             template: `modules/wgtgm-mini-calendar/templates/calendar-maker-months.hbs`,
-            scrollable: ["",".scrollable",".editor-main"],
+            scrollable: ["", ".scrollable", ".editor-main"],
         },
         weekdays: {
             template: `modules/wgtgm-mini-calendar/templates/calendar-maker-weekdays.hbs`,
-            scrollable: ["",".scrollable",".editor-main"],
+            scrollable: ["", ".scrollable", ".editor-main"],
         },
         events: {
             template: `modules/wgtgm-mini-calendar/templates/calendar-maker-events.hbs`,
-            scrollable: ["",".scrollable",".editor-main"],
+            scrollable: ["", ".scrollable", ".editor-main"],
         },
         seasons: {
             template: `modules/wgtgm-mini-calendar/templates/calendar-maker-seasons.hbs`,
-            scrollable: ["",".scrollable",".editor-main"],
+            scrollable: ["", ".scrollable", ".editor-main"],
         },
         sun: {
             template: `modules/wgtgm-mini-calendar/templates/calendar-maker-sun.hbs`,
-            scrollable: ["",".scrollable",".editor-main"],
+            scrollable: ["", ".scrollable", ".editor-main"],
         },
         weather: {
             template: `modules/wgtgm-mini-calendar/templates/calendar-maker-weather.hbs`,
-            scrollable: ["",".scrollable",".editor-main"],
+            scrollable: ["", ".scrollable", ".editor-main"],
         },
         moons: {
             template: `modules/wgtgm-mini-calendar/templates/calendar-maker-moons.hbs`,
-            scrollable: ["",".scrollable",".editor-main"],
+            scrollable: ["", ".scrollable", ".editor-main"],
         },
         footer: {
             template: "templates/generic/form-footer.hbs",
@@ -126,22 +140,21 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
 
     #workingConfig = null;
 
-/** @override */
+    /** @override */
     async _onRender(context, options) {
         await super._onRender(context, options);
         this._activateListeners(this.element);
     }
 
-        /** @override */
+    /** @override */
     _activateListeners(html) {
         if (!html) return;
         html.onchange = (event) => {
             event.stopPropagation();
             this._captureFormState();
-            this.render();
         };
         const fileInput = html.querySelector("#wgtgm-maker-import-file");
-        if(fileInput) {
+        if (fileInput) {
             fileInput.onchange = (event) => this.#handleImportFile(event);
         }
         const iconInputs = html.querySelectorAll(".wgtgm-icon-picker");
@@ -190,20 +203,20 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
     async #handleImportFile(event) {
         const file = event.target.files[0];
         if (!file) return;
-        
+
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
                 const json = JSON.parse(e.target.result);
-                
+
                 // Merge into a clean config
                 this.#workingConfig = foundry.utils.mergeObject(this._createEmptyConfig(), json);
-                
+
                 // Force Arrays
-                if(this.#workingConfig.months && !Array.isArray(this.#workingConfig.months.values)) {
+                if (this.#workingConfig.months && !Array.isArray(this.#workingConfig.months.values)) {
                     this.#workingConfig.months.values = Object.values(this.#workingConfig.months.values);
                 }
-                
+
                 // Normalize Import (Ensure Included flags)
                 this._normalizeData(this.#workingConfig);
 
@@ -216,29 +229,29 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
         };
         reader.readAsText(file);
     }
-    
+
     _modifyCollection(path, callback) {
         this._captureFormState();
         const parts = path.split('.');
         let target = this.#workingConfig;
-        
-        for(let i=0; i<parts.length-1; i++) {
-            if(!target[parts[i]]) target[parts[i]] = {};
+
+        for (let i = 0; i < parts.length - 1; i++) {
+            if (!target[parts[i]]) target[parts[i]] = {};
             target = target[parts[i]];
         }
-        
-        const key = parts[parts.length-1];
-        if(!Array.isArray(target[key])) {
-             target[key] = target[key] ? Object.values(target[key]) : [];
+
+        const key = parts[parts.length - 1];
+        if (!Array.isArray(target[key])) {
+            target[key] = target[key] ? Object.values(target[key]) : [];
         }
-        
+
         callback(target[key]);
         this.render();
     }
 
     _normalizeData(config) {
         const ensureIncluded = (arr) => {
-            if(!Array.isArray(arr)) return;
+            if (!Array.isArray(arr)) return;
             arr.forEach(item => {
                 if (item.included === undefined) item.included = true;
             });
@@ -246,7 +259,7 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
 
         if (config.seasons?.values) ensureIncluded(config.seasons.values);
         if (config.weather?.values) ensureIncluded(config.weather.values);
-        if (config.sun?.values) ensureIncluded(config.sun.values); 
+        if (config.sun?.values) ensureIncluded(config.sun.values);
         if (config.moons?.values) {
             config.moons.values.forEach(m => {
                 if (m.phases) ensureIncluded(m.phases);
@@ -272,8 +285,8 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
 
         if (clean.seasons) clean.seasons.values = cleanCollection(clean.seasons.values);
         if (clean.weather) clean.weather.values = cleanCollection(clean.weather.values);
-        if (clean.sun) clean.sun.values = cleanCollection(clean.sun.values); 
-        
+        if (clean.sun) clean.sun.values = cleanCollection(clean.sun.values);
+
         if (clean.moons?.values) {
             clean.moons.values.forEach(m => {
                 if (m.phases) m.phases = cleanCollection(m.phases);
@@ -290,7 +303,7 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
 
         // Include 'sun.values' here now
         const arrayPaths = [
-            'months.values', 'days.values', 'seasons.values', 
+            'months.values', 'days.values', 'seasons.values',
             'weather.values', 'moons.values', 'notes', 'sun.values'
         ];
 
@@ -311,7 +324,7 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
                 }
             }
         }
-        
+
         // Nested Arrays
         if (this.#workingConfig.moons?.values && Array.isArray(this.#workingConfig.moons.values)) {
             this.#workingConfig.moons.values.forEach(moon => {
@@ -322,20 +335,20 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
         }
 
         // Numeric Enforcement
-        if(this.#workingConfig.months?.values) {
+        if (this.#workingConfig.months?.values) {
             this.#workingConfig.months.values.forEach(m => {
                 m.ordinal = parseInt(m.ordinal) || 0;
                 m.days = parseInt(m.days) || 0;
                 m.leapDays = parseInt(m.leapDays) || 0;
             });
         }
-        if(this.#workingConfig.seasons?.values) {
+        if (this.#workingConfig.seasons?.values) {
             this.#workingConfig.seasons.values.forEach(s => {
                 s.monthStart = parseInt(s.monthStart) || 1;
                 s.monthEnd = parseInt(s.monthEnd) || 1;
             });
         }
-        if(this.#workingConfig.sun?.values) {
+        if (this.#workingConfig.sun?.values) {
             this.#workingConfig.sun.values.forEach(s => {
                 s.monthStart = parseInt(s.monthStart) || 1;
                 s.monthEnd = parseInt(s.monthEnd) || 1;
@@ -343,33 +356,33 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
                 s.dusk = parseInt(s.dusk) || 0;
             });
         }
-        if(this.#workingConfig.weather?.values) {
+        if (this.#workingConfig.weather?.values) {
             this.#workingConfig.weather.values.forEach(w => {
                 w.monthStart = parseInt(w.monthStart) || 1;
                 w.monthEnd = parseInt(w.monthEnd) || 1;
                 w.tempOffset = parseInt(w.tempOffset) || 0;
             });
         }
-        if(this.#workingConfig.moons?.values) {
+        if (this.#workingConfig.moons?.values) {
             this.#workingConfig.moons.values.forEach(m => {
                 m.cycleLength = parseFloat(m.cycleLength) || 0;
                 m.offset = parseFloat(m.offset) || 0;
-                if(m.firstNewMoon) {
+                if (m.firstNewMoon) {
                     m.firstNewMoon.year = parseInt(m.firstNewMoon.year) || 0;
                     m.firstNewMoon.month = parseInt(m.firstNewMoon.month) || 0;
                     m.firstNewMoon.day = parseInt(m.firstNewMoon.day) || 0;
                 }
-                if(m.phases) {
+                if (m.phases) {
                     m.phases.forEach(p => p.length = parseFloat(p.length) || 0);
                 }
             });
         }
-        if(this.#workingConfig.notes) {
+        if (this.#workingConfig.notes) {
             this.#workingConfig.notes.forEach(n => {
-                if(!n.icon){
+                if (!n.icon) {
                     n.icon = "fas fa-star";
                 }
-                if(n.date) {
+                if (n.date) {
                     n.date.year = parseInt(n.date.year) || 0;
                     n.date.month = parseInt(n.date.month) || 0;
                     n.date.day = parseInt(n.date.day) || 0;
@@ -384,15 +397,15 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
         }
     }
 
-  /** @inheritDoc */
-  changeTab(tab, group, options) {
-    super.changeTab(tab, group, options);
-  }
+    /** @inheritDoc */
+    changeTab(tab, group, options) {
+        super.changeTab(tab, group, options);
+    }
 
-  async _preparePartContext(partId, context, options) {
-    // context = await super._preparePartContext(partId, context, options);
-    if ( partId in context.tabs ) context.tab = context.tabs[partId];
-    context.pinTypes = PIN_TYPES;
+    async _preparePartContext(partId, context, options) {
+        // context = await super._preparePartContext(partId, context, options);
+        if (partId in context.tabs) context.tab = context.tabs[partId];
+        context.pinTypes = PIN_TYPES;
 
         const savedCalendars = game.settings.get(MODULE_NAME, "savedCalendars") || {};
         context.savedList = Object.values(savedCalendars).map(c => ({ id: c.id, name: c.name }));
@@ -403,10 +416,10 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
 
         const config = this.#workingConfig;
 
-        if(!Array.isArray(config.months?.values)) config.months = { values: [] };
-        if(!Array.isArray(config.seasons?.values)) config.seasons = { values: [] };
-        if(!Array.isArray(config.weather?.values)) config.weather = { values: [] };
-        if(!Array.isArray(config.sun?.values)) config.sun = { values: [] };
+        if (!Array.isArray(config.months?.values)) config.months = { values: [] };
+        if (!Array.isArray(config.seasons?.values)) config.seasons = { values: [] };
+        if (!Array.isArray(config.weather?.values)) config.weather = { values: [] };
+        if (!Array.isArray(config.sun?.values)) config.sun = { values: [] };
 
         config.days.daysPerYear = config.months.values.reduce((sum, m) => sum + (m.days || 0), 0);
 
@@ -440,14 +453,14 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
             weatherClass: this._getVisualClass(m.ordinal, config.weather.values),
             sunClass: this._getVisualClass(m.ordinal, config.sun.values)
         }));
-        
+
         context.weatherTypes = ["Spring", "Summer", "Autumn", "Winter"];
 
         context.days = (config.days?.values || []).map((d, i) => ({ ...d, index: i }));
         context.notes = (config.notes || []).map((n, i) => ({ ...n, index: i }));
         context.moons = (config.moons?.values || []).map((m, i) => ({ ...m, index: i }));
-        
-        context.config = config; 
+
+        context.config = config;
         context.buttons = [
             { type: "button", action: "createNew", icon: "fa-solid fa-calendar-plus", label: "New" },
             { type: "button", action: "importCalendar", icon: "fa-solid fa-file-import", label: "Import" },
@@ -455,9 +468,9 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
             { type: "close", action: "close", icon: "fa-solid fa-circle-x", label: "Close" },
         ];
 
-    
-    return context;
-}
+
+        return context;
+    }
     async _prepareContext(options) {
         const context = await super._prepareContext(options);
         const tabs = this._prepareTabs("sheet");
@@ -467,8 +480,8 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
 
     _checkOverlaps(months, items, nameKey = 'name') {
         if (!items || !months) return { errors: [], badIndices: new Set() };
-        if(!Array.isArray(items)) items = Object.values(items);
-        if(!Array.isArray(months)) months = Object.values(months);
+        if (!Array.isArray(items)) items = Object.values(items);
+        if (!Array.isArray(months)) months = Object.values(months);
 
         const allOrdinals = months.map(m => parseInt(m.ordinal) || 0);
         const maxOrdinal = Math.max(0, ...allOrdinals);
@@ -480,11 +493,11 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
             if (item.included === false) return;
             let current = parseInt(item.monthStart);
             const end = parseInt(item.monthEnd);
-            
+
             const name = item[nameKey] || `Config #${index + 1}`;
-            
+
             let steps = 0;
-            const maxSteps = maxOrdinal + 12; 
+            const maxSteps = maxOrdinal + 12;
             while (steps < maxSteps) {
                 if (allOrdinals.includes(current)) {
                     if (occupied.has(current)) {
@@ -536,7 +549,7 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
         }
         if (!data.days) throw new Error("Calendar configuration is missing 'days' object.");
 
-    
+
         const requiredTime = ["hoursPerDay", "minutesPerHour", "secondsPerMinute"];
         requiredTime.forEach(field => {
             const val = parseInt(data.days[field]);
@@ -547,15 +560,15 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
         if (data.seasons?.values) {
             const validOrdinals = data.months.values.map(m => m.ordinal);
             data.seasons.values.forEach((s, i) => {
-                if (s.included === false) return; 
+                if (s.included === false) return;
                 if (typeof s.monthStart !== "number" || typeof s.monthEnd !== "number") {
                     throw new Error(`Season "${s.name || i}" is missing 'monthStart' or 'monthEnd'.`);
                 }
                 const startValid = validOrdinals.includes(s.monthStart);
                 const endValid = validOrdinals.includes(s.monthEnd);
-                
+
                 if (!startValid || !endValid) {
-                     throw new Error(`Season "${s.name}" references invalid month ordinals (${s.monthStart}-${s.monthEnd}). Check your Month configuration.`);
+                    throw new Error(`Season "${s.name}" references invalid month ordinals (${s.monthStart}-${s.monthEnd}). Check your Month configuration.`);
                 }
             });
         }
@@ -563,7 +576,7 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
         if (data.moons?.values) {
             data.moons.values.forEach((m, i) => {
                 if (m.included === false) return;
-                if (!m.name) throw new Error(`Moon #${i+1} is missing a name.`);
+                if (!m.name) throw new Error(`Moon #${i + 1} is missing a name.`);
                 if (typeof m.cycleLength !== "number" || m.cycleLength <= 0) {
                     throw new Error(`Moon "${m.name}" has an invalid cycle length.`);
                 }
@@ -577,7 +590,7 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
             data.sun.values.forEach((s, i) => {
                 if (s.included === false) return;
                 if (typeof s.dawn !== "number" || typeof s.dusk !== "number") {
-                    throw new Error(`Sun config entry #${i+1} has invalid dawn/dusk values.`);
+                    throw new Error(`Sun config entry #${i + 1} has invalid dawn/dusk values.`);
                 }
                 if (s.dawn >= s.dusk) {
                     console.warn(`Mini Calendar | Sun config ${i}: Dawn is after Dusk.`);
@@ -586,12 +599,12 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
         }
 
         if (data.weather?.values) {
-             data.weather.values.forEach((w, i) => {
+            data.weather.values.forEach((w, i) => {
                 if (w.included === false) return;
                 if (typeof w.tempOffset !== "number") {
                     throw new Error(`Weather entry "${w.name || i}" has an invalid tempOffset.`);
                 }
-             });
+            });
         }
     }
 
@@ -608,7 +621,7 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
         }
         const seasonCheck = this._checkOverlaps(config.months.values, config.seasons.values);
         const weatherCheck = this._checkOverlaps(config.months.values, config.weather.values);
-        const sunCheck = this._checkOverlaps(config.months.values, config.sun.values, 'dawn'); 
+        const sunCheck = this._checkOverlaps(config.months.values, config.sun.values, 'dawn');
 
         if (seasonCheck.errors.length > 0) {
             ui.notifications.error("Cannot Save: Seasons have overlaps. Please fix them.");
@@ -627,7 +640,7 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
             return;
         }
         const savedCalendars = game.settings.get(MODULE_NAME, "savedCalendars") || {};
-        
+
         const existingById = savedCalendars[config.id];
         const existingByName = Object.values(savedCalendars).find(c => c.name === config.name && c.id !== config.id);
 
@@ -640,7 +653,7 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
         }
 
         savedCalendars[config.id] = config;
-        
+
         await game.settings.set(MODULE_NAME, "savedCalendars", savedCalendars);
         ui.notifications.info(`Calendar "${config.name}" saved! Go to Calendar Configuration to apply it.`);
         if (foundry.applications.instances.get("wgtngm-calendar-config")) await foundry.applications.instances.get("wgtngm-calendar-config").render();
@@ -662,7 +675,7 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
         const id = target.dataset.id;
         const savedCalendars = game.settings.get(MODULE_NAME, "savedCalendars") || {};
         const data = savedCalendars[id];
-        
+
         if (data) {
             const filename = `${data.id || "calendar"}.json`;
             foundry.utils.saveDataToFile(JSON.stringify(data, null, 2), "text/json", filename);

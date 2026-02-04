@@ -5,6 +5,8 @@
     "settings": {
       "calSheetDimensions": "Calendar Position",
       "calSheetDimensionsHint": "Stores the last position and size of the calendar.",
+      "calHudOpened": "Calendar HUD Open State",
+      "calHudOpenedHint": "Stores if the calendar HUD was open when you last closed Foundry.",
       "calSheetOpened": "Calendar Open State",
       "calSheetOpenedHint": "Stores if the calendar was open when you last closed Foundry.",
       "pauseOnCombat":"Pause time on combat",
