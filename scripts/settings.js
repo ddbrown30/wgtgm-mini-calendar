@@ -240,6 +240,16 @@ export default async function minicalendarSettings() {
         requiresReload: false
     });
 
+    game.settings.register(MODULE_NAME, "hideHudonCombat", {
+        name: localize("settings.hideHudonCombat"),
+        hint: localize("settings.hideHudonCombatHint"),
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: false,
+        requiresReload: false
+    });
+
     game.settings.register(MODULE_NAME, "enableDarknessControl", {
         name: "Enable Scene Darkness Control",
         hint: "If enabled, the module will adjust scene darkness based on the time of day.",

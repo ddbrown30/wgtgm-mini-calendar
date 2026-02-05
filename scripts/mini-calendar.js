@@ -1479,6 +1479,11 @@ export class wgtngmMiniCalender extends wgtngmcal {
     const moons = CONFIG.time.worldCalendarConfig.moons?.values || [];
     const currentTimeComps = game.time.calendar.timeToComponents(game.time.worldTime)
 
+    const isLeap = calendar.isLeapYear(date.year);
+    const monthData = calendar.months.values[date.month];
+    const daysInMonth = (isLeap && monthData.leapDays !== undefined) ? monthData.leapDays : monthData.days;
+
+
     const isEditing = noteToEdit !== null;
     const title = isEditing ? "Edit Note" : "Add Note";
     const isAllDay = noteToEdit ? (noteToEdit.hour === null || noteToEdit.hour === undefined) : true;
@@ -1544,7 +1549,6 @@ export class wgtngmMiniCalender extends wgtngmcal {
       hourOptions: Array.from({ length: hoursInDay }, (_, i) => ({ value: i, label: String(i).padStart(2, "0") })),
       minuteOptions: Array.from({ length: Math.floor(minutesInHour) + 1 }, (_, i) => {
         const m = i;
-        // const m = i * 5;
         return m < minutesInHour ? { value: m, label: String(m).padStart(2, "0") } : null;
       }).filter(x => x),
 
@@ -1556,7 +1560,8 @@ export class wgtngmMiniCalender extends wgtngmcal {
       editDate: date,
       yearOptions: Array.from({ length: 21 }, (_, i) => ({ value: (this.#viewYear - 10) + i })),
       monthOptions: calendar.months.values.map((m, i) => ({ index: i, name: game.i18n.localize(m.name) })),
-      dayOptions: Array.from({ length: 31 }, (_, i) => ({ value: i, label: i + 1 })),
+      // dayOptions: Array.from({ length: 31 }, (_, i) => ({ value: i, label: i + 1 })),
+      dayOptions: Array.from({ length: daysInMonth }, (_, i) => ({ value: i, label: i + 1 })),
 
     };
 
@@ -2537,7 +2542,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
     try {
       const comps = calendar.timeToComponents(game.time.worldTime);
       comps.hour = hour;
-      comps.minute = hour;
+      comps.minute = minute;
       comps.second = second;  
       game.time.set(comps);
 
@@ -2547,34 +2552,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
       ui.notifications.error("Failed to set the time.");
     }
 
-    // try {
-    //   const yearZero = CONFIG.time.worldCalendarConfig?.years?.yearZero || 0;
-    //   const systemYear = currentComps.year;
 
-    //   const newTimeComps = {
-    //     // year: systemYear,
-    //     // day: currentComps.day,
-    //     hour: Math.max(0, Math.min(maxHour, hour)),
-    //     minute: Math.max(0, Math.min(maxMinute, minute)),
-    //     second: Math.max(0, Math.min(maxSecond, second)),
-    //   };
-
-    //   game.time.set(newTimeComps);
-
-
-    //   const timeString = `${String(newTimeComps.hour).padStart(2, "0")}:${String(newTimeComps.minute).padStart(2, "0")}:${String(newTimeComps.second).padStart(2, "0")}`;
-
-    //   ui.notifications.info(`World time set to ${timeString}`);
-
-    //   if (this.render) {
-    //     this.render();
-    //   } else if (game.wgtngmMiniCalender) {
-    //     game.wgtngmMiniCalender.render();
-    //   }
-    // } catch (e) {
-    //   console.error("Mini Calendar | Error setting world time:", e);
-    //   ui.notifications.error("Failed to set world time.");
-    // }
   }
 
   /**

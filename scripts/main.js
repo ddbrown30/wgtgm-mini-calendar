@@ -210,6 +210,9 @@ Hooks.on("combatStart", (combat, updateData) => {
         console.log("Mini Calendar | Time advancement paused due to combat.");
         if (calendarApp.rendered) calendarApp.render();
     }
+    if (game.settings.get(MODULE_NAME, "hideHudonCombat")){
+        if (game.wgtngmMiniCalender.hud?.rendered) game.wgtngmMiniCalender.hud.close();
+    }
 });
 
 Hooks.on("deleteCombat", (combat, options, userId) => {
@@ -223,6 +226,10 @@ Hooks.on("deleteCombat", (combat, options, userId) => {
         console.log("Mini Calendar | Time advancement resumed after combat.");
         if (calendarApp.rendered) calendarApp.render();
     }
+    if (game.settings.get(MODULE_NAME, "hideHudonCombat")){
+        if (!game.wgtngmMiniCalender.hud?.rendered) game.wgtngmMiniCalender.hud.render(true);
+    }
+
 });
 
 

@@ -1145,7 +1145,7 @@ export function pf2e() {
                 title: "New Year",
                 content: "First day of the year.",
                 icon: "fas fa-glass-cheers",
-                date: { year: 0, month: 1, day: 1 },
+                date: { year: 0, month: 0, day: 0 },
                 repeatUnit: "years",
                 repeatInterval: 1,
                 repeatCount: 0,

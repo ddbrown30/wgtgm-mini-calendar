@@ -287,28 +287,12 @@ export class CalendarHUD extends HandlebarsApplicationMixin(ApplicationV2) {
 
         if (showWeatherStats) {
             const forecast = await WeatherEngine.getWeatherForDate(comps.year, comps.month, comps.dayOfMonth);
-
-            if (forecast) {
-                tempDisplay = WeatherEngine.getTempDisplay(forecast.temp);
-            }
-
-            if (enableWeather && ((sceneFlag !== false))) {
-                const activeWeatherId = canvas.scene?.weather;
-                if (activeWeatherId) {
-                    for (const [key, effect] of Object.entries(CONFIG.weatherEffects)) {
-                        if (effect.id === activeWeatherId) {
-                            weatherLabel = effect.label;
-                            weatherIcon = this._getWeatherIcon(key);
-                            break;
-                        }
-                    }
-                } else {
-                    weatherIcon = "fas fa-sun";
-                    if (forecast && forecast.icon) weatherIcon = forecast.icon;
-                }
+            if (forecast) tempDisplay = WeatherEngine.getTempDisplay(forecast.temp);
+            if (enableForecast) {
+                if (forecast && forecast.icon) weatherIcon = forecast.icon;
             } else {
                 weatherIcon = "fas fa-ban";
-                weatherLabel = "Weather Disabled";
+                weatherLabel = "Forecast Disabled";
             }
         }
 

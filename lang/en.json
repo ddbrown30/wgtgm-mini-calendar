@@ -14,7 +14,9 @@
       "resumeAfterCombat":"Resume time after combat",
       "resumeAfterCombatHint":"Restores the clock after combat has finished.",
       "fadedUIHint":"Calnedar will fade until mouse is hovered over",
-      "fadedUI":"Enable Fade UI"
+      "fadedUI":"Enable Fade UI",
+      "hideHudonCombat":"Hide HUD on combat",
+      "hideHudonCombatHint":"Hides the HUD during combat and reopens at end."
     }
   }
 }
