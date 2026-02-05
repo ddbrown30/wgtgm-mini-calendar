@@ -15,7 +15,7 @@ export function createMiniCalendarClass() {
 
             if (!(game.system.id === "pf2e" && CONFIG.PF2E && game.pf2e && game.pf2e.worldClock)) return false;
             const dateTheme = game.pf2e.worldClock.dateTheme;
-            if (dateTheme !== 'AR' && dateTheme !== 'IC') return false;
+            // if (dateTheme !== 'AR' && dateTheme !== 'IC') return false;
             const conf = CONFIG.time.worldCalendarConfig;
             return true;
         }

@@ -373,9 +373,9 @@ export class WeatherEngine {
     // UPDATED
     static DEFAULT_BIOMES = {
         "temperate": { tempOffset: 0, seasons: { "Winter": [1, 3, 4, 2, 6, 6], "Spring": [0, 0, 2, 3, 4, 5], "Summer": [0, 2, 5, 5, 6, 6], "Autumn": [0, 2, 3, 3, 4, 6] } },
-        "desert": { tempOffset: 20, seasons: { "Winter": [5, 3, 2, 5, 1, 5], "Spring": [0, 0, 0, 3, 4, 5], "Summer": [0, 2, 1, 4, 0, 0], "Autumn": [5, 3, 2, 1, 1, 6] } },
+        "desert": { tempOffset: 35, seasons: { "Winter": [5, 3, 2, 5, 1, 5], "Spring": [0, 0, 0, 3, 4, 5], "Summer": [0, 2, 1, 4, 0, 0], "Autumn": [5, 3, 2, 1, 1, 6] } },
         "polar": { tempOffset: -30, seasons: { "Winter": [3, 4, 5, 2, 3, 3], "Spring": [3, 1, 5, 3, 4, 5], "Summer": [5, 1, 6, 6, 3, 4], "Autumn": [3, 4, 1, 3, 2, 1] } },
-        "tropical": { tempOffset: 15, seasons: { "Winter": [0, 1, 5, 2, 6, 3], "Spring": [0, 1, 2, 3, 4, 5], "Summer": [2, 2, 3, 4, 5, 0], "Autumn": [3, 3, 4, 2, 0, 1] } }
+        "tropical": { tempOffset: 25, seasons: { "Winter": [0, 1, 5, 2, 6, 3], "Spring": [0, 1, 2, 3, 4, 5], "Summer": [2, 2, 3, 4, 5, 0], "Autumn": [3, 3, 4, 2, 0, 1] } }
     };
 
 
@@ -491,11 +491,11 @@ export class WeatherEngine {
         const variance = Math.floor(Math.random() * 10) - 5;
         let weatherOffset = 0;
 
-        if ([7, 8, 9, 18].includes(cellId)) weatherOffset = 10;   // Sunny/Dry
-        if ([1, 2, 6].includes(cellId)) weatherOffset = 5;    // Fair
+        if ([7, 8, 9, 18].includes(cellId)) weatherOffset = 20;   // Sunny/Dry
+        if ([1, 2, 6].includes(cellId)) weatherOffset = 10;    // Fair
         if ([0].includes(cellId)) weatherOffset = 0;    // Neutral
-        if ([3, 4, 5, 15, 16, 17].includes(cellId)) weatherOffset = -5; // Wet/Windy
-        if ([10, 11, 12, 13, 14].includes(cellId)) weatherOffset = -10; // Stormy
+        if ([3, 4, 5, 15, 16, 17].includes(cellId)) weatherOffset = -7; // Wet/Windy
+        if ([10, 11, 12, 13, 14].includes(cellId)) weatherOffset = -14; // Stormy
 
         return base + (season.tempOffset || 0) + biomeOffset + weatherOffset + variance;
     }

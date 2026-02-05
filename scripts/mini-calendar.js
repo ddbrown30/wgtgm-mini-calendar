@@ -78,6 +78,8 @@ export class wgtngmMiniCalender extends wgtngmcal {
   wasPausedForGame = false;
   wasPausedForCombat = false;
   _debouncedRender = foundry.utils.debounce(this.render.bind(this), 100);
+  _debouncedRenderHud = foundry.utils.debounce(this.updateHud.bind(this), 100);
+  
   _positionObserver = null;
 
   _positionObserver = null;
@@ -148,7 +150,9 @@ export class wgtngmMiniCalender extends wgtngmcal {
     }
   }
 
-
+  updateHud(){
+    if (game.wgtngmMiniCalender.hud) game.wgtngmMiniCalender.hud.render();
+  }
 
   /**
    * Custom handler for header double-clicks
@@ -1084,6 +1088,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
       this.#viewMonth = c.month;
       this.#viewYear = c.year;
       this._debouncedRender();
+      this._debouncedRenderHud();
 
       if (game.user.isGM) {
 
@@ -2531,21 +2536,10 @@ export class wgtngmMiniCalender extends wgtngmcal {
 
     try {
       const comps = calendar.timeToComponents(game.time.worldTime);
-      const yearZero = CONFIG.time.worldCalendarConfig?.years?.yearZero || 0;
-
-      const systemYear = comps.year;
-      const newComps = {
-        year: systemYear,
-        month: comps.month,
-        day: comps.day,
-        dayOfMonth: comps.dayOfMonth,
-        hour: hour,
-        minute: minute,
-        second: second,
-      };
-
-      game.time.set(newComps);
-
+      comps.hour = hour;
+      comps.minute = hour;
+      comps.second = second;  
+      game.time.set(comps);
 
       this.render();
     } catch (e) {
