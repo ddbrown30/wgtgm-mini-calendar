@@ -10,7 +10,7 @@
                     <tbody>
                         {{#each months}}
                         <tr>
-                            <td><input type="number" name="months.values.{{index}}.ordinal" value="{{ordinal}}"></td>
+                            <td><input type="number" name="months.values.{{index}}.ordinal" value="{{this.ordinal}}"></td>
                             <td><input type="text" name="months.values.{{index}}.name" value="{{name}}"></td>
                             <td><input type="text" name="months.values.{{index}}.abbreviation" value="{{abbreviation}}"></td>
                             <td><input type="number" name="months.values.{{index}}.days" value="{{days}}"></td>

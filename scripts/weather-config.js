@@ -13,7 +13,7 @@ export class WeatherConfig extends HandlebarsApplicationMixin(ApplicationV2) {
             title: "Weather Configuration",
             resizable: false
         },
-        position: { width: 440, height: "auto" },
+        position: { width: 440, height: 600 },
         actions: {
             openBiomeEditor: () => new BiomeConfig().render(true)
         },
@@ -23,6 +23,7 @@ export class WeatherConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     static PARTS = {
         form: {
             template: `modules/wgtgm-mini-calendar/templates/weather-config.hbs`,
+            scrollable: ["", ".scrollable"],
 
         }, footer: { template: "modules/wgtgm-mini-calendar/templates/weather-config-footer.hbs" },
 

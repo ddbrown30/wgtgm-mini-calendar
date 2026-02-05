@@ -10,7 +10,7 @@
                     <tbody>
                         {{#each days}}
                         <tr>
-                            <td style="width:40px;"><input type="number" name="days.values.{{index}}.ordinal" value="{{ordinal}}"></td>
+                            <td style="width:40px;"><input type="number" name="days.values.{{index}}.ordinal" value="{{this.ordinal}}"></td>
                             <td><input type="text" name="days.values.{{index}}.name" value="{{name}}"></td>
                             <td><input type="text" name="days.values.{{index}}.abbreviation" value="{{abbreviation}}"></td>
                             <td style="width:30px;"><a data-action="removeDay" data-index="{{index}}" style="color:red;"><i class="fas fa-trash"></i></a></td>

@@ -745,7 +745,7 @@ export class WeatherEngine {
         if (!game.user.isGM) return;
 
         const defaultWeatherEnabled = game.settings.get(MODULE_NAME, "enableWeatherEffects");
-        const sceneFlag = canvas.scene.getFlag(MODULE_NAME, "enableWeather");
+        const sceneFlag = canvas?.scene?.getFlag(MODULE_NAME, "enableWeather") || false;
 
         if (sceneFlag === false) {
             await this.playWeatherSound("none");

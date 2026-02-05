@@ -144,7 +144,7 @@ export class CalendarHUD extends HandlebarsApplicationMixin(ApplicationV2) {
             top: 0,
             left: 0
         },
-        classes: ["calendar-hud-app"],
+        classes: ["calendar-hud-app", "wgtngm-hud"],
         actions: {
             "open-calendar": CalendarHUD.openCalendar,
             "open-settings": CalendarHUD.openSettings,

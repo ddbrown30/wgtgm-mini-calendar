@@ -1,3 +1,8 @@
+#3.6
+- Scroll on weather config
+- pf2e change time fix
+- pf2e calendar maker fix
+
 #3.5
 - backend rewrite
 - calendar hud

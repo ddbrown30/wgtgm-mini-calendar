@@ -514,7 +514,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
 
 
       const sceneTooltip = weatherEnabled ? "Disable Scene Weather FX" : "Enable Scene Weather FX";
-      const sceneFlag = canvas.scene.getFlag(MODULE_NAME, "enableWeather");
+      const sceneFlag = canvas?.scene?.getFlag(MODULE_NAME, "enableWeather") || false;
 
 
       copyId = `
@@ -544,6 +544,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
 
 
   async sceneFX() {
+    if (!canvas.scene) return;
     const currentState = canvas.scene.getFlag(MODULE_NAME, "enableWeather");
     const newState = !currentState;
     await canvas.scene.setFlag(MODULE_NAME, "enableWeather", newState);
@@ -2336,7 +2337,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
 
       const monthName = calendar.months.values[date.month].name;
       const dayNum = date.day + 1;
-      ui.notifications.info(`World time set to ${game.i18n.localize(monthName)} ${dayNum}, ${date.year} (Noon).`);
+      ui.notifications.info(`World time set to ${game.i18n.localize(monthName)} ${dayNum}, ${date.year}.`);
       this.render();
     } catch (e) {
       console.error("Mini Calendar | Error setting world time:", e, { date });
@@ -2526,35 +2527,60 @@ export class wgtngmMiniCalender extends wgtngmcal {
     if (!result) return;
 
     const { hour, minute, second } = result;
+    if (!game.user.isGM) return;
 
     try {
+      const comps = calendar.timeToComponents(game.time.worldTime);
       const yearZero = CONFIG.time.worldCalendarConfig?.years?.yearZero || 0;
-      const systemYear = currentComps.year;
 
-      const newTimeComps = {
+      const systemYear = comps.year;
+      const newComps = {
         year: systemYear,
-        day: currentComps.day,
-        hour: Math.max(0, Math.min(maxHour, hour)),
-        minute: Math.max(0, Math.min(maxMinute, minute)),
-        second: Math.max(0, Math.min(maxSecond, second)),
+        month: comps.month,
+        day: comps.day,
+        dayOfMonth: comps.dayOfMonth,
+        hour: hour,
+        minute: minute,
+        second: second,
       };
 
-      game.time.set(newTimeComps);
+      game.time.set(newComps);
 
 
-      const timeString = `${String(newTimeComps.hour).padStart(2, "0")}:${String(newTimeComps.minute).padStart(2, "0")}:${String(newTimeComps.second).padStart(2, "0")}`;
-
-      ui.notifications.info(`World time set to ${timeString}`);
-
-      if (this.render) {
-        this.render();
-      } else if (game.wgtngmMiniCalender) {
-        game.wgtngmMiniCalender.render();
-      }
+      this.render();
     } catch (e) {
-      console.error("Mini Calendar | Error setting world time:", e);
-      ui.notifications.error("Failed to set world time.");
+      console.error("Mini Calendar | Error setting time:", e);
+      ui.notifications.error("Failed to set the time.");
     }
+
+    // try {
+    //   const yearZero = CONFIG.time.worldCalendarConfig?.years?.yearZero || 0;
+    //   const systemYear = currentComps.year;
+
+    //   const newTimeComps = {
+    //     // year: systemYear,
+    //     // day: currentComps.day,
+    //     hour: Math.max(0, Math.min(maxHour, hour)),
+    //     minute: Math.max(0, Math.min(maxMinute, minute)),
+    //     second: Math.max(0, Math.min(maxSecond, second)),
+    //   };
+
+    //   game.time.set(newTimeComps);
+
+
+    //   const timeString = `${String(newTimeComps.hour).padStart(2, "0")}:${String(newTimeComps.minute).padStart(2, "0")}:${String(newTimeComps.second).padStart(2, "0")}`;
+
+    //   ui.notifications.info(`World time set to ${timeString}`);
+
+    //   if (this.render) {
+    //     this.render();
+    //   } else if (game.wgtngmMiniCalender) {
+    //     game.wgtngmMiniCalender.render();
+    //   }
+    // } catch (e) {
+    //   console.error("Mini Calendar | Error setting world time:", e);
+    //   ui.notifications.error("Failed to set world time.");
+    // }
   }
 
   /**
