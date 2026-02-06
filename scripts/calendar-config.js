@@ -1,5 +1,5 @@
 import { MODULE_NAME } from "./settings.js";
-import { confirmationDialog, calendarJournal } from "./helper.js";
+import { confirmationDialog, calendarJournal,renderCalendarIfOpen } from "./helper.js";
 import { setCalendarJSON } from "./main.js";
 import { pf2e, harptos, gregorian, warhammer, galifar,barovia } from "./presets.js";
 import { CalendarMaker } from "./calendar-maker.js"; 
@@ -450,6 +450,8 @@ export class CalendarConfig extends calendarForm {
                 if (notes.length > 0) {
                     await this._importPresetEvents(notes);
                     ui.notifications.info(`Successfully imported ${notes.length} notes.`);
+                    renderCalendarIfOpen();
+
                 } else {
                     ui.notifications.warn("No notes found in the selected file.");
                 }

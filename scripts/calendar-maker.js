@@ -439,7 +439,15 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
             }
         });
         uniqueOrdinals.sort((a, b) => a.ordinal - b.ordinal);
+        uniqueOrdinals.sort((a, b) => a.ordinal - b.ordinal);
         context.uniqueMonthOrdinals = uniqueOrdinals;
+
+        context.allMonths = config.months.values.map((m, i) => ({
+            name: m.name,
+            index: i,
+            ordinal: m.ordinal,
+            displayName: `${m.name} (Idx ${i})`
+        }));
 
         const seasonCheck = this._checkOverlaps(config.months.values, config.seasons.values);
         context.seasonErrors = seasonCheck.errors;
