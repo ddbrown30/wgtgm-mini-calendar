@@ -82,7 +82,7 @@
 
     {{#if showWeatherStats}}
         <div class="hud-group weather-forecast {{#unless isGM}}weather-player-view{{/unless}}" style="min-width: 60px; justify-content: center;">
-            <i class="{{weatherIcon}}" style="font-size: 1.2em; margin-right: 5px;"></i>
+            <i class="{{weatherIcon}}" style="font-size: 1.2em; margin-right: 5px;" data-tooltip="{{weatherLabel}}"></i>
             {{#if tempDisplay}}
             <span style="font-size: 0.9em; font-weight: bold;">{{tempDisplay}}</span>
             {{/if}}

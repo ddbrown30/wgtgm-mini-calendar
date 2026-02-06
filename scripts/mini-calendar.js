@@ -1091,7 +1091,6 @@ export class wgtngmMiniCalender extends wgtngmcal {
       this._debouncedRenderHud();
 
       if (game.user.isGM) {
-
         WeatherEngine.updateForecasts();
       }
       this._weatherToChat();
@@ -1099,21 +1098,6 @@ export class wgtngmMiniCalender extends wgtngmcal {
 
 
     const timeString = this._formatTime(worldTime);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

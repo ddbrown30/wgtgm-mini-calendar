@@ -234,6 +234,9 @@ Hooks.on("deleteCombat", (combat, options, userId) => {
 
 
 Hooks.on("updateScene", async (scene, changes, options, userId) => {
+    // if (foundry.utils.hasProperty(changes, "weather")){
+    //     if (game.wgtngmMiniCalender.hud.rendered) game.wgtngmMiniCalender.hud.updateWeatherIcon();
+    // }
     if (foundry.utils.hasProperty(changes, "flags.wgtgm-mini-calendar")) {
         const myFlags = changes.flags["wgtgm-mini-calendar"];
         console.log("Mini Calendar flags were updated:", myFlags);

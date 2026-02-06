@@ -299,6 +299,7 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
     _captureFormState() {
         if (!this.element) return;
         const formData = new foundry.applications.ux.FormDataExtended(this.element).object;
+
         this.#workingConfig = foundry.utils.mergeObject(this.#workingConfig, formData);
 
         // Include 'sun.values' here now
@@ -319,9 +320,14 @@ export class CalendarMaker extends HandlebarsApplicationMixin(ApplicationV2) {
 
             if (valid) {
                 const key = parts[parts.length - 1];
+                // Ensure it is an array
                 if (target[key] && !Array.isArray(target[key])) {
-                    target[key] = Object.values(target[key]);
+                    // Sort by key if they are numeric indices to preserve order
+                    const keys = Object.keys(target[key]).sort((a, b) => parseInt(a) - parseInt(b));
+                    target[key] = keys.map(k => target[key][k]);
                 }
+                // Fallback: If it became null/undefined, make it empty array
+                if (!target[key]) target[key] = [];
             }
         }
 

@@ -273,8 +273,6 @@ export class CalendarHUD extends HandlebarsApplicationMixin(ApplicationV2) {
         let tempDisplay = "";
 
 
-
-
         const enableWeather = game.settings.get(MODULE_NAME, "enableWeatherEffects");
         const enableForecast = game.settings.get(MODULE_NAME, "enableWeatherForecast");
         const enableSound = game.settings.get(MODULE_NAME, "enableWeatherSound");
@@ -284,15 +282,24 @@ export class CalendarHUD extends HandlebarsApplicationMixin(ApplicationV2) {
         const showWeatherStats = enableForecast && (game.user.isGM || !hideWeatherPlayer) ? true : false;
 
 
-
         if (showWeatherStats) {
             const forecast = await WeatherEngine.getWeatherForDate(comps.year, comps.month, comps.dayOfMonth);
-            if (forecast) tempDisplay = WeatherEngine.getTempDisplay(forecast.temp);
-            if (enableForecast) {
-                if (forecast && forecast.icon) weatherIcon = forecast.icon;
+            let weatherTypeToUse = forecast;
+            if (comps.hour >= 12 && comps.hour < 18) {
+                if (forecast.variations?.midday) {
+                    weatherTypeToUse = forecast.variations.midday;
+                }
+            } else if (comps.hour >= 18) {
+                if (forecast.variations?.evening) {
+                    weatherTypeToUse = forecast.variations.evening;
+                }
+            }
+            if (enableForecast && forecast) {
+                tempDisplay = WeatherEngine.getTempDisplay(forecast.temp) || "";
+                weatherIcon = weatherTypeToUse.icon || "";
+                weatherLabel = weatherTypeToUse.label || "";
             } else {
-                weatherIcon = "fas fa-ban";
-                weatherLabel = "Forecast Disabled";
+                showWeatherStats = false;
             }
         }
 
@@ -632,6 +639,43 @@ export class CalendarHUD extends HandlebarsApplicationMixin(ApplicationV2) {
 
     static weatherConfig() { new WeatherConfig().render(true); }
 
+    async updateWeatherIcon(){
+        const enableForecast = game.settings.get(MODULE_NAME, "enableWeatherForecast");
+        const hideWeatherPlayer = game.settings.get(MODULE_NAME, "hideWeatherPlayer");
+        const showWeatherStats = enableForecast && (game.user.isGM || !hideWeatherPlayer) ? true : false;
+        if (!showWeatherStats) return;
+
+        const comps = game.time.calendar.timeToComponents(game.time.worldTime);
+        const forecast = await WeatherEngine.getWeatherForDate(comps.year, comps.month, comps.dayOfMonth);
+        if (!forecast) return;
+
+        let weatherTypeToUse = forecast;
+        if (comps.hour >= 12 && comps.hour < 18) {
+            if (forecast.variations?.midday) {
+                weatherTypeToUse = forecast.variations.midday;
+            }
+        } else if (comps.hour >= 18) {
+            if (forecast.variations?.evening) {
+                weatherTypeToUse = forecast.variations.evening;
+            }
+        }
+        const html = this.element;
+        const weatherBlock = html.querySelector(".hud-group.weather-forecast");
+        if (!weatherBlock) return;
+        const iconElement = weatherBlock.querySelector("i");
+        const tempElement = weatherBlock.querySelector("span");
+        if (iconElement && weatherTypeToUse.icon) {
+            iconElement.className = weatherTypeToUse.icon; 
+            if (weatherTypeToUse.label) {
+                iconElement.setAttribute("data-tooltip", weatherTypeToUse.label);
+            }
+        }
+        if (tempElement) {
+            const tempDisplay = WeatherEngine.getTempDisplay(forecast.temp) || "";
+            tempElement.innerText = tempDisplay;
+        }
+    }
+
     static async refreshWeather() {
         const calendar = game.time.calendar;
         if (!calendar) return;
@@ -647,7 +691,8 @@ export class CalendarHUD extends HandlebarsApplicationMixin(ApplicationV2) {
 
         await WeatherEngine.createForecasts(date);
         ui.notifications.info("Weather Regenerated");
-        if (game.wgtngmMiniCalender.hud) game.wgtngmMiniCalender.hud.render();
+        if (game.wgtngmMiniCalender?.hud.rendered) game.wgtngmMiniCalender.hud.updateWeatherIcon();
+        // if (game.wgtngmMiniCalender.hud) game.wgtngmMiniCalender.hud.render();
     }
 
 

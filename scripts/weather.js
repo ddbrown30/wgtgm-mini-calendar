@@ -1,5 +1,5 @@
 import { MODULE_NAME } from "./settings.js";
-import { calendarJournal } from "./helper.js";
+import { calendarJournal, renderHelper } from "./helper.js";
 import { WEATHER_PLAYLIST_NAME, formatTrackName } from "./playlist-importer.js";
 import { HailWeatherEffect } from './hail.js';
 import { AuroraShader } from './aurora.js';
@@ -742,6 +742,7 @@ export class WeatherEngine {
 
 
     static async refreshWeather() {
+        if (game.wgtngmMiniCalender?.hud.rendered) game.wgtngmMiniCalender.hud.updateWeatherIcon();
         if (!game.user.isGM) return;
 
         const defaultWeatherEnabled = game.settings.get(MODULE_NAME, "enableWeatherEffects");
@@ -775,8 +776,8 @@ export class WeatherEngine {
                     weatherTypeToUse = weather.variations.evening.type;
                 }
             }
-
             await this.applyWeatherEffect(weatherTypeToUse);
+
         } else {
             await this.updateForecasts();
         }
@@ -802,7 +803,6 @@ export class WeatherEngine {
         if (!game.user.isGM) return;
         if (!date) return;
         let forecasts = await this.getHistory();
-        console.log(date);
         const calendar = game.time.calendar;
 
         const getKey = (y, m, d) => `${y}-${m}-${d}`;
@@ -812,7 +812,6 @@ export class WeatherEngine {
             month: date.month,
             day: date.day,
         });
-        console.log(lastWeather);
         forecasts[date] = lastWeather;
 
 
@@ -1048,10 +1047,12 @@ export class WeatherEngine {
         if (currentComps.year === yearLookup && currentComps.month === monthLookup && currentComps.dayOfMonth === dayLookup) {
             await this.refreshWeather();
         }
+        renderHelper();
+        // if (game.wgtngmMiniCalender?.rendered) {
+        //     game.wgtngmMiniCalender.render();
+        // }
+        // if (game.wgtngmMiniCalender.hud) game.wgtngmMiniCalender.hud.render();
 
-        if (game.wgtngmMiniCalender?.rendered) {
-            game.wgtngmMiniCalender.render();
-        }
 
         console.log(`Mini Calendar | Weather overridden for ${dayLookup}/${monthLookup}/${yearLookup} to ${info.label} (${temp}°).`);
     }

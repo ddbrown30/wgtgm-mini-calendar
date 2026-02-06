@@ -196,6 +196,9 @@ export default async function minicalendarSettings() {
         type: Boolean,
         default: true,
         onChange: (value) => {
+            if (game.wgtngmMiniCalender.hud && game.wgtngmMiniCalender.hud.rendered) {
+                game.wgtngmMiniCalender.hud.element.classList.toggle("faded-ui", value);
+            }
             if (game.wgtngmMiniCalender && game.wgtngmMiniCalender.rendered) {
                 game.wgtngmMiniCalender.element.classList.toggle("faded-ui", value);
             }
