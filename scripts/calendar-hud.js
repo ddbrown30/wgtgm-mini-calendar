@@ -279,7 +279,7 @@ export class CalendarHUD extends HandlebarsApplicationMixin(ApplicationV2) {
         const sceneFlag = canvas.scene?.getFlag(MODULE_NAME, "enableWeather");
 
         const hideWeatherPlayer = game.settings.get(MODULE_NAME, "hideWeatherPlayer");
-        const showWeatherStats = enableForecast && (game.user.isGM || !hideWeatherPlayer) ? true : false;
+        let showWeatherStats = enableForecast && (game.user.isGM || !hideWeatherPlayer) ? true : false;
 
 
         if (showWeatherStats) {
