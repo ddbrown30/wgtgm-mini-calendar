@@ -21,14 +21,14 @@
                             <td>
                                 <select name="sun.values.{{index}}.monthStart" {{#unless included}}disabled{{/unless}}>
                                     {{#each ../uniqueMonthOrdinals}}
-                                    <option value="{{ordinal}}" {{#if (eq ordinal ../monthStart)}}selected{{/if}}>{{displayName}}</option>
+                                    <option value="{{this.ordinal}}" {{#if (eq this.ordinal ../monthStart)}}selected{{/if}}>{{displayName}}</option>
                                     {{/each}}
                                 </select>
                             </td>
                             <td>
                                 <select name="sun.values.{{index}}.monthEnd" {{#unless included}}disabled{{/unless}}>
                                     {{#each ../uniqueMonthOrdinals}}
-                                    <option value="{{ordinal}}" {{#if (eq ordinal ../monthEnd)}}selected{{/if}}>{{displayName}}</option>
+                                    <option value="{{this.ordinal}}" {{#if (eq this.ordinal ../monthEnd)}}selected{{/if}}>{{displayName}}</option>
                                     {{/each}}
                                 </select>
                             </td>

@@ -18,8 +18,8 @@
             
             <div class="grid-6">
                 <select name="notes.{{index}}.date.month">
-                    {{#each ../uniqueMonthOrdinals}}
-                    <option value="{{ordinal}}" {{#if (eq ordinal ../date.month)}}selected{{/if}}>{{displayName}}</option>
+                    {{#each ../allMonths}}
+                    <option value="{{this.index}}" {{#if (eq this.index ../date.month)}}selected{{/if}}>{{this.name}}</option>
                     {{/each}}
                 </select>
                 <label>Day: </label>

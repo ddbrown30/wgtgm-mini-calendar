@@ -1,5 +1,5 @@
 import { MODULE_NAME } from "./settings.js";
-import { confirmationDialog, calendarJournal } from "./helper.js";
+import { confirmationDialog, calendarJournal,renderCalendarIfOpen } from "./helper.js";
 import { setCalendarJSON } from "./main.js";
 import { pf2e, harptos, gregorian, warhammer, galifar,barovia } from "./presets.js";
 import { CalendarMaker } from "./calendar-maker.js"; 
@@ -290,7 +290,7 @@ export class CalendarConfig extends calendarForm {
 
 
 
-    /**
+   /**
      * Helper to import preset notes (both recurring and single) into the journal.
      */
     async _importPresetEvents(notes) {
@@ -302,77 +302,80 @@ export class CalendarConfig extends calendarForm {
         }
         const recurring = notes.filter(n => n.repeatUnit && n.repeatUnit !== 'none');
         const single = notes.filter(n => !n.repeatUnit || n.repeatUnit === 'none');
-        
+
         let importCount = 0;
 
         if (recurring.length) {
             const recPageName = "0000-Recurring";
             let recPage = journal.pages.getName(recPageName);
-            
+
             let existingNotes = recPage?.flags?.[MODULE_NAME]?.notes || [];
             let dirty = false;
 
             for (const note of recurring) {
-            const incomingDate = note.date || note.startDate;
+                const incomingDate = note.date || note.startDate;
 
-            const exists = existingNotes.find(en => 
-                en.isPreset && 
-                en.title === note.title &&
-                en.startDate?.year === incomingDate?.year &&
-                en.startDate?.month === incomingDate?.month &&
-                en.startDate?.day === incomingDate?.day
-            );
+                const exists = existingNotes.find(en => {
+                    if (en.id && note.id) {
+                        return en.id === note.id;
+                    }
+                    return en.isPreset &&
+                        en.title === note.title &&
+                        en.startDate?.year === incomingDate?.year &&
+                        en.startDate?.month === incomingDate?.month &&
+                        en.startDate?.day === incomingDate?.day;
+                });
 
-            if (!exists) {
-                const newNote = {
-                    id: foundry.utils.randomID(),
-                    ...note,
-                    startDate: incomingDate, 
-                    isPreset: true 
-                };
-                if (newNote.date) delete newNote.date; 
-                existingNotes.push(newNote);
-                dirty = true;
-                importCount++;
+                if (!exists) {
+                    const newNote = {
+                        id: note.id || foundry.utils.randomID(),
+                        ...note,
+                        startDate: incomingDate,
+                        isPreset: true
+                    };
+                    if (newNote.date) delete newNote.date;
+                    existingNotes.push(newNote);
+                    dirty = true;
+                    importCount++;
+                }
             }
-        }
 
             if (dirty) {
                 let recHtml = "<h1>Recurring Events Index</h1>";
                 existingNotes.forEach(n => {
-                     recHtml += `<p><strong>${n.title}</strong> (${n.repeatUnit})</p>`;
+                    recHtml += `<p><strong>${n.title}</strong> (${n.repeatUnit})</p>`;
                 });
 
                 const pageData = {
-                     "text.content": recHtml,
-                     flags: { [MODULE_NAME]: { notes: existingNotes } }
+                    "text.content": recHtml,
+                    flags: { [MODULE_NAME]: { notes: existingNotes } }
                 };
 
                 if (recPage) {
                     await recPage.update(pageData);
                 } else {
-                     await journal.createEmbeddedDocuments("JournalEntryPage", [{
-                         name: recPageName,
-                         "text.format": CONST.JOURNAL_ENTRY_PAGE_FORMATS.HTML,
-                         ...pageData
-                     }]);
+                    await journal.createEmbeddedDocuments("JournalEntryPage", [{
+                        name: recPageName,
+                        "text.format": CONST.JOURNAL_ENTRY_PAGE_FORMATS.HTML,
+                        ...pageData
+                    }]);
                 }
             }
         }
 
         if (single.length) {
             const notesByDate = {};
-            
+
             for (const note of single) {
                 const dateObj = note.date || note.startDate;
                 if (!dateObj) continue;
-                const day = dateObj.day + 1; 
+                const day = dateObj.day + 1;
                 const pageName = `${dateObj.year}-${String(dateObj.month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-                
+
                 if (!notesByDate[pageName]) notesByDate[pageName] = [];
-                
+
                 notesByDate[pageName].push({
-                    id: foundry.utils.randomID(),
+                    id: note.id || foundry.utils.randomID(),
                     ...note,
                     startDate: dateObj,
                     isPreset: true
@@ -386,7 +389,10 @@ export class CalendarConfig extends calendarForm {
 
                 for (const newNote of dayNotes) {
                     // Check for duplicate preset
-                    const exists = existingNotes.find(en => en.isPreset && en.title === newNote.title);
+                    const exists = existingNotes.find(en => {
+                        if (en.id && newNote.id) return en.id === newNote.id;
+                        return en.isPreset && en.title === newNote.title
+                    });
                     if (!exists) {
                         if (newNote.date) delete newNote.date;
                         existingNotes.push(newNote);
@@ -397,10 +403,10 @@ export class CalendarConfig extends calendarForm {
 
                 if (dirty) {
                     let htmlContent = "";
-                    for (const note of existingNotes) { 
-                         htmlContent += `<h2><i class="${note.icon}"></i> ${note.title}</h2><p>${note.content}</p><hr>`; 
+                    for (const note of existingNotes) {
+                        htmlContent += `<h2><i class="${note.icon}"></i> ${note.title}</h2><p>${note.content}</p><hr>`;
                     }
-                    
+
                     const pageData = {
                         "text.content": htmlContent,
                         flags: { [MODULE_NAME]: { notes: existingNotes } }
@@ -418,7 +424,7 @@ export class CalendarConfig extends calendarForm {
                 }
             }
         }
-        
+
         if (importCount > 0) {
             console.log(`Mini Calendar | Imported ${importCount} preset events.`);
         }
@@ -450,6 +456,8 @@ export class CalendarConfig extends calendarForm {
                 if (notes.length > 0) {
                     await this._importPresetEvents(notes);
                     ui.notifications.info(`Successfully imported ${notes.length} notes.`);
+                    renderCalendarIfOpen();
+
                 } else {
                     ui.notifications.warn("No notes found in the selected file.");
                 }

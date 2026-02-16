@@ -1,4 +1,4 @@
-import { localize, openwgtngmMiniCalendarSheet,renderCalendarIfOpen } from "./helper.js";
+import { localize, openwgtngmMiniCalendarSheet, renderCalendarIfOpen } from "./helper.js";
 export const MODULE_NAME = "wgtgm-mini-calendar";
 import { CalendarConfig } from "./calendar-config.js";
 import { WeatherEngine } from "./weather.js";
@@ -22,6 +22,13 @@ export default async function minicalendarSettings() {
         default: ""
     });
 
+    game.settings.register(MODULE_NAME, "whisperedNoteIds", {
+        scope: "client",
+        config: false,
+        type: Array,
+        default: []
+    });
+
     game.settings.register(MODULE_NAME, "savedCalendars", {
         name: "Saved Custom Calendars",
         scope: "world",
@@ -31,14 +38,25 @@ export default async function minicalendarSettings() {
         requiresReload: false
     });
 
-    // game.settings.registerMenu(MODULE_NAME, "calendarMakerMenu", {
-    //     name: "Calendar Maker",
-    //     label: "Open Calendar Maker",
-    //     hint: "Create and edit custom calendars to be used in the configuration.",
-    //     icon: "fas fa-edit",
-    //     type: CalendarMaker,
-    //     restricted: true
-    // });
+    game.settings.register(MODULE_NAME, "allowPlayerNotes", {
+        name: "Allow Player Notes",
+        hint: "If enabled, players can create and edit their own notes in a separate journal.",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: false,
+        requiresReload: true
+    });
+
+    game.settings.register(MODULE_NAME, "enableSystemPF2e", {
+        name: "Enable PF2e System Sync",
+        hint: "If enabled, the calendar will strictly synchronize with the PF2e system time and rules (like leap years and epoch offsets). Disable if you want to use custom calendar rules unrelated to PF2e.",
+        scope: "world",
+        config: game.system.id === 'pf2e',
+        type: Boolean,
+        default: true,
+        requiresReload: true
+    });
 
     game.settings.registerMenu(MODULE_NAME, "calendarConfigMenu", {
         name: "Calendar Configuration",
@@ -66,6 +84,15 @@ export default async function minicalendarSettings() {
         type: Boolean,
         default: false
     });
+    
+    game.settings.register(MODULE_NAME, "calHudOpened", {
+        name: localize("settings.calHudOpened"),
+        hint: localize("settings.calHudOpenedHint"),
+        scope: "client",
+        config: false,
+        type: Boolean,
+        default: true
+    });
 
     game.settings.register(MODULE_NAME, "startMinimized", {
         name: "Open Calendar Minimized",
@@ -76,17 +103,28 @@ export default async function minicalendarSettings() {
         default: false
     });
 
+    // game.settings.register(MODULE_NAME, "enableHUD", {
+    //     name: "Enable Top HUD",
+    //     hint: "Show the top-docked HUD bar.",
+    //     scope: "client",
+    //     config: true,
+    //     type: Boolean,
+    //     default: true,
+    //     requiresReload: true
+    // });
+
+
     game.settings.register(MODULE_NAME, "dockSidebar", {
-    name: "Dock to Sidebar",
-    hint: "If enabled, the calendar will be docked above the Player List in the left sidebar. (Requires reopening the calendar).",
-    scope: "client",
-    config: true,
-    default: false,
-    type: Boolean,
+        name: "Dock to Sidebar",
+        hint: "If enabled, the calendar will be docked above the Player List in the left sidebar. (Requires reopening the calendar).",
+        scope: "client",
+        config: true,
+        default: false,
+        type: Boolean,
         onChange: () => {
-             if (game.wgtngmMiniCalender?.calendarInstance?.rendered) {
-                 game.wgtngmMiniCalender.calendarInstance.render(true);
-             }
+            if (game.wgtngmMiniCalender && game.wgtngmMiniCalender.rendered) {
+                game.wgtngmMiniCalender.render(true);
+            }
         }
     });
 
@@ -101,7 +139,7 @@ export default async function minicalendarSettings() {
         scope: "world",
         config: false,
         type: Object,
-        default: {} ,
+        default: {},
         requiresReload: true
     });
 
@@ -123,13 +161,13 @@ export default async function minicalendarSettings() {
     });
 
     game.settings.register(MODULE_NAME, "timeMultiplier", {
-          scope: "world",
+        scope: "world",
         config: false,
         type: Number,
         default: 1
     });
 
-game.settings.register(MODULE_NAME, "use12hour", {
+    game.settings.register(MODULE_NAME, "use12hour", {
         name: "Use 12-Hour Clock",
         hint: "Display time in 12-hour format (AM/PM) instead of 24-hour format.",
         scope: "client",
@@ -137,9 +175,9 @@ game.settings.register(MODULE_NAME, "use12hour", {
         type: Boolean,
         default: false,
         onChange: () => {
-             if (game.wgtngmMiniCalender?.calendarInstance?.rendered) {
-                 game.wgtngmMiniCalender.calendarInstance.render();
-             }
+            if (game.wgtngmMiniCalender && game.wgtngmMiniCalender.rendered) {
+                game.wgtngmMiniCalender.render();
+            }
         }
     });
 
@@ -158,9 +196,12 @@ game.settings.register(MODULE_NAME, "use12hour", {
         type: Boolean,
         default: true,
         onChange: (value) => {
-             if (game.wgtngmMiniCalender?.calendarInstance?.rendered) {
-                 game.wgtngmMiniCalender.calendarInstance.element.classList.toggle("faded-ui", value);
-         }
+            if (game.wgtngmMiniCalender.hud && game.wgtngmMiniCalender.hud.rendered) {
+                game.wgtngmMiniCalender.hud.element.classList.toggle("faded-ui", value);
+            }
+            if (game.wgtngmMiniCalender && game.wgtngmMiniCalender.rendered) {
+                game.wgtngmMiniCalender.element.classList.toggle("faded-ui", value);
+            }
         }
     });
 
@@ -174,7 +215,7 @@ game.settings.register(MODULE_NAME, "use12hour", {
         requiresReload: false,
         onChange: (value) => {
             if (!game.user.isGM) return;
-            const calendarApp = game.wgtngmMiniCalender?.calendarInstance;
+            const calendarApp = game.wgtngmMiniCalender;
             if (!calendarApp) return;
             if (value) {
                 if (game.combat?.started) {
@@ -195,6 +236,16 @@ game.settings.register(MODULE_NAME, "use12hour", {
     game.settings.register(MODULE_NAME, "resumeAfterCombat", {
         name: localize("settings.resumeAfterCombat"),
         hint: localize("settings.resumeAfterCombatHint"),
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: false,
+        requiresReload: false
+    });
+
+    game.settings.register(MODULE_NAME, "hideHudonCombat", {
+        name: localize("settings.hideHudonCombat"),
+        hint: localize("settings.hideHudonCombatHint"),
         scope: "world",
         config: true,
         type: Boolean,
@@ -285,11 +336,11 @@ game.settings.register(MODULE_NAME, "use12hour", {
         scope: "world",
         config: true,
         type: Boolean,
-        default: false,
+        default: true,
         onChange: () => {
-             if (game.wgtngmMiniCalender?.calendarInstance?.rendered) {
-                 game.wgtngmMiniCalender.calendarInstance.render();
-             }
+            if (game.wgtngmMiniCalender && game.wgtngmMiniCalender.rendered) {
+                game.wgtngmMiniCalender.render();
+            }
         }
     });
 
@@ -302,10 +353,10 @@ game.settings.register(MODULE_NAME, "use12hour", {
         type: Boolean,
         default: false,
         onChange: () => {
-             if (game.wgtngmMiniCalender?.calendarInstance?.rendered) {
-                 game.wgtngmMiniCalender.calendarInstance.render();
-         }
-     }
+            if (game.wgtngmMiniCalender && game.wgtngmMiniCalender.rendered) {
+                game.wgtngmMiniCalender.render();
+            }
+        }
     });
 
     game.settings.register(MODULE_NAME, "sceneDefaultWeather", {
@@ -353,7 +404,7 @@ game.settings.register(MODULE_NAME, "use12hour", {
         default: {}
     });
 
-// --- WEATHER SETTINGS MENU ---
+    // --- WEATHER SETTINGS MENU ---
     game.settings.registerMenu(MODULE_NAME, "weatherConfigMenu", {
         name: "Weather Configuration",
         label: "Configure Weather",
@@ -379,13 +430,13 @@ game.settings.register(MODULE_NAME, "use12hour", {
         type: Boolean,
         default: true,
         onChange: (value) => {
-            import("./weather.js").then(({WeatherEngine}) => {
-                if (!value) game.wgtngmMiniCalender.weatherEngine.applyWeatherEffect("none");
-                else game.wgtngmMiniCalender.weatherEngine.refreshWeather();
+            import("./weather.js").then(({ WeatherEngine }) => {
+                if (!value) WeatherEngine.applyWeatherEffect("none");
+                else WeatherEngine.refreshWeather();
             });
-            if (game.wgtngmMiniCalender.calendarInstance && game.user.isGM) {
-                const fxIcon = game.wgtngmMiniCalender.calendarInstance.element.querySelector('[data-action="toggle-weather-fx"]');
-                fxIcon.classList.toggle('true', value);
+            if (game.wgtngmMiniCalender && game.user.isGM) {
+                const fxIcon = game.wgtngmMiniCalender.element?.querySelector('[data-action="toggle-weather-fx"]');
+                if (fxIcon) fxIcon.classList.toggle('true', value);
             }
         }
     });
@@ -397,10 +448,10 @@ game.settings.register(MODULE_NAME, "use12hour", {
         type: Boolean,
         default: true,
         onChange: () => {
-             if (game.wgtngmMiniCalender?.calendarInstance?.rendered) {
-                 game.wgtngmMiniCalender.calendarInstance.render();
-             }
-         }
+            if (game.wgtngmMiniCalender && game.wgtngmMiniCalender.rendered) {
+                game.wgtngmMiniCalender.render();
+            }
+        }
     });
 
     game.settings.register(MODULE_NAME, "enableWeatherSound", {
@@ -411,14 +462,14 @@ game.settings.register(MODULE_NAME, "use12hour", {
         type: Boolean,
         default: true,
         onChange: (value) => {
-             if (!value) {
-                 import("./weather.js").then(({WeatherEngine}) => {
-                    game.wgtngmMiniCalender.weatherEngine.stopWeatherSounds();
-                 });
-             }
-            if (game.wgtngmMiniCalender.calendarInstance && game.user.isGM) {
-                game.wgtngmMiniCalender.weatherEngine.refreshWeather();
-                const soundIcon = game.wgtngmMiniCalender.calendarInstance.element.querySelector('[data-action="toggle-weather-sound"]');
+            if (!value) {
+                import("./weather.js").then(({ WeatherEngine }) => {
+                    WeatherEngine.stopWeatherSounds();
+                });
+            }
+            if (game.wgtngmMiniCalender && game.user.isGM) {
+                WeatherEngine.refreshWeather();
+                const soundIcon = game.wgtngmMiniCalender.element.querySelector('[data-action="toggle-weather-sound"]');
                 soundIcon.classList.toggle('fa-volume-high', value);
                 soundIcon.classList.toggle('fa-volume-xmark', !value);
             }
@@ -454,6 +505,7 @@ game.settings.register(MODULE_NAME, "use12hour", {
     });
 
 game.settings.register(MODULE_NAME, "customBiomeMap", {
+    game.settings.register(MODULE_NAME, "customBiomeMap", {
         scope: "world",
         config: false,
         default: {},
@@ -466,13 +518,13 @@ game.settings.register(MODULE_NAME, "customBiomeMap", {
         default: {},
         type: Object
     });
-// KEY BINDS
+    // KEY BINDS
     game.keybindings.register(MODULE_NAME, "MiniCalendar", {
-      name: "Open the Mini Calendar",
-      editable: [
-        {key: "KeyK", modifiers: [foundry.helpers.interaction.KeyboardManager.MODIFIER_KEYS.CONTROL]}
-      ],
-      onDown: () => {openwgtngmMiniCalendarSheet()}
+        name: "Open the Mini Calendar",
+        editable: [
+            { key: "KeyK", modifiers: [foundry.helpers.interaction.KeyboardManager.MODIFIER_KEYS.CONTROL] }
+        ],
+        onDown: () => { openwgtngmMiniCalendarSheet() }
     });
 
 }

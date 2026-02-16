@@ -11,6 +11,7 @@ export const format = (key, data) =>
     game.i18n.format(`${MODULE_NAME}.${key}`, data);
 
 export const calendarJournal = "Calendar Events - Mini Calendar";
+export const playerJournalName = "Player Notes - Mini Calendar";
 
 export const PIN_TYPES = [
     { key: "fas fa-book", label: "Note" },
@@ -75,65 +76,45 @@ export function handleMPClick(event) {
     }
 }
 export async function openwgtngmMiniCalendarSheet() {
-    if (game.wgtngmMiniCalender.calendarInstance && game.wgtngmMiniCalender.calendarInstance.rendered) {
-        game.wgtngmMiniCalender.calendarInstance.close();
+    if (game.wgtngmMiniCalender && game.wgtngmMiniCalender.rendered) {
+        game.wgtngmMiniCalender.close();
         return;
     }
-
-    let savedDimensions = game.settings.get(MODULE_NAME, "calSheetDimensions");
-
-
-    if (!game.wgtngmMiniCalender.calendarInstance) {
-        game.wgtngmMiniCalender.calendarInstance = new wgtngmMiniCalender( {
-        position: {
-            left: savedDimensions?.left ?? 40,
-            top: savedDimensions?.top ?? 40
-        }
-       });
+    if (game.wgtngmMiniCalender) {
+        game.wgtngmMiniCalender.render(true);
     }
-   
-    game.wgtngmMiniCalender.calendarInstance.render(true);
-
 }
 
 
-export async function openwgtngmMiniCalendarAPI(toggle=true) {
-    if (toggle){
-        if (game.wgtngmMiniCalender.calendarInstance && game.wgtngmMiniCalender.calendarInstance.rendered) {
-            game.wgtngmMiniCalender.calendarInstance.close();
+export async function openwgtngmMiniCalendarAPI(toggle = true) {
+    if (toggle) {
+        if (game.wgtngmMiniCalender && game.wgtngmMiniCalender.rendered) {
+            game.wgtngmMiniCalender.close();
             return;
         }
     }
-    let savedDimensions = game.settings.get(MODULE_NAME, "calSheetDimensions");
-
-
-    if (!game.wgtngmMiniCalender.calendarInstance) {
-        game.wgtngmMiniCalender.calendarInstance = new wgtngmMiniCalender( {
-        position: {
-            left: savedDimensions?.left ?? 40,
-            top: savedDimensions?.top ?? 40
-        }
-       });
+    if (game.wgtngmMiniCalender) {
+        game.wgtngmMiniCalender.render(true);
     }
-   
-    game.wgtngmMiniCalender.calendarInstance.render(true);
-
 }
 
 
 export async function renderCalendarIfOpen() {
-    if (game.wgtngmMiniCalender.calendarInstance && game.wgtngmMiniCalender.calendarInstance.rendered) {
-        game.wgtngmMiniCalender.calendarInstance.render(true);
+    if (game.wgtngmMiniCalender && game.wgtngmMiniCalender.rendered) {
+        game.wgtngmMiniCalender.render(true);
     }
 
 }
 
-
+export function renderHelper() {
+    if (game.wgtngmMiniCalender.hud) game.wgtngmMiniCalender.hud.render();
+    renderCalendarIfOpen()
+}
 
 export async function whisperChat(content = "") {
     ChatMessage.create({
         user: game.user.id,
-        speaker: ChatMessage.getSpeaker(), 
+        speaker: ChatMessage.getSpeaker(),
         content: content,
         whisper: [game.user.id]
     });
@@ -143,7 +124,7 @@ export async function whisperChat(content = "") {
 export async function broadcastChat(content = "") {
     ChatMessage.create({
         user: game.user.id,
-        speaker: ChatMessage.getSpeaker(), 
+        speaker: ChatMessage.getSpeaker(),
         content: content,
     });
 }

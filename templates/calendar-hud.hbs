@@ -1,0 +1,117 @@
+<div id="calendar-hud-wgtgm" class="minimal-hud {{timeClass}}">
+    {{#if isGM}}
+
+    <div class="hud-group config-buttons">
+        <button type="button" class="hud-icon-btn" data-action="weather-config" data-tooltip="Weather Configuration">
+            <i class="fas fa-cog"></i>
+        </button>
+        <button type="button" class="hud-icon-btn" data-action="open-settings" data-tooltip="Calendar Configuration">
+            <i class="fas fa-wrench"></i>
+        </button>
+    </div>
+    {{/if}}
+    {{#if (or isGM playerNotes)}}
+    <div class="hud-group add-note {{#unless isGM}}player-view{{/unless}}" data-tooltip="Add Note">
+        <button type="button" class="hud-icon-btn" data-action="add-note">
+            <i class="fas fa-calendar-plus"></i>
+        </button>
+    </div>
+    {{/if}}
+    {{#if isGM}}
+    <div class="hud-group add-note">
+        <button type="button" class="hud-icon-btn" data-action="jump-dusk" data-tooltip="Jump to Dusk">
+            <i class="fas fa-moon"></i><!-- Dusk -->
+        </button>
+        <button type="button" class="hud-icon-btn" data-action="jump-dawn" data-tooltip="Jump to Dawn (Next Day)">
+            <i class="fas fa-sun"></i><!-- Dawn -->
+        </button>
+    </div>
+    <div class="hud-group time-left">
+        <button type="button" class="hud-text-btn small" data-action="advance-day-neg"
+            data-tooltip="-1 Day">-1d</button>
+        <button type="button" class="hud-text-btn small" data-action="advance-hour-neg"
+            data-tooltip="-1 Hour">-1h</button>
+        <button type="button" class="hud-text-btn small" data-action="advance-10m-neg"
+            data-tooltip="-10 Minutes">-10m</button>
+        <button type="button" class="hud-text-btn small play-pause-btn" data-action="toggle-play-pause"
+            data-tooltip="Toggle Time">
+            <i class="fas {{#if isRunning}}fa-pause{{else}}fa-play{{/if}}"></i>
+        </button>
+    </div>
+    {{/if}}
+
+    <div class="hud-group date-seasons {{#unless isGM}}player-view{{/unless}}" data-tooltip="Open Calendar">
+        <div class="data-time-wrapper" data-action="open-calendar">
+            <div class="time-text-overlay">{{time}}</div>
+            <div class="date-text" >{{date}}
+                <span class="season-text">{{seasonName}}</span>
+            </div>
+        </div>
+
+
+        <div class="hud-time-block {{timeClass}}">
+            <div class="sky-background"></div>
+
+            <!-- Sun -->
+            <div class="celestial-body sun {{#unless isDay}}hidden{{/unless}}"
+                style="left: {{sunPosition}}%; top: {{sunHeight}}%;">
+                <i class="fas fa-sun"></i>
+            </div>
+
+            <!-- Moon -->
+            <div class="celestial-body moon {{#unless isNight}}hidden{{/unless}}"
+                style="left: {{moonPosition}}%; top: {{moonHeight}}%;">
+                {{#if moonImage}}
+                <img src="{{moonImage}}" title="{{moonPhase}}" style="filter: drop-shadow(0 0 5px {{moonColor}});">
+                {{else}}
+                <i class="fas fa-moon"></i>
+                {{/if}}
+            </div>
+
+        </div>
+    </div>
+    {{#if isGM}}
+    <div class="hud-group time-right">
+        <button type="button" class="hud-text-btn small" data-action="advance-10m"
+            data-tooltip="+10 Minutes">+10m</button>
+        <button type="button" class="hud-text-btn small" data-action="advance-hour" data-tooltip="+1 Hour">+1h</button>
+        <button type="button" class="hud-text-btn small" data-action="advance-day" data-tooltip="+1 Day">+1d</button>
+
+    </div>
+    {{/if}}
+
+    {{#if showWeatherStats}}
+        <div class="hud-group weather-forecast {{#unless isGM}}weather-player-view{{/unless}}" style="min-width: 60px; justify-content: center;">
+            <i class="{{weatherIcon}}" style="font-size: 1.2em; margin-right: 5px;" data-tooltip="{{weatherLabel}}"></i>
+            {{#if tempDisplay}}
+            <span style="font-size: 0.9em; font-weight: bold;">{{tempDisplay}}</span>
+            {{/if}}
+        </div>
+    {{/if}}
+
+    {{#if isGM}}
+    <div class="hud-group weather-controls">
+        <button type="button" class="hud-icon-btn" data-action="set-weather" data-tooltip="Set Weather">
+            <i class="fas fa-cloud"></i>
+        </button>
+        <button type="button" class="hud-icon-btn" data-action="refresh-weather" data-tooltip="Regenerate Weather">
+            <i class="fas fa-sync-alt"></i>
+        </button>
+        <span class="hud-separator">|</span>
+        <button type="button" class="hud-icon-btn {{#if toggles.weather}}active{{/if}}" data-action="toggle-weather"
+            data-tooltip="Toggle Weather Effects">
+            <i class="fas fa-cloud-sun-rain"></i>
+        </button>
+        <button type="button" class="hud-icon-btn {{#if toggles.sceneWeather}}active{{/if}}"
+            data-action="toggle-scene-weather" data-tooltip="Toggle Scene Weather">
+            <i class="fas fa-map"></i>
+        </button>
+        <button type="button" class="hud-icon-btn {{#if toggles.sfx}}active{{/if}}" data-action="toggle-sfx"
+            data-tooltip="Toggle SFX">
+            <i class="fas fa-volume-up"></i>
+        </button>
+    </div>
+
+
+    {{/if}}
+</div>

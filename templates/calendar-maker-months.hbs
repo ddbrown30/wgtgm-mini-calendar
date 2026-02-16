@@ -6,11 +6,11 @@
                                 {{#if months}}
 
                 <table>
-                    <thead><tr><th style="width:40px;">Ord</th><th>Name</th><th>Abbr</th><th style="width:60px;">Days</th><th style="width:30px;">Int</th><th style="width:60px;">Leap</th><th></th></tr></thead>
+                    <thead><tr><th style="width:50px;">Ord</th><th>Name</th><th>Abbr</th><th style="width:60px;">Days</th><th style="width:30px;">Int</th><th style="width:60px;">Leap</th><th></th></tr></thead>
                     <tbody>
                         {{#each months}}
                         <tr>
-                            <td><input type="number" name="months.values.{{index}}.ordinal" value="{{ordinal}}"></td>
+                            <td><input type="number" name="months.values.{{index}}.ordinal" value="{{this.ordinal}}"></td>
                             <td><input type="text" name="months.values.{{index}}.name" value="{{name}}"></td>
                             <td><input type="text" name="months.values.{{index}}.abbreviation" value="{{abbreviation}}"></td>
                             <td><input type="number" name="months.values.{{index}}.days" value="{{days}}"></td>

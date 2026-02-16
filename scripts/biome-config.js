@@ -45,6 +45,8 @@ export class BiomeConfig extends HandlebarsApplicationMixin(ApplicationV2) {
             ? foundry.utils.deepClone(savedConfig.custom) 
             : foundry.utils.deepClone(WeatherEngine.DEFAULT_BIOMES["temperate"]);
 
+        this.selectedProfile = savedConfig?.profile || "temperate";
+
         this.selectedHex = 0;
     }
 
@@ -113,13 +115,12 @@ export class BiomeConfig extends HandlebarsApplicationMixin(ApplicationV2) {
             hexes: hexData,
             weatherTypes,
             selectedHexId: this.selectedHex,
-            // Active state for tag cloud based on selected hex
             weatherTypesWithActive: weatherTypes.map(w => ({
                 ...w,
                 isActive: w.id === (this.hexMap[this.selectedHex]?.type) ? "active" : ""
             })),
-            
             profiles,
+            selectedProfile: this.selectedProfile,
             tempOffset: displayOffset,
             tempUnit,
         };
@@ -274,7 +275,6 @@ static async #onSaveAndClose(event, target) {
 
         const biomeProfile = html.querySelector("select[name='biomeProfile']");
         const profileKey = biomeProfile?.value || "temperate";
-        
         if (profileKey && WeatherEngine.DEFAULT_BIOMES[profileKey]) {
             const profileData = WeatherEngine.DEFAULT_BIOMES[profileKey];
             this.customBiome.seasons = foundry.utils.deepClone(profileData.seasons);
@@ -289,10 +289,9 @@ static async #onSaveAndClose(event, target) {
         await game.settings.set(MODULE_NAME, "customBiomeMap", this.hexMap);
 
         const currentConfig = game.settings.get(MODULE_NAME, "customBiomeConfig") || {};
+        currentConfig.profile = profileKey;
         currentConfig.custom = this.customBiome;
         await game.settings.set(MODULE_NAME, "customBiomeConfig", currentConfig);
-
-        // await game.settings.set(MODULE_NAME, "biome", "custom");
 
         ui.notifications.info("Custom Biome Saved & Activated.");
         this.close();

@@ -27,19 +27,19 @@ const Weather = "blizzard";  // Set the weather ID (see list below)
     const key = `${comps.year}-${comps.month}-${comps.dayOfMonth}`;
 
     const weatherMap = {
-        "none":         { label: "Clear",            icon: "fas fa-sun" },
+        "none": { label: "Clear", icon: "fas fa-sun" },
         "partlyCloudy": { label: "Scattered Clouds", icon: "fas fa-cloud-sun" },
-        "clouds":       { label: "Overcast",         icon: "fas fa-cloud" },
-        "lightRain":    { label: "Light Rain",       icon: "fas fa-cloud-rain" },
-        "rain":         { label: "Rain",             icon: "fas fa-cloud-showers-heavy" },
-        "heavyRain":    { label: "Heavy Rain",       icon: "fas fa-cloud-showers-heavy" },
-        "rainStorm":    { label: "Storm",            icon: "fas fa-bolt" },
-        "fog":          { label: "Fog",              icon: "fas fa-smog" },
-        "snow":         { label: "Snow",             icon: "fas fa-snowflake" },
-        "blizzard":     { label: "Blizzard",         icon: "fas fa-fa-snow-blowing" },
-        "leaves":       { label: "Windy",            icon: "fas fa-wind" },
-        "sandstorm":    { label: "Sandstorm",        icon: "fas fa-wind" },
-        "hail":         { label: "Hail",             icon: "fas fa-cloud-hail" }
+        "clouds": { label: "Overcast", icon: "fas fa-cloud" },
+        "lightRain": { label: "Light Rain", icon: "fas fa-cloud-rain" },
+        "rain": { label: "Rain", icon: "fas fa-cloud-showers-heavy" },
+        "heavyRain": { label: "Heavy Rain", icon: "fas fa-cloud-showers-heavy" },
+        "rainStorm": { label: "Storm", icon: "fas fa-bolt" },
+        "fog": { label: "Fog", icon: "fas fa-smog" },
+        "snow": { label: "Snow", icon: "fas fa-snowflake" },
+        "blizzard": { label: "Blizzard", icon: "fas fa-fa-snow-blowing" },
+        "leaves": { label: "Windy", icon: "fas fa-wind" },
+        "sandstorm": { label: "Sandstorm", icon: "fas fa-wind" },
+        "hail": { label: "Hail", icon: "fas fa-cloud-hail" }
     };
 
     const info = weatherMap[Weather] || weatherMap["none"];
@@ -50,7 +50,7 @@ const Weather = "blizzard";  // Set the weather ID (see list below)
     if (!page) return ui.notifications.error("Weather History page not found. Initialize weather first.");
 
     const history = foundry.utils.deepClone(page.flags[MODULE_NAME]?.history || {});
-    
+
     history[key] = {
         ...history[key],
         type: Weather,
@@ -67,8 +67,8 @@ const Weather = "blizzard";  // Set the weather ID (see list below)
         await canvas.scene.update({ weather: weatherId });
     }
 
-    if (game.wgtngmMiniCalender?.calendarInstance?.rendered) {
-        game.wgtngmMiniCalender.calendarInstance.render();
+    if (game.wgtngmMiniCalender?.rendered) {
+        game.wgtngmMiniCalender.render();
     }
 
     ui.notifications.info(`Set today's weather to ${info.label} (${Temp}°).`);

@@ -2,6 +2,7 @@
 .wgtngmMiniCalender {
   --wgtgm-primary: #7a6a5a;
 }
+
 #wgtngmMiniCalender.minimized .window-header button.header-control.fa-window-maximize,
 #wgtngmMiniCalender.minimized .window-header button.header-control.fa-anchor,
 #wgtngmMiniCalender.minimized .window-header button.header-control.fa-calendar-plus {
@@ -22,6 +23,7 @@
   height: auto !important;
   overflow: visible;
 }
+
 .application.wgtngmMiniCalender.minimized .calendar-mini {
   display: flex;
   flex-direction: row;
@@ -46,9 +48,11 @@
 .application.wgtngmMiniCalender .calendar-mini {
   display: none;
 }
+
 .application.wgtngmMiniCalender .calendar-mini-footer {
   display: none;
 }
+
 .application.wgtngmMiniCalender.minimized .calendar-mini-footer {
   display: flex;
   flex-direction: row;
@@ -97,6 +101,7 @@
   flex-wrap: nowrap;
   flex-grow: 1;
 }
+
 .wgtngmMiniCalender .calendar-header {
   display: flex;
   justify-content: space-between;
@@ -178,6 +183,7 @@
   font-size: 0.9em;
   align-self: flex-start;
 }
+
 .wgtngmMiniCalender .calendar-grid .day .weather-icon {
   position: absolute;
   top: 4px;
@@ -210,8 +216,7 @@
   font-size: 0.9em;
 }
 
-.application.wgtngmMiniCalenderConfig .window-content {
-}
+.application.wgtngmMiniCalenderConfig .window-content {}
 
 .wgtngmMiniCalenderConfig textarea {
   width: 100%;
@@ -236,8 +241,7 @@
   padding: 8px;
 }
 
-.wgtngmMiniCalenderConfig .form-footer button:hover {
-}
+.wgtngmMiniCalenderConfig .form-footer button:hover {}
 
 .wgtngmMiniCalender .calendar-footer .time-display {
   flex-grow: 2;
@@ -305,6 +309,7 @@
   border: none;
   object-fit: contain;
 }
+
 .wgtngmMiniCalender .calendar-mini i,
 .wgtngmMiniCalender .calendar-mini-footer i {
   cursor: pointer;
@@ -391,16 +396,18 @@
 }
 
 .wgtngmMiniCalender-dialog.dialog.add-note footer.form-footer {
-    width: calc(100% - 20px);
-    margin-left: 10px;
-    position: absolute;
-    bottom: 10px;
+  width: calc(100% - 20px);
+  margin-left: 10px;
+  position: absolute;
+  bottom: 10px;
 }
+
 .wgtngmMiniCalender-dialog.dialog.add-note footer.form-footer button {
-    height: 32px !important;
-    border: 1px dotted;
-    --button-size: unset;
+  height: 32px !important;
+  border: 1px dotted;
+  --button-size: unset;
 }
+
 .wgtngmMiniCalender-dialog.dialog.add-note form.standard-form {
   display: flex;
   height: 100%;
@@ -414,56 +421,58 @@
 }
 
 .wgtngmMiniCalender-dialog.dialog.add-note .dialog-content {
-    height: 100%;
-    overflow-y: auto;
-    margin-right: 0px;
-    display: flex;
-    gap: 8px;
-    padding: 10px 10px 0px 10px;
-    margin-bottom: 42px;
+  height: 100%;
+  overflow-y: auto;
+  margin-right: 0px;
+  display: flex;
+  gap: 8px;
+  padding: 10px 10px 0px 10px;
+  margin-bottom: 42px;
 }
 
 .wgtngmMiniCalender-dialog.dialog.add-note .calendar-note-item {
-    border-bottom: 1px dotted var(--wgtgm-primary);
-    padding-bottom: 10px;
+  border-bottom: 1px dotted var(--wgtgm-primary);
+  padding-bottom: 10px;
 }
 
 .wgtngmMiniCalender-dialog.dialog.add-note .calendar-note-item:hover {
-/*  border: 1px solid var(--wgtgm-primary);*/
+  /*  border: 1px solid var(--wgtgm-primary);*/
 }
+
 .wgtngmMiniCalender-dialog.dialog.add-note .no-notes {
   text-align: center;
   font-style: italic;
   margin-top: 10px;
 }
+
 .wgtngmMiniCalender-dialog.dialog.add-note .note-header {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-weight: bold;
-    color: var(--color-text-primary);
-    font-size: 14px;
-    justify-content: space-around;
-    flex-direction: row;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: bold;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  justify-content: space-around;
+  flex-direction: row;
 }
 
 .wgtngmMiniCalender-dialog.dialog.add-note .note-time {
-    flex: 0;
-    white-space: nowrap;
+  flex: 0;
+  white-space: nowrap;
 }
 
 .wgtngmMiniCalender-dialog.dialog.add-note .note-title {
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow: hidden;
-    flex: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  flex: 1;
 }
 
 .wgtngmMiniCalender-dialog.dialog.add-note .note-time i,
 .wgtngmMiniCalender-dialog.dialog.add-note .note-title i {
-    color: var(--color-text-primary);
-    font-size: 14px;
-    flex: 0 0 14px;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  flex: 0 0 14px;
 }
 
 .wgtngmMiniCalender-dialog.dialog.add-note .note-header.note-control {
@@ -499,11 +508,12 @@
   padding: 5px;
   margin-top: 10px;
 }
+
 .application.wgtngmMiniCalender-dialog.dialog.add-note {
-    min-width: 340px;
-    max-width: 440px;
-    min-height: 200px;
-    max-height: 800px;
+  min-width: 340px;
+  max-width: 440px;
+  min-height: 200px;
+  max-height: 800px;
 }
 
 .application.wgtngmMiniCalender-dialog .repeat-input {
@@ -569,10 +579,12 @@
   bottom: unset;
   top: 90%;
 }
+
 .wgtngmMiniCalender .calendar-mini .player .wgtngm-tooltip {
   bottom: unset;
   top: 70%;
 }
+
 /*.wgtngmMiniCalender .calendar-grid .day:hover .wgtngm-tooltip*/
 .wgtngmMiniCalender .calendar-mini-footer .weather-icon:hover .wgtngm-tooltip,
 .wgtngmMiniCalender .calendar-grid .weather-icon:hover .wgtngm-tooltip,
@@ -723,14 +735,17 @@
 .wgtngmMiniCalender.dawn .mini-time-slider {
   background: linear-gradient(to right, #4a3a2a, #ff8c00, #a26bca);
 }
+
 /* Midday: Blue Sky */
 .wgtngmMiniCalender.midday .mini-time-slider {
   background: linear-gradient(to right, #87ceeb, #ffd700, #87ceeb);
 }
+
 /* Dusk: Purple to Dark Blue */
 .wgtngmMiniCalender.dusk .mini-time-slider {
   background: linear-gradient(to right, #a26bca, #ff8c00, #2c3e50);
 }
+
 /* Midnight: Dark Blue to Black */
 .wgtngmMiniCalender.midnight .mini-time-slider {
   background: linear-gradient(to right, #0b1a33, #444, #0b1a33);
@@ -772,6 +787,7 @@
 .wgtngmMiniCalender .mini-time-slider::-moz-range-thumb:hover {
   transform: scale(1.2);
 }
+
 .wgtngmMiniCalender .mini-time-slider::-webkit-slider-thumb:hover {
   transform: scale(1.2);
 }
@@ -799,6 +815,7 @@
   background-color: #f0f8ff;
   border-color: #708090;
 }
+
 .wgtngmMiniCalender.midnight .mini-time-slider::-moz-range-thumb {
   background-color: #f0f8ff;
   border-color: #708090;
@@ -810,6 +827,7 @@
   /* width: calc(100% - 60px); */
   overflow: hidden;
 }
+
 .wgtngmMiniCalender .window-header .fa-map:not(.true),
 .wgtngmMiniCalender .window-header .fa-cloud-sun-rain:not(.true) {
   opacity: 0.5;
@@ -834,9 +852,11 @@
 .wgtngmWeatherConfig .form-footer {
   display: flex;
 }
+
 .wgtngmWeatherConfig .form-footer button {
   flex-grow: 1;
 }
+
 .wgtngmMiniCalender .calendar-mini .player .wgtgm-date {
   display: flex;
   gap: 4px;
@@ -861,7 +881,7 @@
 
 .wgtngmMiniCalender.docked.maximizing,
 .wgtngmMiniCalender.docked.minimizing,
-.wgtngmMiniCalender.docked.minimized{
+.wgtngmMiniCalender.docked.minimized {
   min-width: fit-content !important;
 }
 
@@ -894,17 +914,20 @@
   flex-direction: column;
   gap: 10px;
 }
+
 .wgtngmMiniCalender-dialog .header-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
+
 .wgtngmMiniCalender-dialog .temp-control {
   display: flex;
   align-items: center;
   gap: 5px;
   font-size: 0.9em;
 }
+
 .wgtngmMiniCalender-dialog .temp-control input {
   width: 60px;
   text-align: center;
@@ -916,6 +939,7 @@
   display: flex;
   gap: 8px;
 }
+
 .wgtngmMiniCalender-dialog .slot-card {
   flex: 1;
   background: rgba(0, 0, 0, 0.1);
@@ -927,14 +951,15 @@
   position: relative;
   overflow: hidden;
 }
+
 .wgtngmMiniCalender-dialog .slot-card:hover {
   background: rgba(0, 0, 0, 0.2);
 }
 
 /* Active Target State */
 .wgtngmMiniCalender-dialog .slot-card.active {
-    border-color: var(--color-border);
-    background: rgba(255, 255, 255, 0.05);
+  border-color: var(--color-border);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .wgtngmMiniCalender-dialog .slot-header {
@@ -945,6 +970,7 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
+
 .wgtngmMiniCalender-dialog .slot-content {
   display: flex;
   flex-direction: column;
@@ -953,9 +979,11 @@
   min-height: 45px;
   justify-content: center;
 }
+
 .wgtngmMiniCalender-dialog .slot-content .icon {
   font-size: 1.5em;
 }
+
 .wgtngmMiniCalender-dialog .slot-content .label {
   font-size: 0.8em;
   text-align: center;
@@ -966,6 +994,7 @@
 .wgtngmMiniCalender-dialog .slot-card.inherited .slot-content {
   opacity: 0.5;
 }
+
 .wgtngmMiniCalender-dialog .inherit-indicator {
   display: none;
   position: absolute;
@@ -974,6 +1003,7 @@
   font-size: 0.6em;
   opacity: 0.6;
 }
+
 .wgtngmMiniCalender-dialog .slot-card.inherited .inherit-indicator {
   display: block;
 }
@@ -995,94 +1025,106 @@
   overflow-y: auto;
   padding-top: 5px;
 }
+
 .wgtngmBiomeConfig .weather-btn,
 .wgtngmMiniCalender-dialog .weather-tag-btn {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 10px;
-    background: var(--cc-accent10);
-    border-radius: 15px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    transition: all 0.2s ease;
-    user-select: none;
-    outline: none !important;
-    box-shadow: none !important;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: var(--cc-accent10);
+  border-radius: 15px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+  user-select: none;
+  outline: none !important;
+  box-shadow: none !important;
 }
+
 .wgtngmMiniCalender-dialog .weather-tag-btn:hover {
   background: rgba(0, 0, 0, 0.15);
   transform: translateY(-1px);
 }
+
 .wgtngmMiniCalender-dialog .weather-tag-btn:active {
   transform: translateY(0);
 }
 
 .wgtngmBiomeConfig .biome-config-container {
-      display: flex;
-    height: 100%;
-    gap: 10px;
-    padding-bottom: 10px;
+  display: flex;
+  height: 100%;
+  gap: 10px;
+  padding-bottom: 10px;
 }
 
-.wgtngmBiomeConfig .config-panel{
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    overflow-y: auto;
-    padding-right: 5px;
-}
-.wgtngmBiomeConfig .hex-map-panel
-{
-     position: relative;
-    overflow: hidden;
-    min-width: 490px;
+.wgtngmBiomeConfig .config-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  padding-right: 5px;
 }
 
-.wgtngmBiomeConfig .biome-footer{
-    display: flex;
-    justify-content: space-around;
-    gap: 10px;
+.wgtngmBiomeConfig .hex-map-panel {
+  position: relative;
+  overflow: hidden;
+  min-width: 490px;
 }
 
-.wgtngmBiomeConfig .biome-footer button{
-    flex: 1;
+.wgtngmBiomeConfig .biome-footer {
+  display: flex;
+  justify-content: space-around;
+  gap: 10px;
+}
+
+.wgtngmBiomeConfig .biome-footer button {
+  flex: 1;
 }
 
 .wgtngmBiomeConfig .hex-cell {
-    background: var(--color-light-1);
-    z-index: 10;
-    transform: scale(1);
+  background: var(--color-light-1);
+  z-index: 10;
+  transform: scale(1);
 }
+
 .wgtngmBiomeConfig .hex-cell.active {
-    background-color: var(--color-level-warning);
-    transform: scale(1.1);
+  background-color: var(--color-level-warning);
+  transform: scale(1.1);
 }
 
 .wgtngmBiomeConfig .hex-cell.active i {
   color: white !important;
 }
+
 .wgtngmBiomeConfig .hex-cell i {
-font-size: 32px; color: #333; pointer-events: none;
+  font-size: 32px;
+  color: #333;
+  pointer-events: none;
 }
+
 .wgtngmBiomeConfig .hex-cell span {
-position: absolute; font-size: 12px; bottom: 5px; color: #555;
+  position: absolute;
+  font-size: 12px;
+  bottom: 5px;
+  color: #555;
 }
 
 .wgtngmBiomeConfig .weather-tag-cloud {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
 }
 
 .wgtngmBiomeConfig .weather-btn:hover {
-  background: rgba(0,0,0,0.1); }
+  background: rgba(0, 0, 0, 0.1);
+}
 
 .wgtngmBiomeConfig .weather-btn.active {
-    background: var(--color-level-warning);
-    color: white;
-    border-color: none;
+  background: var(--color-level-warning);
+  color: white;
+  border-color: none;
 }
 
 
@@ -1092,34 +1134,38 @@ EDITOR
 
 */
 
-.application.wgtngmMiniCalenderMaker{
-    max-height: 1250px;
-    max-width: 800px;
+.application.wgtngmMiniCalenderMaker {
+  max-height: 1250px;
+  max-width: 800px;
 }
+
 .wgtngmMiniCalenderMaker table,
 .wgtngmMiniCalenderMaker thead {
-background: none;
-    border: none;
+  background: none;
+  border: none;
 }
+
 .wgtngmMiniCalenderMaker tr {
   background: none;
 }
+
 .wgtngmMiniCalenderMaker th,
 .wgtngmMiniCalenderMaker td {
-    padding: 10px 5px;
+  padding: 10px 5px;
 }
+
 
 
 .wgtngmMiniCalenderMaker .editor-card {
-    padding-bottom: 1rem;
-    padding-right: 5px;
-    border-radius: 4px;
-    margin-bottom: 1rem;
-    border-bottom: 1px dashed var(--color-tabs-border);
+  padding-bottom: 1rem;
+  padding-right: 5px;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  border-bottom: 1px dashed var(--color-tabs-border);
 }
 
 .wgtngmMiniCalenderMaker .editor-card:last-child {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 .wgtngmMiniCalenderMaker .editor-card h2 {
@@ -1128,15 +1174,19 @@ background: none;
   display: flex;
   justify-content: space-between;
 }
+
 .wgtngmMiniCalenderMaker .grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
-      margin-bottom: 10px;
+  margin-bottom: 10px;
 }
+
 .wgtngmMiniCalenderMaker .grid-3 {
-  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
-      margin-bottom: 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 
@@ -1144,14 +1194,16 @@ background: none;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
-      margin-bottom: 10px;
+  margin-bottom: 10px;
 }
+
 .wgtngmMiniCalenderMaker .grid-6 {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr auto 1fr 1fr;
-    gap: 10px;
-    align-items: center;
-  }
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
 .wgtngmMiniCalenderMaker .timeline-container {
   display: flex;
   width: 100%;
@@ -1160,6 +1212,7 @@ background: none;
   overflow: hidden;
   margin-bottom: 0.5rem;
 }
+
 .wgtngmMiniCalenderMaker .timeline-segment {
   flex: 1;
   display: flex;
@@ -1171,122 +1224,126 @@ background: none;
   color: white;
   text-shadow: 0 1px 2px black;
 }
+
 .wgtngmMiniCalenderMaker .seg-empty {
   background-color: #eee;
   color: #999;
   text-shadow: none;
 }
+
 .wgtngmMiniCalenderMaker .seg-ok {
   background-color: #2e8b57;
 }
+
 .wgtngmMiniCalenderMaker .seg-conflict {
   background-color: #b22222;
 }
+
 .wgtngmMiniCalenderMaker .btn-sm {
   padding: 0.2rem 0.5rem;
   font-size: 0.8rem;
 }
+
 .wgtngmMiniCalenderMaker .input-group label {
   font-weight: bold;
   font-size: 0.8em;
-      line-height: 1.6em;
+  line-height: 1.6em;
 }
 
 .wgtngmMiniCalenderMaker .error-box {
-    color: var(--color-level-error);
-    padding: 0.5rem;
-    border-radius: 4px;
-    margin-bottom: 1rem;
-    border: 1px solid var(--color-level-error);
-     }
+  color: var(--color-level-error);
+  padding: 0.5rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  border: 1px solid var(--color-level-error);
+}
+
 .wgtngmMiniCalenderMaker .error-border {
-    border-radius: 4px;
-    border: 1px solid var(--color-level-error) !important;
-  }
+  border-radius: 4px;
+  border: 1px solid var(--color-level-error) !important;
+}
 
 
 
 .wgtngmMiniCalenderMaker .window-content {
-    display: grid;
-    grid-template-columns: 150px 1fr;
-    grid-template-rows: auto 1fr;
-    grid-template-areas:
-        "nav content"
-        "side content"
-        "footer content";
-    height: 100%;
-    overflow: hidden;
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "nav content"
+    "side content"
+    "footer content";
+  height: 100%;
+  overflow: hidden;
 }
 
 .wgtngmMiniCalenderMaker .sheet-tabs {
-    grid-area: nav;
-    display: flex;
-    flex-direction: column;
-    border: none;
-    padding: 0;
-    align-items: flex-start;
-    width: 150px;
-    gap: 5px;
-    height: fit-content;
+  grid-area: nav;
+  display: flex;
+  flex-direction: column;
+  border: none;
+  padding: 0;
+  align-items: flex-start;
+  width: 150px;
+  gap: 5px;
+  height: fit-content;
 }
 
-.wgtngmMiniCalenderMaker .sheet-tabs a {
-}
+.wgtngmMiniCalenderMaker .sheet-tabs a {}
 
 .wgtngmMiniCalenderMaker .sheet-tabs a.active {
-    border-left: 4px solid var(--color-text-accent);
-    margin-left: -14px;
-    padding-left: 10px;
+  border-left: 4px solid var(--color-text-accent);
+  margin-left: -14px;
+  padding-left: 10px;
 }
 
 .wgtngmMiniCalenderMaker .sidebar-list {
-    grid-area: side;
-    border-top: 1px dashed var(--color-tabs-border);
-    overflow-y: auto;
-    padding-top: 10px;
-    margin-top: 15px;
-    margin-right: 0px;
-    border-right: none;
+  grid-area: side;
+  border-top: 1px dashed var(--color-tabs-border);
+  overflow-y: auto;
+  padding-top: 10px;
+  margin-top: 15px;
+  margin-right: 0px;
+  border-right: none;
 }
 
-.wgtngmMiniCalenderMaker .sidebar-list .sidebar-buttons{
+.wgtngmMiniCalenderMaker .sidebar-list .sidebar-buttons {
   display: flex;
   flex-direction: row;
   justify-content: space-evenly;
   padding-bottom: 10px;
-  gap:5px;
+  gap: 5px;
 }
 
-.wgtngmMiniCalenderMaker .sidebar-list .sidebar-buttons button{
-    flex: 1;
+.wgtngmMiniCalenderMaker .sidebar-list .sidebar-buttons button {
+  flex: 1;
 }
-.wgtngmMiniCalenderMaker .sidebar-list h4{
 
-}
+.wgtngmMiniCalenderMaker .sidebar-list h4 {}
 
 .wgtngmMiniCalenderMaker .tab {
-    grid-area: content;
-    overflow-y: auto;
-    height: 100%;
-    padding-left: 15px;
-    margin-right: -15px;
-    padding-right: 5px;
-    border-left: 1px dashed var(--color-tabs-border);
-    margin-left: 10px;
-  }
+  grid-area: content;
+  overflow-y: auto;
+  height: 100%;
+  padding-left: 15px;
+  margin-right: -15px;
+  padding-right: 5px;
+  border-left: 1px dashed var(--color-tabs-border);
+  margin-left: 10px;
+}
 
 .wgtngmMiniCalenderMaker .sidebar-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.9em;
-    gap: 4px;
-    padding-bottom: 5px;
-    padding-top: 5px;
-    border-bottom: 1px dotted var(--color-tabs-border);
-    margin-bottom: 5px;
-    margin-top: -5px;
-    padding-left: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9em;
+  gap: 4px;
+  padding-bottom: 5px;
+  padding-top: 5px;
+  border-bottom: 1px dotted var(--color-tabs-border);
+  margin-bottom: 5px;
+  margin-top: -5px;
+  padding-left: 5px;
 }
 
 .wgtngmMiniCalenderMaker .sidebar-item:hover {
@@ -1294,40 +1351,44 @@ background: none;
 }
 
 .wgtngmMiniCalenderMaker .sidebar-item span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
 }
 
 .wgtngmMiniCalenderMaker .sidebar-item a {
-  width:16px;
+  width: 16px;
 }
 
 .wgtngmMiniCalenderMaker .sidebar-item a[data-action="deleteCalendar"]:hover {
-    color: var(--color-level-error);
+  color: var(--color-level-error);
 }
+
 .wgtngmMiniCalenderMaker .sidebar-item a[data-action="exportCalendar"]:hover {
-    color: var(--color-level-success);
+  color: var(--color-level-success);
 }
 
 
 .wgtngmMiniCalenderMaker .form-footer {
-    grid-area: footer;
-    display: flex;
-    gap: 5px;
-    padding-top: 10px;
-    flex-wrap: wrap;
+  grid-area: footer;
+  display: flex;
+  gap: 5px;
+  padding-top: 10px;
+  flex-wrap: wrap;
 }
 
 
-.wgtngmMiniCalenderMaker .form-footer button{
-  flex:1 1 100%;
+.wgtngmMiniCalenderMaker .form-footer button {
+  flex: 1 1 100%;
 }
+
 .wgtngmMiniCalenderMaker .moon-card,
 .wgtngmMiniCalenderMaker .season-card,
-.wgtngmMiniCalenderMaker .event-card{
-    border-bottom: 1px dotted var(--color-tabs-border); padding:5px; margin-bottom:5px;
+.wgtngmMiniCalenderMaker .event-card {
+  border-bottom: 1px dotted var(--color-tabs-border);
+  padding: 5px;
+  margin-bottom: 5px;
 }
 
 
@@ -1336,20 +1397,343 @@ background: none;
   min-height: 600px;
 }
 
-.wgtngmMiniCalender-dialog.edit-note [id="advanced-options-container"]{
+.wgtngmMiniCalender-dialog.edit-note [id="advanced-options-container"] {}
 
+
+.application.wgtngmMiniCalender-dialog.edit-note [id="advanced-options-container"] label {
+  flex: 0 0 25%;
 }
 
-
-.application.wgtngmMiniCalender-dialog.edit-note [id="advanced-options-container"] label{
-    flex: 0 0 25%;
-}
-
-.application.wgtngmMiniCalender-dialog.edit-note [id="advanced-options-container"] .adv-subgroup{
+.application.wgtngmMiniCalender-dialog.edit-note [id="advanced-options-container"] .adv-subgroup {
   margin-top: 10px;
 }
 
 
-.application.wgtngmMiniCalender-dialog.edit-note [id="advanced-options-container"] .form-group{
+.application.wgtngmMiniCalender-dialog.edit-note [id="advanced-options-container"] .form-group {
   padding-bottom: 5px;
+}
+
+/* CALENDAR HUD - Minimalist & Graphical */
+#calendar-hud-wgtgm.minimal-hud {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  background: transparent;
+  display: flex !important;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 0px 20px;
+  z-index: 20;
+  pointer-events: none;
+  box-sizing: border-box;
+  color: #eee;
+  margin: 0px;
+  font-size: 12px;
+}
+
+#calendar-hud-wgtgm.minimal-hud:hover{
+  z-index: 1000001;
+  transition: z-index 0.3s;
+}
+
+#calendar-hud-wgtgm.minimal-hud * {
+  pointer-events: auto;
+  /* Re-enable pointer events for children */
+}
+
+/* GROUPS */
+#calendar-hud-wgtgm .hud-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(10, 10, 12, 0.7);
+  /* Minimal dark backdrop */
+  padding: 4px 10px;
+  border-radius: 20px;
+/*  border: 1px solid rgba(255, 255, 255, 0.1);*/
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(5px);
+  height: 32px;
+  /* Fixed height for controls */
+  margin-top: 5px;
+}
+
+
+/* GROUPS */
+#calendar-hud-wgtgm .hud-group.time-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(10, 10, 12, 0.7);
+  padding: 4px 10px;
+  border-radius: 16px 0px 0px 16px;
+/*  border: 1px solid rgba(255, 255, 255, 0.1);*/
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(5px);
+  height: 32px;
+  margin-top: 5px;
+  margin-left: 8px;
+}
+
+#calendar-hud-wgtgm .hud-group.time-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(10, 10, 12, 0.7);
+  padding: 4px 10px;
+  border-radius: 0px 16px 16px 0px;
+/*  border: 1px solid rgba(255, 255, 255, 0.1);*/
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(5px);
+  height: 32px;
+  margin-top: 5px;
+  margin-right: 8px;
+}
+
+#calendar-hud-wgtgm .hud-group.weather-forecast {
+  margin-right: 8px;
+}
+
+#calendar-hud-wgtgm .hud-group.weather-forecast.weather-player-view {
+  margin-left: 8px;
+}
+
+
+
+#calendar-hud-wgtgm .hud-group.add-note{
+  margin-left: 8px;
+}
+
+#calendar-hud-wgtgm .hud-group.add-note.player-view {
+  margin-right: 8px;
+}
+
+
+#calendar-hud-wgtgm .hud-group.date-seasons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: auto;
+    border-radius: 0px 0px 16px 16px;
+    margin-top: 5px;
+  }
+
+#calendar-hud-wgtgm .hud-group.date-seasons.player-view{
+  border-radius:16px
+}
+
+
+#calendar-hud-wgtgm .hud-group.date-seasons.player-view .hud-time-block {
+    cursor:unset;
+  }
+
+#calendar-hud-wgtgm .hud-group.middle-controls-left,
+#calendar-hud-wgtgm .hud-group.middle-controls-right {
+  gap: 5px;
+}
+
+/* SEPARATORS */
+#calendar-hud-wgtgm .hud-separator {
+  color: rgba(255, 255, 255, 0.2);
+  font-size: 1.2em;
+  font-weight: 300;
+  margin: 0 2px;
+}
+
+/* BUTTONS */
+#calendar-hud-wgtgm .hud-text-btn {
+  background: transparent;
+  border: none;
+  color: #ccc;
+  font-family: inherit;
+  font-size: 0.95em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 5px;
+  transition: color 0.2s, transform 0.1s;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+#calendar-hud-wgtgm .hud-text-btn:hover {
+  color: #fff;
+  transform: translateY(-1px);
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+#calendar-hud-wgtgm .hud-text-btn.small {
+  font-size: 0.8em;
+  color: #999;
+}
+
+#calendar-hud-wgtgm .hud-text-btn.small:hover {
+  color: #ddd;
+}
+
+#calendar-hud-wgtgm .hud-icon-btn {
+  background: transparent;
+  border: none;
+  color: #bbb;
+  font-size: 1.1em;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  border-radius: 50%;
+}
+
+#calendar-hud-wgtgm .hud-text-btn.small:focus{
+  outline: none;
+  border: none;
+  box-shadow: none;
+}
+
+#calendar-hud-wgtgm .hud-icon-btn:focus{
+  outline: none;
+  border: none;
+  box-shadow: none;
+}
+
+#calendar-hud-wgtgm .hud-icon-btn.active {
+  color: #d4af37;
+  outline: none;
+  border: none;
+  box-shadow: none;
+}
+
+
+#calendar-hud-wgtgm .hud-icon-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* DATE TEXT */
+#calendar-hud-wgtgm .date-text {
+font-size: 1.1em;
+    font-weight: bold;
+    color: #eee;
+    margin-left: 5px;
+    cursor: pointer;
+    padding-top: 4px;
+    margin-bottom: -2px;
+}
+
+#calendar-hud-wgtgm .date-text:hover {
+  color: #fff;
+}
+
+#calendar-hud-wgtgm .season-text {
+  font-weight: 400;
+  color: #aaa;
+  font-size: 0.9em;
+}
+
+/* GRAPHICAL TIME BLOCK */
+#calendar-hud-wgtgm .hud-time-block {
+    position: relative;
+    width: calc(100% + 20px);
+    height: 15px;
+    background: #000;
+    border-radius: 0px 0px 16px 16px;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: ew-resize;
+    margin-bottom: -4px;
+    margin-left: -10px;
+    margin-right: -10px;
+}
+
+/* Sky Gradients */
+/* Default Night */
+#calendar-hud-wgtgm .hud-time-block.night .sky-background {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, #0d1117 0%, #1f2833 100%);
+}
+
+/* Dawn */
+#calendar-hud-wgtgm .hud-time-block.dawn .sky-background {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, #4a3b52 0%, #ff8c69 100%);
+}
+
+/* Day */
+#calendar-hud-wgtgm .hud-time-block.day .sky-background {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, #4facfe 0%, #00f2fe 100%);
+}
+
+/* Dusk */
+#calendar-hud-wgtgm .hud-time-block.dusk .sky-background {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, #2c3e50 0%, #fd746c 100%);
+}
+
+#calendar-hud-wgtgm .celestial-body {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 16px;
+  transition: left 0.5s ease, top 0.5s ease;
+  transform: translate(-50%, -50%);
+}
+
+#calendar-hud-wgtgm .data-time-wrapper{
+  display: flex;
+    flex-direction: row;
+    align-items: baseline;
+}
+
+#calendar-hud-wgtgm .celestial-body.hidden {
+  opacity: 0;
+}
+
+#calendar-hud-wgtgm .celestial-body.sun {
+  color: #ffeb3b;
+  filter: drop-shadow(0 0 8px #ffeb3b);
+  z-index: 2;
+}
+
+#calendar-hud-wgtgm .celestial-body.moon {
+  color: #f0f0f0;
+  z-index: 2;
+}
+
+#calendar-hud-wgtgm .celestial-body.moon img {
+  width: 100%;
+  height: 100%;
+}
+
+.wgtngmWeatherConfig .form-body {
+  overflow:scroll;
+  padding:10px;
+}
+
+.wgtngmWeatherConfig .window-content {
+  padding: 0px
+}
+
+.wgtngmWeatherConfig .form-footer {
+  padding: 0px 10px 10px 10px;
 }

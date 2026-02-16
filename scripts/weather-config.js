@@ -1,6 +1,7 @@
 import { MODULE_NAME } from "./settings.js";
 import { BiomeConfig } from "./biome-config.js";
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
+import { renderHelper } from "./helper.js";
 
 export class WeatherConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     static DEFAULT_OPTIONS = {
@@ -12,7 +13,7 @@ export class WeatherConfig extends HandlebarsApplicationMixin(ApplicationV2) {
             title: "Weather Configuration",
             resizable: false
         },
-        position: { width: 440, height: "auto" },
+        position: { width: 440, height: 600 },
         actions: {
             openBiomeEditor: () => new BiomeConfig().render(true)
         },
@@ -20,8 +21,12 @@ export class WeatherConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     };
 
     static PARTS = {
-        form: { template: `modules/wgtgm-mini-calendar/templates/weather-config.hbs`, },
-        footer: { template: "modules/wgtgm-mini-calendar/templates/weather-config-footer.hbs" },
+        form: {
+            template: `modules/wgtgm-mini-calendar/templates/weather-config.hbs`,
+            scrollable: ["", ".scrollable"],
+
+        }, footer: { template: "modules/wgtgm-mini-calendar/templates/weather-config-footer.hbs" },
+
     };
 
 
@@ -102,6 +107,8 @@ export class WeatherConfig extends HandlebarsApplicationMixin(ApplicationV2) {
             game.wgtngmMiniCalender.calendarInstance.render();
             return;
         }
+        renderHelper();
+            return;
     }
 }
 
