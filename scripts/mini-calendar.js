@@ -1,6 +1,7 @@
 import { MODULE_NAME } from "./settings.js";
 import { localize, calendarJournal, playerJournalName, confirmationDialog, whisperChat, broadcastChat, renderCalendarIfOpen, PIN_TYPES } from "./helper.js";
 import { CalendarConfig } from "./calendar-config.js";
+import { HistoricalDataWeatherEngine } from "./historical-data-engine.js";
 import { WeatherEngine } from "./weather.js";
 import { WeatherConfig } from "./weather-config.js";
 
@@ -79,7 +80,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
   wasPausedForCombat = false;
   _debouncedRender = foundry.utils.debounce(this.render.bind(this), 100);
   _debouncedRenderHud = foundry.utils.debounce(this.updateHud.bind(this), 100);
-  
+
   _positionObserver = null;
 
   _positionObserver = null;
@@ -105,6 +106,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
   async initialize() {
     this.#isRunning = game.settings.get(MODULE_NAME, "timeIsRunning");
     this.#timeMultiplier = game.settings.get(MODULE_NAME, "timeMultiplier");
+    game.wgtngmMiniCalender.weatherEngine = game.settings.get(MODULE_NAME, "useHistoricalData") ? new HistoricalDataWeatherEngine() : new WeatherEngine();
     if (game.user.isGM) {
       await this._ensureJournalsExist();
       if (this.#isRunning) {
@@ -132,8 +134,8 @@ export class wgtngmMiniCalender extends wgtngmcal {
   }
 
   async _ensureJournalsExist() {
-    
-    
+
+
     await game.wgtngmMiniCalender.weatherEngine.getForecastPage();
 
     let pJournal = game.journal.getName(playerJournalName);
@@ -423,7 +425,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
     let notes = [];
     const pageName = `${date.year}-${String(date.month + 1).padStart(2, "0")}-${String(date.day + 1).padStart(2, "0")}`;
 
-    
+
     const cacheKey = pageName;
     if (this._todayNotesCache.dateKey === cacheKey && this._todayNotesCache.notes) {
       return foundry.utils.deepClone(this._todayNotesCache.notes);
@@ -434,7 +436,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
       const page = preFetchedPageMap ? preFetchedPageMap.get(pageName) : gmJournal.pages.getName(pageName);
       if (page) {
         const gmNotes = page.flags?.[MODULE_NAME]?.notes || [];
-        
+
         gmNotes.forEach(n => {
           if (n.isPlayerNote === undefined) n.isPlayerNote = false;
           n.isGMNote = !n.isPlayerNote;
@@ -558,10 +560,10 @@ export class wgtngmMiniCalender extends wgtngmcal {
     const newState = !currentState;
     await canvas.scene.setFlag(MODULE_NAME, "enableWeather", newState);
     if (newState) {
-      
+
       await game.wgtngmMiniCalender.weatherEngine.refreshWeather();
     } else {
-      
+
       await game.wgtngmMiniCalender.weatherEngine.disableWeatherEffect();
     }
     if (game.wgtngmMiniCalender.hud && game.wgtngmMiniCalender.hud.rendered) {
@@ -582,10 +584,10 @@ export class wgtngmMiniCalender extends wgtngmcal {
     const newState = !currentState;
     await game.settings.set(MODULE_NAME, "enableWeatherEffects", newState);
     if (newState) {
-      
+
       await game.wgtngmMiniCalender.weatherEngine.refreshWeather();
     } else {
-      
+
       await game.wgtngmMiniCalender.weatherEngine.applyWeatherEffect("none");
     }
     if (game.wgtngmMiniCalender.hud && game.wgtngmMiniCalender.hud.rendered) {
@@ -1089,7 +1091,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
     if (this._lastCheckedDay !== dayKey) {
       this._lastCheckedDay = dayKey;
 
-      
+
       this.#viewMonth = c.month;
       this.#viewYear = c.year;
       this._debouncedRender();
@@ -1197,7 +1199,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
     }
     if (!notes || notes.length === 0) return;
 
-    
+
     const whisperedIds = game.settings.get(MODULE_NAME, "whisperedNoteIds");
     const unwhisperedNotes = notes.filter((n) => !whisperedIds.includes(n.id));
 
@@ -1368,7 +1370,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
 
   async _saveNotesForDay(date, notes) {
     if (game.user.isGM) {
-      
+
       const gmNotes = notes.filter(n => !n.isPlayerNote);
       const playerNotes = notes.filter(n => n.isPlayerNote);
 
@@ -1377,7 +1379,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
     } else {
       const allowPlayerNotes = game.settings.get(MODULE_NAME, "allowPlayerNotes");
       if (allowPlayerNotes) {
-        
+
         const myNotes = notes.filter(n => n.userId === game.user.id);
         await this._saveNotesToSpecificJournal(date, myNotes, playerJournalName);
       }
@@ -1549,7 +1551,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
       editDate: date,
       yearOptions: Array.from({ length: 21 }, (_, i) => ({ value: (this.#viewYear - 10) + i })),
       monthOptions: calendar.months.values.map((m, i) => ({ index: i, name: game.i18n.localize(m.name) })),
-      
+
       dayOptions: Array.from({ length: daysInMonth }, (_, i) => ({ value: i, label: i + 1 })),
 
     };
@@ -1748,7 +1750,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
           : {
             id: foundry.utils.randomID(),
             userId: game.user.id,
-            isPlayerNote: !game.user.isGM, 
+            isPlayerNote: !game.user.isGM,
             ...result
           };
 
@@ -2551,7 +2553,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
       const comps = calendar.timeToComponents(game.time.worldTime);
       comps.hour = hour;
       comps.minute = minute;
-      comps.second = second;  
+      comps.second = second;
       game.time.set(comps);
 
       this.render();

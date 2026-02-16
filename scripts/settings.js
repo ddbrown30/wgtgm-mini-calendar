@@ -84,7 +84,7 @@ export default async function minicalendarSettings() {
         type: Boolean,
         default: false
     });
-    
+
     game.settings.register(MODULE_NAME, "calHudOpened", {
         name: localize("settings.calHudOpened"),
         hint: localize("settings.calHudOpenedHint"),
@@ -431,8 +431,8 @@ export default async function minicalendarSettings() {
         default: true,
         onChange: (value) => {
             import("./weather.js").then(({ WeatherEngine }) => {
-                if (!value) WeatherEngine.applyWeatherEffect("none");
-                else WeatherEngine.refreshWeather();
+                if (!value) game.wgtngmMiniCalender.weatherEngine.applyWeatherEffect("none");
+                else game.wgtngmMiniCalender.weatherEngine.refreshWeather();
             });
             if (game.wgtngmMiniCalender && game.user.isGM) {
                 const fxIcon = game.wgtngmMiniCalender.element?.querySelector('[data-action="toggle-weather-fx"]');
@@ -468,7 +468,7 @@ export default async function minicalendarSettings() {
                 });
             }
             if (game.wgtngmMiniCalender && game.user.isGM) {
-                WeatherEngine.refreshWeather();
+                game.wgtngmMiniCalender.weatherEngine.refreshWeather();
                 const soundIcon = game.wgtngmMiniCalender.element.querySelector('[data-action="toggle-weather-sound"]');
                 soundIcon.classList.toggle('fa-volume-high', value);
                 soundIcon.classList.toggle('fa-volume-xmark', !value);
@@ -504,7 +504,6 @@ export default async function minicalendarSettings() {
         default: 2000,
     });
 
-game.settings.register(MODULE_NAME, "customBiomeMap", {
     game.settings.register(MODULE_NAME, "customBiomeMap", {
         scope: "world",
         config: false,

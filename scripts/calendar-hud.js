@@ -283,7 +283,7 @@ export class CalendarHUD extends HandlebarsApplicationMixin(ApplicationV2) {
 
 
         if (showWeatherStats) {
-            const forecast = await WeatherEngine.getWeatherForDate(comps.year, comps.month, comps.dayOfMonth);
+            const forecast = await game.wgtngmMiniCalender.weatherEngine.getWeatherForDate(comps.year, comps.month, comps.dayOfMonth);
             let weatherTypeToUse = forecast;
             if (comps.hour >= 12 && comps.hour < 18) {
                 if (forecast.variations?.midday) {
@@ -295,7 +295,7 @@ export class CalendarHUD extends HandlebarsApplicationMixin(ApplicationV2) {
                 }
             }
             if (enableForecast && forecast) {
-                tempDisplay = WeatherEngine.getTempDisplay(forecast.temp) || "";
+                tempDisplay = game.wgtngmMiniCalender.weatherEngine.getTempDisplay(forecast.temp) || "";
                 weatherIcon = weatherTypeToUse.icon || "";
                 weatherLabel = weatherTypeToUse.label || "";
             } else {
@@ -646,7 +646,7 @@ export class CalendarHUD extends HandlebarsApplicationMixin(ApplicationV2) {
         if (!showWeatherStats) return;
 
         const comps = game.time.calendar.timeToComponents(game.time.worldTime);
-        const forecast = await WeatherEngine.getWeatherForDate(comps.year, comps.month, comps.dayOfMonth);
+        const forecast = await game.wgtngmMiniCalender.weatherEngine.getWeatherForDate(comps.year, comps.month, comps.dayOfMonth);
         if (!forecast) return;
 
         let weatherTypeToUse = forecast;
@@ -665,13 +665,13 @@ export class CalendarHUD extends HandlebarsApplicationMixin(ApplicationV2) {
         const iconElement = weatherBlock.querySelector("i");
         const tempElement = weatherBlock.querySelector("span");
         if (iconElement && weatherTypeToUse.icon) {
-            iconElement.className = weatherTypeToUse.icon; 
+            iconElement.className = weatherTypeToUse.icon;
             if (weatherTypeToUse.label) {
                 iconElement.setAttribute("data-tooltip", weatherTypeToUse.label);
             }
         }
         if (tempElement) {
-            const tempDisplay = WeatherEngine.getTempDisplay(forecast.temp) || "";
+            const tempDisplay = game.wgtngmMiniCalender.weatherEngine.getTempDisplay(forecast.temp) || "";
             tempElement.innerText = tempDisplay;
         }
     }
@@ -689,7 +689,7 @@ export class CalendarHUD extends HandlebarsApplicationMixin(ApplicationV2) {
             day: comps.dayOfMonth
         };
 
-        await WeatherEngine.createForecasts(date);
+        await game.wgtngmMiniCalender.weatherEngine.createForecasts(date);
         ui.notifications.info("Weather Regenerated");
         if (game.wgtngmMiniCalender?.hud.rendered) game.wgtngmMiniCalender.hud.updateWeatherIcon();
         // if (game.wgtngmMiniCalender.hud) game.wgtngmMiniCalender.hud.render();

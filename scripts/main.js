@@ -6,7 +6,6 @@ import { CalendarConfig } from "./calendar-config.js";
 import { createMiniCalendarClass } from "./CalendarClass.js";
 import { weatherEffects, WeatherEngine } from "./weather.js";
 import { PlaylistImporter } from "./playlist-importer.js"; // <--- New Import
-import { HistoricalDataWeatherEngine } from "./historical-data-engine.js";
 let DEFAULT_CALENDAR;
 
 export function setCalendarJSON(firstTime = false) {
@@ -160,8 +159,6 @@ Hooks.once("ready", async function () {
 
     game.wgtngmMiniCalender = new wgtngmMiniCalender();
     await game.wgtngmMiniCalender.initialize();
-  
-    game.wgtngmMiniCalender.weatherEngine = game.settings.get(MODULE_NAME, "useHistoricalData") ? new HistoricalDataWeatherEngine() : new WeatherEngine();
 
     // Initialize HUD
     game.wgtngmMiniCalender.hud = new CalendarHUD();
@@ -258,15 +255,18 @@ Hooks.on("updateScene", async (scene, changes, options, userId) => {
 
         }
         if (myFlags.enableWeather !== undefined) {
-            if (!myFlags.enableWeather) await WeatherEngine.disableWeatherEffect();
-            else WeatherEngine.refreshWeather();
+            if (!myFlags.enableWeather) await game.wgtngmMiniCalender.weatherEngine.disableWeatherEffect();
+            else game.wgtngmMiniCalender.weatherEngine.refreshWeather();
         }
     }
 });
 
 Hooks.on("canvasReady", async (canvas) => {
-    WeatherEngine.refreshWeather();
-    if (game.wgtngmMiniCalender) await game.wgtngmMiniCalender._updateSceneDarkness(game.time.worldTime);
+    if (game.wgtngmMiniCalender) {
+        await game.wgtngmMiniCalender._updateSceneDarkness(game.time.worldTime);
+        if (game.wgtngmMiniCalender.weatherEngine)
+            game.wgtngmMiniCalender.weatherEngine.refreshWeather();
+    }
     // await WeatherEngine.playWeatherSound(canvas.scene.weather);
 });
 
