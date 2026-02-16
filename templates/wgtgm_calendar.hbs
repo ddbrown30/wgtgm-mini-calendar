@@ -7,18 +7,18 @@
 
     <div class="calendar-grid wgtngm-calendar-grid">
         {{#each weekdays}}
-        <div class="weekday">{{#unless ../isIntercalary}}{{this}}{{/unless}}</div>
+        <div class="weekday" data-tooltip-text="{{this.name}}">{{#unless ../isIntercalary}}{{this.abbrev}}{{/unless}}</div>
         {{/each}}
 
         {{#each days}}
-        
+
             {{#if this.isBlank}}
                 <div class="day blank"></div>
             {{else}}
             <div class="day {{#if this.isCurrentDay}}current{{/if}}"
                 data-date="{{json this.date}}"
                 data-has-event="{{this.hasEvent}}"
-                data-action="set-date"> 
+                data-action="set-date">
 
                 <span class="day-number">{{this.dayNumber}}</span>
                     {{#if (and this.weatherIcon this.showWeather)}}
@@ -43,7 +43,7 @@
             {{/if}}
         {{/each}}
     </div>
- 
+
     <div class="calendar-mini">
         {{#if isGM}}
             {{#each currentMoon}}
@@ -51,11 +51,11 @@
                     <img src="{{this.image}}" class="moon-base">
                 <div class="moon-tint" style="-webkit-mask-image: url('{{this.image}}'); mask-image: url('{{this.image}}');"></div>
                 </div>
-            {{/each}}  
+            {{/each}}
              {{#if currentHasEvent}}<i class="{{currentNoteIcon}} event-icon {{#if this.hasRecurring}}recurring-note{{/if}}" data-date="{{json currentDate}}" data-action="add-note" ><span class="wgtngm-tooltip">{{{currentNoteTooltip}}}</span></i>{{/if}}
-            <span class="current-day">{{currentDay}}</span> <span class="current-month">{{currentMonth}}</span> <span class="current-year">{{currentYear}}</span> 
-            <i class="fas fa-sunrise" data-action="set-dawn" title="Set to Dawn"></i> 
-            <i class="fas fa-sunset" data-action="set-sunset" title="Set to Dusk"></i> 
+            <span class="current-day">{{currentDay}}</span> <span class="current-month">{{currentMonth}}</span> <span class="current-year">{{currentYear}}</span>
+            <i class="fas fa-sunrise" data-action="set-dawn" title="Set to Dawn"></i>
+            <i class="fas fa-sunset" data-action="set-sunset" title="Set to Dusk"></i>
             <i class="fas fa-moon-stars" data-action="set-midnight" title="Set to Midnight"></i>
       {{else}}
         <div class="player">
@@ -65,11 +65,11 @@
                    <img src="{{this.image}}" class="moon-base">
                   <div class="moon-tint" style="-webkit-mask-image: url('{{this.image}}'); mask-image: url('{{this.image}}');"></div>
                   </div>
-                {{/each}}  
-               {{#if (and currentHasEvent currenthasVisible)}}<i class="{{currentNoteIcon}} event-icon {{#if (and this.hasRecurring this.hasVisible)}}recurring-note{{/if}}" data-date="{{json currentDate}}" data-action="add-note" ><span class="wgtngm-tooltip">{{{currentNoteTooltipPlayerVisible}}}</span></i>{{/if}}  
-            <span class="current-day">{{currentDay}}</span> <span class="current-month">{{currentMonth}}</span> <span class="current-year">{{currentYear}}</span> 
+                {{/each}}
+               {{#if (and currentHasEvent currenthasVisible)}}<i class="{{currentNoteIcon}} event-icon {{#if (and this.hasRecurring this.hasVisible)}}recurring-note{{/if}}" data-date="{{json currentDate}}" data-action="add-note" ><span class="wgtngm-tooltip">{{{currentNoteTooltipPlayerVisible}}}</span></i>{{/if}}
+            <span class="current-day">{{currentDay}}</span> <span class="current-month">{{currentMonth}}</span> <span class="current-year">{{currentYear}}</span>
             </div>
-    <footer class="calendar-mini-footer">            
+    <footer class="calendar-mini-footer">
         {{#if (and currentWeatherIcon showWeather)}}
             <div class="weather-icon" title="" >
                 <i class="{{this.currentWeatherIcon}}" ><span class="wgtngm-tooltip"><p>{{this.currentWeatherTooltip}}</p></span></i>
@@ -99,7 +99,7 @@
                  <input type="range" class="mini-time-slider" min="0" max="{{maxSeconds}}" value="{{currentSeconds}}" step="{{stepSeconds}}" style="" title="Drag to adjust time">
     </div>
     <footer class="calendar-footer time-controls">
-    
+
     <button data-action="sub-hour" title="Subtract 1 Hour"><i class="fas fa-minus"></i> 1h</button>
         <button data-action="sub-minute" title="Subtract 10 Minutes"><i class="fas fa-minus"></i> 10m</button>
 
