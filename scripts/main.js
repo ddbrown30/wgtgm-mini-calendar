@@ -318,7 +318,7 @@ Hooks.on("getSceneControlButtons", (controls) => {
                 order: 2,
                 title: "Mini Calendar",
                 icon: "fa-solid fa-calendar",
-                visible: !canvas.scene?.environment.darknessLock,
+                visible: true,
                 onChange: () => {
                     openwgtngmMiniCalendarSheet();
                 },
@@ -329,7 +329,7 @@ Hooks.on("getSceneControlButtons", (controls) => {
                 order: 3,
                 title: "Mini Calendar HUD",
                 icon: "fa-solid fa-clock",
-                visible: !canvas.scene?.environment.darknessLock,
+                visible: true,
                 onChange: () => {
                     const hud = game.wgtngmMiniCalender?.hud;
                     if (hud) {

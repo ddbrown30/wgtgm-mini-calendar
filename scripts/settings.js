@@ -91,7 +91,7 @@ export default async function minicalendarSettings() {
         scope: "client",
         config: false,
         type: Boolean,
-        default: true
+        default: false
     });
 
     game.settings.register(MODULE_NAME, "startMinimized", {
