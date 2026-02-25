@@ -30,7 +30,7 @@
   "relationships": {
     "systems": []
   },
-  "packs": [
+    "packs": [
     {
       "name": "macros",
       "label": "macros",
@@ -43,11 +43,19 @@
     }
   ],
   "packFolders": [
+    {
+    "name": "WgtnGM",
+    "sorting": "m",
+    "color": "#205d9e",
+    "packs": [],
+    "folders": [
   {
     "name": "MiniCalendar",
     "sorting": "m",
     "color": "#205d9e",
     "packs": ["macros"]
   }
+      ]
+    }
   ]
 }

@@ -44,7 +44,7 @@
         <div class="data-time-wrapper" data-action="open-calendar">
             <div class="time-text-overlay">{{time}}</div>
             <div class="date-text" >{{date}}
-                <span class="season-text">{{seasonName}}</span>
+                <!-- <span class="season-text">{{seasonName}}</span> -->
             </div>
         </div>
 
@@ -90,6 +90,26 @@
     {{/if}}
 
     {{#if isGM}}
+    {{#if toggles.darknessControlEnabled}}
+    <div class="hud-group darkness-controls">
+        <button type="button" class="hud-icon-btn {{#if toggles.darkness}}active{{/if}}" data-action="toggle-darkness"
+            data-tooltip="Toggle Scene Darkness Control">
+            <i class="fas fa-eclipse"></i>
+        </button>
+        {{#if toggles.darkness}}
+            <button type="button" class="hud-icon-btn" data-action="update-darkness" data-tooltip="Update Scene Darkness">
+                <i class="fas fa-arrows-rotate"></i>
+            </button>
+        {{else}}
+        <button type="button" class="hud-icon-btn" data-action="transition-to-day" data-tooltip="Transition to Day">
+            <i class="fas fa-sun"></i>
+        </button>
+        <button type="button" class="hud-icon-btn" data-action="transition-to-night" data-tooltip="Transition to Night">
+            <i class="fas fa-moon"></i>
+        {{/if}}
+    </div>
+        {{/if}}
+
     <div class="hud-group weather-controls">
         <button type="button" class="hud-icon-btn" data-action="set-weather" data-tooltip="Set Weather">
             <i class="fas fa-cloud"></i>

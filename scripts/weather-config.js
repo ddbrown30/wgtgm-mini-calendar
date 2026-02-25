@@ -33,6 +33,7 @@ export class WeatherConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     async _prepareContext(options) {
         return {
             hideWeatherPlayer: game.settings.get(MODULE_NAME, "hideWeatherPlayer"),
+            showOnlyTodayWeatherPlayer: game.settings.get(MODULE_NAME, "showOnlyTodayWeatherPlayer"),
             broadcastWeather: game.settings.get(MODULE_NAME, "broadcastWeather"),
             biome: game.settings.get(MODULE_NAME, "biome"),
             auroraChance: game.settings.get(MODULE_NAME, "auroraChance"),
@@ -53,6 +54,7 @@ export class WeatherConfig extends HandlebarsApplicationMixin(ApplicationV2) {
 
     static async #onSubmit(event, form, formData) {
         await game.settings.set(MODULE_NAME, "hideWeatherPlayer", formData.object.hideWeatherPlayer);
+        await game.settings.set(MODULE_NAME, "showOnlyTodayWeatherPlayer", formData.object.showOnlyTodayWeatherPlayer);
         await game.settings.set(MODULE_NAME, "broadcastWeather", formData.object.broadcastWeather);
         await game.settings.set(MODULE_NAME, "biome", formData.object.biome);
         await game.settings.set(MODULE_NAME, "auroraChance", formData.object.auroraChance);
@@ -66,4 +68,3 @@ export class WeatherConfig extends HandlebarsApplicationMixin(ApplicationV2) {
             return;
     }
 }
-

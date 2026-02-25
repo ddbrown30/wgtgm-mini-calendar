@@ -3,6 +3,7 @@ import { localize, calendarJournal, playerJournalName, confirmationDialog, whisp
 import { CalendarConfig } from "./calendar-config.js";
 import { WeatherEngine } from "./weather.js";
 import { WeatherConfig } from "./weather-config.js";
+import { ViewNotesApp } from "./view-notes-app.js";
 
 var ApplicationV2 = foundry.applications.api.ApplicationV2;
 var HandlebarsApplicationMixin = foundry.applications.api.HandlebarsApplicationMixin;
@@ -47,6 +48,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
       "set-date": this.#_dayClickContext,
       "toggle-weather-sound": this.#_toggleWeatherSound,
       "toggle-weather-fx": this.#_toggleWeatherFX,
+      "toggle-darkness-fx": this.#_toggleDarknessFX,
       "toggle-scene-fx": this.#_toggleSceneFX,
       "set-dock": this.#_toggleDock,
       "change-weather": this.#_changeWeatherMini,
@@ -79,7 +81,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
   wasPausedForCombat = false;
   _debouncedRender = foundry.utils.debounce(this.render.bind(this), 100);
   _debouncedRenderHud = foundry.utils.debounce(this.updateHud.bind(this), 100);
-  
+
   _positionObserver = null;
 
   _positionObserver = null;
@@ -87,9 +89,11 @@ export class wgtngmMiniCalender extends wgtngmcal {
   _lastSubmittedDarkness = null;
 
 
-  _todayNotesCache = { dateKey: null, notes: null };
+  _todayNotesCache = new Map();
+  _todayNotesCacheLimit = 60;
   _moonDarknessCache = { dayKey: null, isFullMoon: false, moonOverride: 0.7 };
   _suppressHook = false;
+  _viewNotesApp = null;
 
   _debouncedSavePosition = foundry.utils.debounce(async () => {
     if (!this.element || !this.position) return;
@@ -132,8 +136,8 @@ export class wgtngmMiniCalender extends wgtngmcal {
   }
 
   async _ensureJournalsExist() {
-    
-    
+
+
     await WeatherEngine.getForecastPage();
 
     let pJournal = game.journal.getName(playerJournalName);
@@ -150,7 +154,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
     }
   }
 
-  updateHud(){
+  updateHud() {
     if (game.wgtngmMiniCalender.hud) game.wgtngmMiniCalender.hud.render();
   }
 
@@ -416,25 +420,19 @@ export class wgtngmMiniCalender extends wgtngmcal {
 
   async _getNotesForDay(date, preFetchedJournal = null, preFetchedPageMap = null, preFetchedPlayerJournal = null, preFetchedPageMapPlayer = null) {
     let notes = [];
-    const pageName = `${date.year}-${String(date.month + 1).padStart(2, "0")}-${String(date.day + 1).padStart(2, "0")}`;
-
-    
-    const cacheKey = pageName;
-    if (this._todayNotesCache.dateKey === cacheKey && this._todayNotesCache.notes) {
-      return foundry.utils.deepClone(this._todayNotesCache.notes);
-    }
+    const pageName = this._getDayPageName(date);
+    const cachedNotes = this._getCachedNotesForDate(date);
+    if (cachedNotes) return cachedNotes;
 
     const gmJournal = preFetchedJournal ?? game.journal.getName(calendarJournal);
     if (gmJournal) {
       const page = preFetchedPageMap ? preFetchedPageMap.get(pageName) : gmJournal.pages.getName(pageName);
       if (page) {
         const gmNotes = page.flags?.[MODULE_NAME]?.notes || [];
-        
-        gmNotes.forEach(n => {
-          if (n.isPlayerNote === undefined) n.isPlayerNote = false;
-          n.isGMNote = !n.isPlayerNote;
-        });
-        notes.push(...gmNotes);
+        notes.push(...gmNotes.map(n => {
+          const isPlayerNote = n.isPlayerNote ?? false;
+          return { ...n, isPlayerNote, isGMNote: !isPlayerNote };
+        }));
       }
     }
 
@@ -443,8 +441,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
       const pPage = preFetchedPageMapPlayer ? preFetchedPageMapPlayer.get(pageName) : pJournal.pages.getName(pageName);
       if (pPage) {
         const pNotes = pPage.flags?.[MODULE_NAME]?.notes || [];
-        pNotes.forEach(n => n.isPlayerNote = true);
-        notes.push(...pNotes);
+        notes.push(...pNotes.map(n => ({ ...n, isPlayerNote: true, isGMNote: false })));
       }
     }
 
@@ -453,26 +450,53 @@ export class wgtngmMiniCalender extends wgtngmcal {
 
     if (recurringPage) {
       const recurringNotes = recurringPage.flags?.[MODULE_NAME]?.notes || [];
-      const matches = recurringNotes.filter(n => this._checkRecurrence(n, date));
-      matches.forEach(n => {
-        n.isRecurringInstance = true;
-        if (n.isPlayerNote === undefined) n.isPlayerNote = false;
-      });
-      notes = notes.concat(matches);
+      if (recurringNotes.length) {
+        const matches = recurringNotes.filter(n => this._checkRecurrence(n, date)).map(n => {
+          const isPlayerNote = n.isPlayerNote ?? false;
+          return { ...n, isRecurringInstance: true, isPlayerNote, isGMNote: !isPlayerNote };
+        });
+        notes = notes.concat(matches);
+      }
     }
 
     const recurringPagePlayer = preFetchedPageMapPlayer ? preFetchedPageMapPlayer.get(recurringPageName) : pJournal?.pages.getName(recurringPageName);
     if (recurringPagePlayer) {
       const recurringNotesPlayer = recurringPagePlayer.flags?.[MODULE_NAME]?.notes || [];
-      const matchesPlayer = recurringNotesPlayer.filter(n => this._checkRecurrence(n, date));
-      matchesPlayer.forEach(n => {
-        n.isRecurringInstance = true;
-        n.isPlayerNote = true;
-      });
-      notes = notes.concat(matchesPlayer);
+      if (recurringNotesPlayer.length) {
+        const matchesPlayer = recurringNotesPlayer.filter(n => this._checkRecurrence(n, date))
+          .map(n => ({ ...n, isRecurringInstance: true, isPlayerNote: true, isGMNote: false }));
+        notes = notes.concat(matchesPlayer);
+      }
     }
-    this._todayNotesCache = { dateKey: cacheKey, notes: foundry.utils.deepClone(notes) };
+    this._setCachedNotesForDate(date, notes);
     return notes;
+  }
+
+  _getDayPageName(date) {
+    return `${date.year}-${String(date.month + 1).padStart(2, "0")}-${String(date.day + 1).padStart(2, "0")}`;
+  }
+
+  _getNotesCacheKey(date) {
+    return this._getDayPageName(date);
+  }
+
+  _getCachedNotesForDate(date) {
+    const key = this._getNotesCacheKey(date);
+    const cached = this._todayNotesCache.get(key);
+    return cached ? foundry.utils.deepClone(cached) : null;
+  }
+
+  _setCachedNotesForDate(date, notes) {
+    const key = this._getNotesCacheKey(date);
+    this._todayNotesCache.set(key, foundry.utils.deepClone(notes));
+    if (this._todayNotesCache.size > this._todayNotesCacheLimit) {
+      const oldestKey = this._todayNotesCache.keys().next().value;
+      this._todayNotesCache.delete(oldestKey);
+    }
+  }
+
+  _clearNotesCache() {
+    this._todayNotesCache.clear();
   }
 
   _initializeViewState() {
@@ -512,6 +536,11 @@ export class wgtngmMiniCalender extends wgtngmcal {
       const weatherTooltip = weatherEnabled ? "Disable Weather FX" : "Enable Weather FX";
       const currentState = game.settings.get(MODULE_NAME, "enableWeatherEffects");
       const soundEnabled = game.settings.get(MODULE_NAME, "enableWeatherSound");
+      const enableDarknessControl = game.settings.get(MODULE_NAME, "enableDarknessControl");
+      const defaultDarkness = game.settings.get(MODULE_NAME, "defaultSceneDarkness");
+      const sceneDarknessFlag = canvas?.scene?.getFlag(MODULE_NAME, "enableDarkness");
+      const darknessEnabled = sceneDarknessFlag !== undefined ? sceneDarknessFlag : defaultDarkness;
+      const darknessTooltip = darknessEnabled ? "Disable Scene Darkness Control" : "Enable Scene Darkness Control";
 
       const soundTooltip = soundEnabled ? "Disable Weather Sounds" : "Enable Weather Sounds";
       const soundIcon = soundEnabled ? "fa-volume-high" : "fa-volume-xmark";
@@ -528,6 +557,9 @@ export class wgtngmMiniCalender extends wgtngmcal {
                   data-tooltip="Stop Sound Effects" aria-label="Stop Sound Effects"></button>        
           <button type="button" class="header-control fa-solid fa-cloud-sun-rain icon ${currentState}" data-action="toggle-weather-fx"
                   data-tooltip="${weatherTooltip}" aria-label="Toggle Weather"></button>
+          ${enableDarknessControl ? `
+          <button type="button" class="header-control fa-solid fa-eclipse icon ${darknessEnabled}" data-action="toggle-darkness-fx"
+                  data-tooltip="${darknessTooltip}" aria-label="Toggle Darkness"></button>` : ""}
           <button type="button" class="header-control fa-solid fa-map ${sceneFlag} icon" data-action="toggle-scene-fx"
                   data-tooltip="${sceneTooltip}" aria-label="Toggle Scene Weather"></button>
         `;
@@ -553,10 +585,10 @@ export class wgtngmMiniCalender extends wgtngmcal {
     const newState = !currentState;
     await canvas.scene.setFlag(MODULE_NAME, "enableWeather", newState);
     if (newState) {
-      
+
       await WeatherEngine.refreshWeather();
     } else {
-      
+
       await WeatherEngine.disableWeatherEffect();
     }
     if (game.wgtngmMiniCalender.hud && game.wgtngmMiniCalender.hud.rendered) {
@@ -577,10 +609,10 @@ export class wgtngmMiniCalender extends wgtngmcal {
     const newState = !currentState;
     await game.settings.set(MODULE_NAME, "enableWeatherEffects", newState);
     if (newState) {
-      
+
       await WeatherEngine.refreshWeather();
     } else {
-      
+
       await WeatherEngine.applyWeatherEffect("none");
     }
     if (game.wgtngmMiniCalender.hud && game.wgtngmMiniCalender.hud.rendered) {
@@ -593,6 +625,50 @@ export class wgtngmMiniCalender extends wgtngmcal {
 
   static async #_toggleWeatherFX(event, target) {
     this.weatherFX();
+  }
+
+  async darknessFX() {
+    if (!canvas.scene || !game.user.isGM) return;
+    if (!game.settings.get(MODULE_NAME, "enableDarknessControl")) return;
+    const defaultEnabled = game.settings.get(MODULE_NAME, "defaultSceneDarkness");
+    const sceneFlag = canvas.scene.getFlag(MODULE_NAME, "enableDarkness");
+    const currentState = sceneFlag !== undefined ? sceneFlag : defaultEnabled;
+    const newState = !currentState;
+
+    await canvas.scene.setFlag(MODULE_NAME, "enableDarkness", newState);
+    if (newState) {
+      await this.forceDarknessUpdate({ notify: false });
+    }
+
+    if (game.wgtngmMiniCalender.hud && game.wgtngmMiniCalender.hud.rendered) {
+      game.wgtngmMiniCalender.hud.element?.querySelector("[data-action='toggle-darkness']")?.classList.toggle("active", newState);
+    }
+    if (game.wgtngmMiniCalender && game.wgtngmMiniCalender.rendered) {
+      const btn = game.wgtngmMiniCalender.element?.querySelector("[data-action='toggle-darkness-fx']");
+        if (btn) {
+          btn.classList.remove("true", "false");
+          btn.classList.add(newState ? "true" : "false");
+          btn.setAttribute("data-tooltip", newState ? "Disable Scene Darkness Control" : "Enable Scene Darkness Control");
+        }
+      }
+  }
+
+  static async #_toggleDarknessFX(event, target) {
+    if (!canvas.scene || !game.user.isGM) return;
+    await this.darknessFX();
+  }
+
+  async forceDarknessUpdate({ notify = true } = {}) {
+    if (!canvas.scene || !game.user.isGM) return;
+    if (!game.settings.get(MODULE_NAME, "enableDarknessControl")) return;
+
+    this._lastDarknessUpdate = 0;
+    this._lastSubmittedDarkness = null;
+    await this._updateSceneDarkness(game.time.worldTime);
+
+    if (notify) {
+      ui.notifications.info("Scene darkness updated.");
+    }
   }
 
   async weatherSound() {
@@ -633,8 +709,10 @@ export class wgtngmMiniCalender extends wgtngmcal {
 
     let weatherHistory = {};
     const hideWeatherPlayer = game.settings.get(MODULE_NAME, "hideWeatherPlayer");
+    const showOnlyTodayWeatherPlayer = game.settings.get(MODULE_NAME, "showOnlyTodayWeatherPlayer");
     const enableWeatherForecast = game.settings.get(MODULE_NAME, "enableWeatherForecast");
-    const showWeather = enableWeatherForecast && (game.user.isGM || !hideWeatherPlayer) ? true : false;
+    const playerTodayOnlyWeather = !game.user.isGM && showOnlyTodayWeatherPlayer;
+    const showWeather = enableWeatherForecast && (game.user.isGM || !hideWeatherPlayer || showOnlyTodayWeatherPlayer) ? true : false;
 
     const page = game.journal.getName(calendarJournal)?.pages.getName("Weather History");
     weatherHistory = page?.flags?.[MODULE_NAME]?.history || {};
@@ -738,11 +816,14 @@ export class wgtngmMiniCalender extends wgtngmcal {
         const weatherIcon = weather ? weather.icon : "";
         const weatherTooltip = weather ? `${weather.label} (${WeatherEngine.getTempDisplay(weather.temp)})` : "";
 
+        const isTodayCell = isCurrentGameMonthAndYear && dayOfMonth === nowComponents.dayOfMonth;
+        const showWeatherForDay = showWeather && (!playerTodayOnlyWeather || isTodayCell);
+
         days.push({
           isBlank: false,
           dayNumber: dayOfMonth + 1,
           date: date,
-          isCurrentDay: isCurrentGameMonthAndYear && dayOfMonth === nowComponents.dayOfMonth,
+          isCurrentDay: isTodayCell,
           hasEvent: hasEvent,
           noteIcon: noteIcon,
           hasVisible: hasVisible,
@@ -752,7 +833,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
           hasRecurring: hasRecurring,
           weatherIcon: weatherIcon,
           weatherTooltip: weatherTooltip,
-          showWeather: showWeather
+          showWeather: showWeatherForDay
         });
       }
     }
@@ -1049,7 +1130,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
       this._debouncedRender();
     }
 
-    this._todayNotesCache = { dateKey: null, notes: null };
+    this._clearNotesCache();
     this._moonDarknessCache = { dayKey: null, isFullMoon: false, moonOverride: 0.7 };
   };
 
@@ -1084,7 +1165,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
     if (this._lastCheckedDay !== dayKey) {
       this._lastCheckedDay = dayKey;
 
-      
+
       this.#viewMonth = c.month;
       this.#viewYear = c.year;
       this._debouncedRender();
@@ -1126,7 +1207,22 @@ export class wgtngmMiniCalender extends wgtngmcal {
     let content = `<h4>Events for ${monthName} ${dayNum}, ${date.year}</h4>`;
 
     newNotes.forEach((n) => {
-      content += `<p><strong>${n.title}</strong><br/>${n.content}</p>`;
+      const timeStr = (n.hour !== null && n.hour !== undefined)
+        ? ` [${String(n.hour).padStart(2, '0')}:${String(n.minute || 0).padStart(2, '0')}]`
+        : "";
+      content += `<p><strong>${n.title}${timeStr}</strong><br/>${n.content}</p>`;
+
+      // If note has linked macros, add execute buttons
+      if (n.linkedMacros && n.linkedMacros.length > 0) {
+        content += `<div class="wgtngm-macro-buttons">`;
+        n.linkedMacros.forEach(macroId => {
+          const macro = game.macros.get(macroId);
+          if (macro) {
+            content += `<button class="wgtngm-execute-macro" data-macro-id="${macroId}"><i class="fas fa-play"></i> Execute: ${macro.name}?</button>`;
+          }
+        });
+        content += `</div>`;
+      }
     });
 
     whisperChat(content);
@@ -1180,19 +1276,10 @@ export class wgtngmMiniCalender extends wgtngmcal {
       month: currentComps.month,
       day: currentComps.dayOfMonth,
     };
-    const dateKey = `${date.year}-${date.month}-${date.day}`;
-
-
-    let notes = [];
-    if (this._todayNotesCache.dateKey === dateKey && this._todayNotesCache.notes !== null) {
-      notes = this._todayNotesCache.notes;
-    } else {
-      notes = await this._getNotesForDay(date);
-      this._todayNotesCache = { dateKey, notes };
-    }
+    const notes = await this._getNotesForDay(date);
     if (!notes || notes.length === 0) return;
 
-    
+
     const whisperedIds = game.settings.get(MODULE_NAME, "whisperedNoteIds");
     const unwhisperedNotes = notes.filter((n) => !whisperedIds.includes(n.id));
 
@@ -1232,6 +1319,18 @@ export class wgtngmMiniCalender extends wgtngmcal {
           ? ` [${String(n.hour).padStart(2, '0')}:${String(n.minute || 0).padStart(2, '0')}]`
           : "";
         content += `<p><strong>${n.title}${timeStr}</strong><br/>${n.content}</p>`;
+
+        // If note has linked macros, add execute buttons
+        if (n.linkedMacros && n.linkedMacros.length > 0) {
+          content += `<div class="wgtngm-macro-buttons">`;
+          n.linkedMacros.forEach(macroId => {
+            const macro = game.macros.get(macroId);
+            if (macro) {
+              content += `<button class="wgtngm-execute-macro" data-macro-id="${macroId}"><i class="fas fa-play"></i> Execute: ${macro.name}?</button>`;
+            }
+          });
+          content += `</div>`;
+        }
       });
 
       whisperChat(content);
@@ -1363,7 +1462,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
 
   async _saveNotesForDay(date, notes) {
     if (game.user.isGM) {
-      
+
       const gmNotes = notes.filter(n => !n.isPlayerNote);
       const playerNotes = notes.filter(n => n.isPlayerNote);
 
@@ -1372,7 +1471,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
     } else {
       const allowPlayerNotes = game.settings.get(MODULE_NAME, "allowPlayerNotes");
       if (allowPlayerNotes) {
-        
+
         const myNotes = notes.filter(n => n.userId === game.user.id);
         await this._saveNotesToSpecificJournal(date, myNotes, playerJournalName);
       }
@@ -1519,7 +1618,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
       },
 
       moonOptions: moons.map((m, i) => ({ index: i, name: m.name })),
-      monthOptions: calendar.months.values.map((m, i) => ({ index: i, name: m.name })),
+      monthOptions: calendar.months.values.map((m, i) => ({ index: i, name: game.i18n.localize(m.name) })),
       weekdayOptions: calendar.days.values.map((d, i) => ({ index: i, name: game.i18n.localize(d.name) })),
       ordinalOptions: [
         { value: 0, label: "First" }, { value: 1, label: "Second" },
@@ -1527,24 +1626,19 @@ export class wgtngmMiniCalender extends wgtngmcal {
         { value: -1, label: "Last" }
       ],
       allDay: isAllDay,
-      timeDisplay: isAllDay ? "none" : "flex",
-      selectedHour: noteToEdit?.hour || currentTimeComps?.hour || 0,
-      selectedMinute: noteToEdit?.minute || currentTimeComps?.minute ||0,
+      selectedHour: noteToEdit?.hour ?? currentTimeComps?.hour ?? 0,
+      selectedMinute: noteToEdit?.minute ?? currentTimeComps?.minute ?? 0,
       hourOptions: Array.from({ length: hoursInDay }, (_, i) => ({ value: i, label: String(i).padStart(2, "0") })),
-      minuteOptions: Array.from({ length: Math.floor(minutesInHour) + 1 }, (_, i) => {
-        const m = i;
-        return m < minutesInHour ? { value: m, label: String(m).padStart(2, "0") } : null;
-      }).filter(x => x),
+      minuteOptions: Array.from({ length: Math.floor(minutesInHour) }, (_, i) => ({ value: i, label: String(i).padStart(2, "0") })),
 
       content: noteToEdit?.content || "",
-      playerVisible: noteToEdit?.playerVisible || !game.user.isGM || false,
+      playerVisible: noteToEdit?.playerVisible ?? !game.user.isGM,
 
 
       isEditing: isEditing,
       editDate: date,
       yearOptions: Array.from({ length: 21 }, (_, i) => ({ value: (this.#viewYear - 10) + i })),
-      monthOptions: calendar.months.values.map((m, i) => ({ index: i, name: game.i18n.localize(m.name) })),
-      
+
       dayOptions: Array.from({ length: daysInMonth }, (_, i) => ({ value: i, label: i + 1 })),
 
     };
@@ -1552,9 +1646,12 @@ export class wgtngmMiniCalender extends wgtngmcal {
     const htmlContent = await foundry.applications.handlebars.renderTemplate("modules/wgtgm-mini-calendar/templates/add-note.hbs", renderData);
 
     const result = await foundry.applications.api.DialogV2.prompt({
-      window: { title: title },
+      window: { title: title,
+        resizable: true
+        },
+        position: { width: "auto", height: "auto" },
       content: htmlContent,
-      classes: ["wgtngmMiniCalender-dialog", "dialog", "edit-note"],
+      classes: ["wgtngmMiniCalender-dialog", "dialog", isEditing ? "edit-note" : "add-note", "note-editor-dialog"],
       modal: false,
       close: (dialog) => {
       },
@@ -1610,8 +1707,8 @@ export class wgtngmMiniCalender extends wgtngmcal {
 
         function toggleAdvanced() {
           const isAdv = advCheck.checked;
-          stdRepeat.style.display = isAdv ? "none" : "flex";
-          advContainer.style.display = isAdv ? "block" : "none";
+          stdRepeat.classList.toggle("is-hidden", isAdv);
+          advContainer.classList.toggle("is-hidden", !isAdv);
         }
 
         function toggleRules() {
@@ -1631,11 +1728,14 @@ export class wgtngmMiniCalender extends wgtngmcal {
 
         const allDayBox = el.querySelector("#note-all-day");
         const timeContainer = el.querySelector("#note-time-container");
-        allDayBox.addEventListener("change", (ev) => timeContainer.style.display = ev.target.checked ? "none" : "flex");
+        allDayBox.addEventListener("change", (ev) => timeContainer.classList.toggle("is-hidden", ev.target.checked));
 
         const iconInput = el.querySelector("input[name='icon']");
         const iconPreview = el.querySelector("#icon-preview");
-        iconInput.addEventListener("input", (ev) => iconPreview.className = ev.target.value);
+        iconInput.addEventListener("input", (ev) => {
+          const iconClass = ev.target.value?.trim() || "fas fa-book";
+          iconPreview.className = `wgtgm-note-editor__icon-preview ${iconClass}`;
+        });
       },
       ok: {
         label: "Save",
@@ -1743,7 +1843,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
           : {
             id: foundry.utils.randomID(),
             userId: game.user.id,
-            isPlayerNote: !game.user.isGM, 
+            isPlayerNote: !game.user.isGM,
             ...result
           };
 
@@ -1760,6 +1860,9 @@ export class wgtngmMiniCalender extends wgtngmcal {
 
     if (openViewNote) {
       this._showViewNotesDialog(dateChanged ? newDate : date, freshNotes, position);
+    } else if (this._viewNotesApp?.rendered) {
+      const refreshNotes = await this._getNotesForDay(dateChanged ? newDate : date);
+      this._viewNotesApp.updateNotes(refreshNotes, result.id || noteToEdit?.id);
     }
   }
 
@@ -2017,13 +2120,13 @@ export class wgtngmMiniCalender extends wgtngmcal {
       this._debouncedRender();
     }
 
-    this._todayNotesCache = { dateKey: null, notes: null };
+    this._clearNotesCache();
 
     return updatedNotes;
   }
 
   /**
-    * Shows the "List" dialog for all notes on a given day.
+    * Shows the master-detail "View Notes" ApplicationV2 dialog.
     * @param {object} date - The date object {year, month, day}
     * @param {Array} notes - The array of note objects for that day.
     */
@@ -2033,139 +2136,20 @@ export class wgtngmMiniCalender extends wgtngmcal {
     if (!notes) {
       notes = await this._getNotesForDay(date);
     }
-    let position = {};
-    if (openPosition) {
-      position = openPosition;
-    }
 
-    const isGM = game.user.isGM;
-    const allowPlayerNotes = game.settings.get(MODULE_NAME, "allowPlayerNotes"); //
-
-    notes.sort((a, b) => {
-      const aAllDay = a.hour === null || a.hour === undefined;
-      const bAllDay = b.hour === null || b.hour === undefined;
-
-      if (aAllDay && !bAllDay) return -1;
-      if (!aAllDay && bAllDay) return 1;
-      if (aAllDay && bAllDay) return a.title.localeCompare(b.title);
-
-      if (a.hour !== b.hour) return a.hour - b.hour;
-      return (a.minute || 0) - (b.minute || 0);
-    });
-
-    let notesHTML = notes
-      .map(
-        (note) => {
-          const isAuthor = note.userId === game.user.id;
-          if (!isGM && !note.playerVisible && !isAuthor) return "";
-          const hasTime = note.hour !== null && note.hour !== undefined;
-          const noteTime = hasTime ? `${String(note.hour).padStart(2, '0')}:${String(note.minute || 0).padStart(2, '0')}` : '';
-
-          const isRepeating = note.repeatUnit && note.repeatUnit !== 'none';
-          const repeatIcon = isRepeating ? '<i class="fas fa-repeat" title="Repeating Event" style="margin-right: 5px; font-size: 0.8em; opacity: 0.7;"></i>' : '<span></span>';
-
-          const canUserEdit = isGM || (allowPlayerNotes && note.userId === game.user.id); //
-
-          const isHidden = note?.playerVisible ? '' : '-slash';
-          const isVisibleIcon = `<i class="fas fa-eye${isHidden} note-control" title="playerVisible" data-action="visible-toggle" data-note-id="${note.id}" style="margin-right: 5px; font-size: 0.8em; opacity: 0.7;"></i>`;
-          const playerIndicator = note.isPlayerNote ? ` <i class="fas fa-user" style="font-size:10px"></i> ` : '';
-          return `
-            <div class="calendar-note-item" data-note-id="${note.id}" ${canUserEdit ? `data-action="edit-note"` : ''}>
-                <span class="note-header">
-                <span class="note-title">
-                    <i class="${note.icon || "fas fa-book"}"></i>
-                    ${foundry.utils.escapeHTML(note.title)}${playerIndicator}</span>
-                  ${noteTime ? `<span class="note-time">
-                    <i class="fas fa-clock"></i> ${noteTime}
-                  </span>`: ''}
-                    ${repeatIcon}
-                    ${isGM ? isVisibleIcon : ''}
-                    ${canUserEdit ? `<i class="fas fa-trash note-control" data-action="delete-note" title="Delete Note"></i>` : ''}
-                </span>
-
-                <div class="note-content">
-                    ${foundry.utils.escapeHTML(note.content) || "<em>No content.</em>"}
-                </div>
-            </div>
-        `;
-        }
-      )
-      .join("");
-
-    if (notes.length === 0) {
-      notesHTML = "<p class='no-notes'><em>No notes for this day.</em></p>";
-    }
-
-    const calendar = game.time.calendar;
-    const monthName = game.i18n.localize(calendar.months.values[date.month].name);
-    const day = date.day + 1;
-
-    const content = `
-                ${notesHTML}
-        `;
-    const prepareButtons = [
-      {
-        action: "cancel",
-        label: "Close",
-        callback: () => null,
+    // If already open for a different date, close it
+    if (this._viewNotesApp?.rendered) {
+      if (this._viewNotesApp.date.year === date.year &&
+        this._viewNotesApp.date.month === date.month &&
+        this._viewNotesApp.date.day === date.day) {
+        this._viewNotesApp.updateNotes(notes);
+        return;
       }
-    ];
-
-    if (isGM || allowPlayerNotes) {
-      prepareButtons.push({
-        action: "export",
-        label: "Add Note",
-        icon: "fas fa-calendar-plus",
-        default: true,
-        callback: (event, button, data) => {
-          this._showAddNoteDialog(date, null, data?.position, true);
-        },
-      });
+      await this._viewNotesApp.close();
     }
 
-    const data = await foundry.applications.api.DialogV2.wait({
-      window: {
-        title: `Notes for ${monthName} ${day}, ${date.year}`,
-        resizable: true,
-      },
-      position: position,
-      content: content,
-      id: `Notes for ${monthName} ${day}, ${date.year}`,
-      classes: ["wgtngmMiniCalender-dialog", "dialog", "add-note"],
-      modal: false,
-      buttons: prepareButtons,
-      close: () => {
-      },
-      render: (dialog) => {
-        dialog.target.element.querySelectorAll('[data-action="edit-note"]').forEach((btn) => {
-          btn.addEventListener("click", (event) => {
-            const noteId = event.target.closest("[data-note-id]")?.dataset.noteId;
-            const note = notes.find((n) => n.id === noteId);
-            if (note) {
-              this._showAddNoteDialog(date, note, dialog.target?.position, true);
-            }
-          });
-        });
-        dialog.target.element.querySelectorAll('[data-action="delete-note"]').forEach((btn) => {
-          btn.addEventListener("click", (event) => {
-            event.stopPropagation();
-            const noteId = event.target.closest("[data-note-id]")?.dataset.noteId;
-            if (noteId) {
-              this._handleDeleteNote(dialog.target?.position, date, notes, noteId);
-            }
-          });
-        });
-        dialog.target.element.querySelectorAll('[data-action="visible-toggle"]').forEach((btn) => {
-          btn.addEventListener("click", (event) => {
-            event.stopPropagation();
-            const noteId = event.target.closest("[data-note-id]")?.dataset.noteId;
-            if (noteId) {
-              this._toggleVisibility(dialog.target?.position, date, notes, noteId);
-            }
-          });
-        });
-      },
-    }).catch(() => null);
+    this._viewNotesApp = new ViewNotesApp(date, notes, this);
+    this._viewNotesApp.render(true);
   }
 
 
@@ -2303,11 +2287,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
         this._showViewNotesDialog(date, notes);
       }
     } else {
-      if (notes.length === 0) {
-        this._showAddNoteDialog(date);
-      } else {
-        this._showViewNotesDialog(date, notes);
-      }
+      this._showViewNotesDialog(date, notes);
     }
   }
 
@@ -2546,7 +2526,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
       const comps = calendar.timeToComponents(game.time.worldTime);
       comps.hour = hour;
       comps.minute = minute;
-      comps.second = second;  
+      comps.second = second;
       game.time.set(comps);
 
       this.render();
@@ -2852,14 +2832,19 @@ export class wgtngmMiniCalender extends wgtngmcal {
   }
 
 
-  async _updateSceneDarkness(worldTime) {
+
+  async _updateSceneDarkness(worldTime, { force = false } = {}) {
     if (!canvas.scene || (!canvas.scene.active && game.settings.get(MODULE_NAME, "enableDarknessActive"))) return;
 
     const defaultEnabled = game.settings.get(MODULE_NAME, "defaultSceneDarkness");
     const sceneFlag = canvas.scene.getFlag(MODULE_NAME, "enableDarkness");
     const isEnabled = sceneFlag !== undefined ? sceneFlag : defaultEnabled;
 
+
+
     if (!isEnabled) return;
+    const currentMax = foundry.utils.getProperty(canvas.scene.environment.globalLight, "darkness.max");
+    const needsGlobalLightCap = currentMax === 1;
 
     const calendar = game.time.calendar;
     const comps = this.getCachedDateComponents(worldTime) || calendar.timeToComponents(worldTime);
@@ -2875,7 +2860,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
 
 
     if (currentHour > (dawn + transitionHalf) && currentHour < (dusk - transitionHalf)) {
-      if (Math.abs(canvas.scene.environment.darknessLevel - levelLow) < 0.01) return;
+      if (!force && !needsGlobalLightCap && Math.abs(canvas.scene.environment.darknessLevel - levelLow) < 0.01) return;
       targetDarkness = levelLow;
     } else {
 
@@ -2912,7 +2897,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
 
 
       if (currentHour < (dawn - transitionHalf) || currentHour > (dusk + transitionHalf)) {
-        if (Math.abs(currentDarkness - levelHigh) < 0.075) return;
+        if (!force && !needsGlobalLightCap && Math.abs(currentDarkness - levelHigh) < 0.075) return;
         targetDarkness = levelHigh;
       } else {
 
@@ -2932,7 +2917,8 @@ export class wgtngmMiniCalender extends wgtngmcal {
 
 
 
-    if (this._lastSubmittedDarkness !== null && Math.abs(this._lastSubmittedDarkness - targetDarkness) < 0.075) {
+    if (!force && !needsGlobalLightCap && this._lastSubmittedDarkness !== null
+      && Math.abs(this._lastSubmittedDarkness - targetDarkness) < 0.075) {
       return;
     }
 
@@ -2941,7 +2927,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
     const timeSince = now - this._lastDarknessUpdate;
     const diff = Math.abs(currentDarkness - targetDarkness);
 
-    if (timeSince < 5000 && diff < 0.2) {
+    if (!force && !needsGlobalLightCap && timeSince < 5000 && diff < 0.2) {
       return;
     }
 
@@ -2949,16 +2935,19 @@ export class wgtngmMiniCalender extends wgtngmcal {
     this._lastDarknessUpdate = now;
     this._lastSubmittedDarkness = targetDarkness;
 
-    if (Math.abs(currentDarkness - targetDarkness) > 0.075) {
+    if (Math.abs(currentDarkness - targetDarkness) > 0.075 || needsGlobalLightCap) {
+      const globalLight = foundry.utils.deepClone(canvas.scene.environment.globalLight ?? {});
+      if (needsGlobalLightCap) foundry.utils.setProperty(globalLight, "darkness.max", 0.95);
 
 
 
       canvas.scene.update(
-        { environment: { darknessLevel: targetDarkness, globalLight: canvas.scene.environment.globalLight } },
+        { environment: { darknessLevel: targetDarkness, globalLight } },
         { animateDarkness: 1000 }
       );
     }
   }
+
 
   /**
      * Checks if the current time is technically night (before dawn OR after dusk).
@@ -3221,4 +3210,3 @@ export class wgtngmMiniCalender extends wgtngmcal {
     });
   }
 }
-

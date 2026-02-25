@@ -64,9 +64,9 @@ export class CalendarHUD extends HandlebarsApplicationMixin(ApplicationV2) {
             timeEl.innerText = timeText;
             this._lastTimeText = timeText;
         }
-
+        const dayName = calendar.days.values[comps.dayOfWeek].abbreviation || calendar.days.values[comps.dayOfWeek].name;
         const monthName = calendar.months.values[comps.month].name;
-        const dateText = `${comps.dayOfMonth + 1} ${game.i18n.localize(monthName)}, ${comps.year}`;
+        const dateText = `${game.i18n.localize(dayName)} ${comps.dayOfMonth + 1} ${game.i18n.localize(monthName)}, ${comps.year}`;
 
 
         let dateEl = this._cachedElements.dateText;
@@ -163,8 +163,11 @@ export class CalendarHUD extends HandlebarsApplicationMixin(ApplicationV2) {
             "jump-dusk": CalendarHUD.jumpDusk,
             "jump-dawn": CalendarHUD.jumpDawn,
 
-
+            "transition-to-day": CalendarHUD.transitionToDay,
+            "transition-to-night": CalendarHUD.transitionToNight,
             "toggle-weather": CalendarHUD.toggleWeather,
+            "toggle-darkness": CalendarHUD.toggleDarkness,
+            "update-darkness": CalendarHUD.updateDarkness,
             "toggle-scene-weather": CalendarHUD.toggleSceneWeather,
             "toggle-sfx": CalendarHUD.toggleSFX,
             "toggle-play-pause": CalendarHUD.togglePlayPause,
@@ -185,8 +188,9 @@ export class CalendarHUD extends HandlebarsApplicationMixin(ApplicationV2) {
         const timestamp = game.time.worldTime;
         const comps = calendar.timeToComponents(timestamp);
         const monthName = calendar.months.values[comps.month].name;
+        const dayName = calendar.days.values[comps.dayOfWeek].abbreviation || calendar.days.values[comps.dayOfWeek].name;
 
-        const date = `${comps.dayOfMonth + 1} ${game.i18n.localize(monthName)}, ${comps.year}`;
+        const date = `${game.i18n.localize(dayName)} ${comps.dayOfMonth + 1} ${game.i18n.localize(monthName)}, ${comps.year}`;
         const time = this._formatTime(timestamp);
 
 
@@ -276,11 +280,16 @@ export class CalendarHUD extends HandlebarsApplicationMixin(ApplicationV2) {
         const enableWeather = game.settings.get(MODULE_NAME, "enableWeatherEffects");
         const enableForecast = game.settings.get(MODULE_NAME, "enableWeatherForecast");
         const enableSound = game.settings.get(MODULE_NAME, "enableWeatherSound");
+        const enableDarknessControl = game.settings.get(MODULE_NAME, "enableDarknessControl");
         const sceneFlag = canvas.scene?.getFlag(MODULE_NAME, "enableWeather");
+        const defaultDarkness = game.settings.get(MODULE_NAME, "defaultSceneDarkness");
+        const sceneDarknessFlag = canvas.scene?.getFlag(MODULE_NAME, "enableDarkness");
+        const sceneDarknessEnabled = sceneDarknessFlag !== undefined ? sceneDarknessFlag : defaultDarkness;
 
         const hideWeatherPlayer = game.settings.get(MODULE_NAME, "hideWeatherPlayer");
-        let showWeatherStats = enableForecast && (game.user.isGM || !hideWeatherPlayer) ? true : false;
-
+        // let showWeatherStats = enableForecast && (game.user.isGM || !hideWeatherPlayer) ? true : false;
+        const showOnlyTodayWeatherPlayer = game.settings.get(MODULE_NAME, "showOnlyTodayWeatherPlayer");
+        let showWeatherStats = enableForecast && (game.user.isGM || !hideWeatherPlayer || showOnlyTodayWeatherPlayer) ? true : false;
 
         if (showWeatherStats) {
             const forecast = await WeatherEngine.getWeatherForDate(comps.year, comps.month, comps.dayOfMonth);
@@ -324,6 +333,8 @@ export class CalendarHUD extends HandlebarsApplicationMixin(ApplicationV2) {
             showWeatherStats,
             toggles: {
                 weather: enableWeather,
+                darkness: sceneDarknessEnabled,
+                darknessControlEnabled: enableDarknessControl,
                 sceneWeather: sceneFlag !== false,
                 sfx: enableSound
             },
@@ -642,7 +653,9 @@ export class CalendarHUD extends HandlebarsApplicationMixin(ApplicationV2) {
     async updateWeatherIcon(){
         const enableForecast = game.settings.get(MODULE_NAME, "enableWeatherForecast");
         const hideWeatherPlayer = game.settings.get(MODULE_NAME, "hideWeatherPlayer");
-        const showWeatherStats = enableForecast && (game.user.isGM || !hideWeatherPlayer) ? true : false;
+        // const showWeatherStats = enableForecast && (game.user.isGM || !hideWeatherPlayer) ? true : false;
+        const showOnlyTodayWeatherPlayer = game.settings.get(MODULE_NAME, "showOnlyTodayWeatherPlayer");
+        const showWeatherStats = enableForecast && (game.user.isGM || !hideWeatherPlayer || showOnlyTodayWeatherPlayer) ? true : false;
         if (!showWeatherStats) return;
 
         const comps = game.time.calendar.timeToComponents(game.time.worldTime);
@@ -767,9 +780,49 @@ export class CalendarHUD extends HandlebarsApplicationMixin(ApplicationV2) {
         this.render();
     }
 
+    static async toggleDarkness(event) {
+        if (!canvas.scene || !game.user.isGM) return;
+        if (!game.settings.get(MODULE_NAME, "enableDarknessControl")) return;
+        await game.wgtngmMiniCalender.darknessFX();
+        this.render();
+    }
+
+    static async updateDarkness(event) {
+        if (!canvas.scene || !game.user.isGM) return;
+        if (!game.settings.get(MODULE_NAME, "enableDarknessControl")) return;
+        await game.wgtngmMiniCalender.forceDarknessUpdate();
+        this.render();
+    }
+
     static async toggleSceneWeather(event) {
         if (!canvas.scene || !game.user.isGM) return;
         await game.wgtngmMiniCalender.sceneFX()
+        this.render();
+    }
+
+    static async transitionToDay(event) {
+        if (!canvas.scene || !game.user.isGM) return;
+        const targetDarkness = 0;
+        const globalLight = foundry.utils.deepClone(canvas.scene.environment.globalLight ?? {});
+        const currentMax = foundry.utils.getProperty(globalLight, "darkness.max");
+        if (currentMax === 1) foundry.utils.setProperty(globalLight, "darkness.max", 0.95);
+        await canvas.scene.update(
+            { environment: { darknessLevel: targetDarkness, globalLight } },
+            { animateDarkness: 1000 }
+        );
+        this.render();
+    }
+
+    static async transitionToNight(event) {
+        if (!canvas.scene || !game.user.isGM) return;
+        const targetDarkness = 1;
+        const globalLight = foundry.utils.deepClone(canvas.scene.environment.globalLight ?? {});
+        const currentMax = foundry.utils.getProperty(globalLight, "darkness.max");
+        if (currentMax === 1) foundry.utils.setProperty(globalLight, "darkness.max", 0.95);
+        await canvas.scene.update(
+            { environment: { darknessLevel: targetDarkness, globalLight } },
+            { animateDarkness: 1000 }
+        );
         this.render();
     }
 
@@ -786,8 +839,6 @@ export class CalendarHUD extends HandlebarsApplicationMixin(ApplicationV2) {
         }
     }
 }
-
-
 
 
 

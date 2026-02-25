@@ -434,20 +434,25 @@ export class WeatherEngine {
 
         const freezingPoint = 32;
         const isFreezing = temp <= freezingPoint;
-        if (isFreezing) {
-            if (type === "rain") {
-                type = "lightSnow"; icon = "fas fa-snowflake"; label = "Snow";
+        const applyFreezingConversion = (weatherData) => {
+            if (!isFreezing || !weatherData) return weatherData;
+
+            const converted = { ...weatherData };
+            if (converted.type === "rain") {
+                converted.type = "lightSnow"; converted.icon = "fas fa-snowflake"; converted.label = "Snow";
             }
-            else if (type === "lightRain") {
-                type = "hail"; icon = "fas fa-cloud-hail"; label = "Hail";;
+            else if (converted.type === "lightRain") {
+                converted.type = "hail"; converted.icon = "fas fa-cloud-hail"; converted.label = "Hail";
             }
-            else if (type === "heavyRain") {
-                type = "snow"; icon = "fas fa-snowflake"; label = "Heavy Snow";
+            else if (converted.type === "heavyRain") {
+                converted.type = "snow"; converted.icon = "fas fa-snowflake"; converted.label = "Heavy Snow";
             }
-            else if (type === "rainStorm") {
-                type = "blizzard"; icon = "fas fa-snow-blowing"; label = "Blizzard";
+            else if (converted.type === "rainStorm") {
+                converted.type = "blizzard"; converted.icon = "fas fa-snow-blowing"; converted.label = "Blizzard";
             }
-        }
+            return converted;
+        };
+        ({ type, icon, label } = applyFreezingConversion({ type, icon, label }));
 
         const auroraChance = game.settings.get(MODULE_NAME, "auroraChance");
         const allAurora = game.settings.get(MODULE_NAME, "allAurora");
@@ -467,7 +472,7 @@ export class WeatherEngine {
             const randIdx = Math.floor(Math.random() * baseCellDef.neighbors.length);
             const neighborId = baseCellDef.neighbors[randIdx];
             const neighborDef = currentHexMap[neighborId] || baseCellDef;
-            return { type: neighborDef.type, label: neighborDef.label, icon: neighborDef.icon };
+            return applyFreezingConversion({ type: neighborDef.type, label: neighborDef.label, icon: neighborDef.icon });
         };
 
         const middayVar = getVariant();
