@@ -322,6 +322,20 @@ export class wgtngmMiniCalender extends wgtngmcal {
     }
   }
 
+  _getWeatherTooltip(currentWeather) {
+    return `${currentWeather.label} (${this._getTempDisplay(currentWeather)})`;
+  }
+
+  _getTempDisplay(currentWeather) {
+    if (currentWeather.tempLow !== undefined) {
+      const highTemp = game.wgtngmMiniCalender.weatherEngine.getTempDisplay(currentWeather.temp);
+      const lowTemp = game.wgtngmMiniCalender.weatherEngine.getTempDisplay(currentWeather.tempLow);
+      return `H:${highTemp} L:${lowTemp}`;
+    } else {
+      return `${game.wgtngmMiniCalender.weatherEngine.getTempDisplay(currentWeather.temp)}`;
+    }
+  }
+
   /** Calculates moon phase info for a given timestamp and moon config */
   _calculateMoonPhase(timestamp, moonConfig, calendar) {
     try {
@@ -821,7 +835,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
         const key = `${this.#viewYear}-${this.#viewMonth}-${dayOfMonth}`;
         const weather = weatherHistory[key] || null;
         const weatherIcon = weather ? weather.icon : "";
-        const weatherTooltip = weather ? `${weather.label} (${game.wgtngmMiniCalender.weatherEngine.getTempDisplay(weather.temp)})` : "";
+        const weatherTooltip = weather ? this._getWeatherTooltip(weather) : "";
 
         const isTodayCell = isCurrentGameMonthAndYear && dayOfMonth === nowComponents.dayOfMonth;
         const showWeatherForDay = showWeather && (!playerTodayOnlyWeather || isTodayCell);
@@ -873,11 +887,10 @@ export class wgtngmMiniCalender extends wgtngmcal {
     const currentNoteTooltip = currentHasEvent ? currentNotes.map((n) => `<p>${n.title}</p>`).join("") : "";
     const currentNoteTooltipPlayerVisible = currentHasEvent ? currentNotes.filter(n => n.playerVisible).map((n) => `<p>${n.title}</p>`).join("") : "";
 
-
     const key = `${nowComponents.year}-${nowComponents.month}-${nowComponents.dayOfMonth}`;
     const currentWeather = weatherHistory[key] || null;
     const currentWeatherIcon = currentWeather ? currentWeather.icon : "";
-    const currentWeatherTooltip = currentWeather ? `${currentWeather.label} (${game.wgtngmMiniCalender.weatherEngine.getTempDisplay(currentWeather.temp)})` : "";
+    const currentWeatherTooltip = currentWeather ? this._getWeatherTooltip(currentWeather) : "";
 
 
     return {
@@ -1271,7 +1284,7 @@ export class wgtngmMiniCalender extends wgtngmcal {
     if (!currentWeather) return;
 
     const currentWeatherIcon = currentWeather.icon ? `<i class="${currentWeather.icon}"></i>` : "";
-    const currentTemp = game.wgtngmMiniCalender.weatherEngine.getTempDisplay(currentWeather.temp) || "";
+    const currentTemp = this._getTempDisplay(currentWeather) || "";
     const weatherLabel = currentWeather.label === "Aurora" ? "Clear" : currentWeather.label;
 
     let content = `<h3>${currentWeatherIcon} ${currentTemp}</h3><span style="font-size:16px">${weatherLabel}</span>`;

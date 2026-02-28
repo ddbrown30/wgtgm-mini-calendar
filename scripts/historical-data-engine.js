@@ -68,10 +68,9 @@ export class HistoricalDataWeatherEngine extends WeatherEngine {
         }
     }
 
-    validateDate(gregorianDate) {
+    validateDate(gregorianDate, year) {
         const currentDate = new Date();
 
-        const year = game.settings.get(MODULE_NAME, "historicalDataYear");
         const currentYear = currentDate.getFullYear();
         if (year > currentYear) {
             ui.notifications.error(`Future year of ${year} being used to generate weather.`);
@@ -122,7 +121,7 @@ export class HistoricalDataWeatherEngine extends WeatherEngine {
             year = location.year;
         }
 
-        if (!this.validateDate(gregorianDate)) {
+        if (!this.validateDate(gregorianDate, year)) {
             //Invalid date. Abort
             return;
         }
@@ -138,7 +137,7 @@ export class HistoricalDataWeatherEngine extends WeatherEngine {
             longitude: longitude,
             start_date: queryDate,
             end_date: queryDate,
-            daily: ["weather_code", "temperature_2m_mean"],
+            daily: ["weather_code", "temperature_2m_max", "temperature_2m_min"],
             temperature_unit: "fahrenheit", //We always use fahrenheit since we do the Celsius conversion elsewhere
         };
 
@@ -154,7 +153,8 @@ export class HistoricalDataWeatherEngine extends WeatherEngine {
                 icon: weatherDef.icon,
                 label: weatherDef.label,
                 type: "none",
-                temp: result.temperature_2m_mean[0],
+                temp: result.temperature_2m_max[0],
+                tempLow: result.temperature_2m_min[0],
                 date
             };
         } catch (error) {
