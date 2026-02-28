@@ -1,0 +1,30 @@
+<div class="form-body">
+    <div class="form-group">
+        <label>Name</label>
+        <input type="text" name="name" value="{{name}}" />
+
+        <div class="flexrow hist-coords">
+            <div class="flexcolumn">
+                <label>Latitude</label>
+                <input type="number" name="latitude" value="{{latitude}}" />
+            </div>
+
+            <div class="flexcolumn">
+                <label>Longitude</label>
+                <input type="number" name="longitude" value="{{longitude}}" />
+            </div>
+        </div>
+        <p class="notes">The real world WGS84 latitude and longitude to use for historical weather data.</p>
+
+        <label>Year</label>
+        <input type="number" name="year" value="{{year}}" />
+        <p class="notes">The real world year to use for historical weather data.</p>
+        <p class="notes">Data goes back as far as 1940. Using the current year is not recommended so as not to request data from the future.</p>
+    </div>
+    <footer class="form-footer">
+        <button type="button" data-action="apply" {{#unless name}}disabled{{/unless}}>
+            {{#if editing}}Update{{else}}Add{{/if}}
+        </button>
+        <button type="button" data-action="cancel">{{localize "Cancel"}}</button>
+    </footer>
+</div>

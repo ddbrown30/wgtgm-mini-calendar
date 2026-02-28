@@ -9,23 +9,27 @@
         </div>
         <p class="notes">Determines how weather is generated.</p>
         {{#if useHistoricalData}}
-        <div class="flexrow hist-coords">
-            <div class="flexcolumn">
-                <label>Latitude</label>
-                <input type="text" name="historicalDataLat" value="{{historicalDataLat}}" />
-            </div>
-
-            <div class="flexcolumn">
-                <label>Longitude</label>
-                <input type="text" name="historicalDataLong" value="{{historicalDataLong}}" />
-            </div>
+        <div class="form-group">
+            <select id="hist-location" name="hist-location" type="dropdown">
+                {{selectOptions historicalLocations selected=selectedHistoricalLocation.id valueAttr="id" labelAttr="name"}}
+            </select>
+            <button type="button" data-action="addHistLocation">
+                <i class="fas fa-plus"></i>
+            </button>
+            <button type="button" data-action="editHistLocation" {{#unless selectedHistoricalLocation.id}}disabled{{/unless}}>
+                <i class="fas fa-edit"></i>
+            </button>
+            <button type="button" data-action="deleteHistLocation" {{#unless selectedHistoricalLocation.id}}disabled{{/unless}}>
+                <i class="fas fa-trash"></i>
+            </button>
         </div>
-        <p class="notes">The real world WGS84 latitude and longitude to use for historical weather data.</p>
-
-        <label>Year</label>
-        <input type="text" name="historicalDataYear" value="{{historicalDataYear}}" />
-        <p class="notes">The real world year to use for historical weather data.</p>
-        <p class="notes">Data goes back as far as 1940. Using the current year is not recommended so as not to request data from the future.</p>
+        {{#if selectedHistoricalLocation.id}}
+        <div class="form-group">
+            <span>Latitude: {{selectedHistoricalLocation.latitude}}</span>
+            <span>Longitude: {{selectedHistoricalLocation.longitude}}</span>
+            <span>Year: {{selectedHistoricalLocation.year}}</span>
+        </div>
+        {{/if}}
         {{else}}
         <label>Current Biome</label>
         <div class="form-fields">

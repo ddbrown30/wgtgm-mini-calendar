@@ -2,6 +2,7 @@ import { MODULE_NAME } from "./settings.js";
 import { BiomeConfig } from "./biome-config.js";
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 import { renderHelper } from "./helper.js";
+import { WeatherLocationEditor } from "./weather-location-editor.js";
 
 export class WeatherConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     static DEFAULT_OPTIONS = {
@@ -15,7 +16,19 @@ export class WeatherConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         },
         position: { width: 440, height: 600 },
         actions: {
-            openBiomeEditor: () => new BiomeConfig().render(true)
+            openBiomeEditor: () => new BiomeConfig().render(true),
+            addHistLocation: function (event) { new WeatherLocationEditor(this).render(true); },
+            editHistLocation: function (event) { new WeatherLocationEditor(this, this.selectedHistoricalLocation).render(true); },
+            deleteHistLocation: async function (event, button) {
+                let historicalLocations = game.settings.get(MODULE_NAME, "historicalLocations");
+                const index = historicalLocations.findIndex(h => h.id === this.selectedHistoricalLocation.id);
+                if (index !== -1) {
+                    historicalLocations.splice(index, 1);
+                }
+                await game.settings.set(MODULE_NAME, "historicalLocations", historicalLocations);
+                this.selectedHistoricalLocation = undefined;
+                this.render(true);
+            },
         },
         form: { handler: this.#onSubmit, closeOnSubmit: true }
     };
@@ -32,12 +45,26 @@ export class WeatherConfig extends HandlebarsApplicationMixin(ApplicationV2) {
 
     async _prepareContext(options) {
         this.useHistoricalData ??= game.settings.get(MODULE_NAME, "useHistoricalData");
+        this.historicalLocations = game.settings.get(MODULE_NAME, "historicalLocations");
+        this.selectedHistoricalLocation ??= this.historicalLocations.find(h => h.id == game.settings.get(MODULE_NAME, "historicalLocationId"));
+
+        if (!this.historicalLocations.length) {
+            this.historicalLocations = [{ id: 0, name: "" }];
+            this.selectedHistoricalLocation = this.historicalLocations[0];
+        } else if (this.selectedHistoricalLocation) {
+            this.selectedHistoricalLocation = this.historicalLocations.find(h => h.id == this.selectedHistoricalLocation.id);
+        }
+
+        if (!this.selectedHistoricalLocation) {
+            this.selectedHistoricalLocation = this.historicalLocations[0];
+        }
+
+        this.historicalLocations = this.historicalLocations.sort((a, b) => a.name.localeCompare(b.name));
 
         return {
             useHistoricalData: this.useHistoricalData,
-            historicalDataLat: game.settings.get(MODULE_NAME, "historicalDataLat"),
-            historicalDataLong: game.settings.get(MODULE_NAME, "historicalDataLong"),
-            historicalDataYear: game.settings.get(MODULE_NAME, "historicalDataYear"),
+            historicalLocations: this.historicalLocations,
+            selectedHistoricalLocation: this.selectedHistoricalLocation,
             hideWeatherPlayer: game.settings.get(MODULE_NAME, "hideWeatherPlayer"),
             showOnlyTodayWeatherPlayer: game.settings.get(MODULE_NAME, "showOnlyTodayWeatherPlayer"),
             broadcastWeather: game.settings.get(MODULE_NAME, "broadcastWeather"),
@@ -66,6 +93,11 @@ export class WeatherConfig extends HandlebarsApplicationMixin(ApplicationV2) {
             this.useHistoricalData = selection[0].value == "historical";
             this.render(true);
         });
+
+        this.element.querySelector('select[id="hist-location"]').addEventListener("change", async event => {
+            this.selectedHistoricalLocation = this.historicalLocations.find(h => h.id == event.target.selectedOptions[0].value);
+            this.render();
+        });
     }
 
     static async #onSubmit(event, form, formData) {
@@ -80,9 +112,7 @@ export class WeatherConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         const oldUseHistorical = game.settings.get(MODULE_NAME, "useHistoricalData");
         await game.settings.set(MODULE_NAME, "useHistoricalData", this.useHistoricalData);
         if (this.useHistoricalData) {
-            await game.settings.set(MODULE_NAME, "historicalDataLat", formData.object.historicalDataLat);
-            await game.settings.set(MODULE_NAME, "historicalDataLong", formData.object.historicalDataLong);
-            await game.settings.set(MODULE_NAME, "historicalDataYear", formData.object.historicalDataYear);
+            await game.settings.set(MODULE_NAME, "historicalLocationId", this.selectedHistoricalLocation.id);
         } else {
             await game.settings.set(MODULE_NAME, "biome", formData.object.biome);
             await game.settings.set(MODULE_NAME, "allAurora", formData.object.allAurora);

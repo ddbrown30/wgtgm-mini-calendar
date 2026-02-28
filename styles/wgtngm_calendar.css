@@ -1054,10 +1054,6 @@
   overflow-y: auto;
 }
 
-.wgtngmWeatherConfig .hist-coords {
-  gap: 10px;
-}
-
 .wgtngmWeatherConfig .form-group:not(.biomes) {
   display: flex;
   gap: 8px;
@@ -1071,6 +1067,19 @@
 }
 
 .wgtngmWeatherConfig .form-footer button {
+  flex-grow: 1;
+}
+
+.wgtngmWeatherLocationEditor .hist-coords {
+  margin-top: 0.5rem;
+  gap: 0.5rem;
+}
+
+.wgtngmWeatherLocationEditor .form-footer {
+  display: flex;
+}
+
+.wgtngmWeatherLocationEditor .form-footer button {
   flex-grow: 1;
 }
 

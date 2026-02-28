@@ -109,9 +109,18 @@ export class HistoricalDataWeatherEngine extends WeatherEngine {
         const calendarConfig = CONFIG.time.worldCalendarConfig;
         const gregorianDate = this.getGregorianDate(date, calendarConfig);
 
-        const latitude = game.settings.get(MODULE_NAME, "historicalDataLat");
-        const longitude = game.settings.get(MODULE_NAME, "historicalDataLong");
-        const year = game.settings.get(MODULE_NAME, "historicalDataYear");
+        let latitude = 0;
+        let longitude = 0;
+        let year = 2000;
+
+        const historicalLocations = game.settings.get(MODULE_NAME, "historicalLocations");
+        const locId = game.settings.get(MODULE_NAME, "historicalLocationId");
+        const location = historicalLocations.find(h => h.id == locId);
+        if (location) {
+            latitude = location.latitude;
+            longitude = location.longitude;
+            year = location.year;
+        }
 
         if (!this.validateDate(gregorianDate)) {
             //Invalid date. Abort

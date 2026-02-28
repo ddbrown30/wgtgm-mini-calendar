@@ -376,7 +376,7 @@ export default async function minicalendarSettings() {
         type: Boolean,
         default: false
     });
-    
+
     game.settings.register(MODULE_NAME, "showOnlyTodayWeatherPlayer", {
         name: "Show Only Today's Weather to Players",
         hint: "If enabled, players only see weather for the current in-game day.",
@@ -509,25 +509,19 @@ export default async function minicalendarSettings() {
         default: false,
     });
 
-    game.settings.register(MODULE_NAME, "historicalDataLat", {
+
+    game.settings.register(MODULE_NAME, "historicalLocations", {
         scope: "world",
         config: false,
-        type: Number,
-        default: 0,
+        type: Array,
+        default: [],
     });
 
-    game.settings.register(MODULE_NAME, "historicalDataLong", {
+    game.settings.register(MODULE_NAME, "historicalLocationId", {
         scope: "world",
         config: false,
-        type: Number,
-        default: 0,
-    });
-
-    game.settings.register(MODULE_NAME, "historicalDataYear", {
-        scope: "world",
-        config: false,
-        type: Number,
-        default: 2000,
+        type: String,
+        default: "",
     });
 
     game.settings.register(MODULE_NAME, "customBiomeMap", {
