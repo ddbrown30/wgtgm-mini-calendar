@@ -1,0 +1,28 @@
+{
+  "name": "setTime - API",
+  "type": "script",
+  "_id": "JhWVz1ZZAfcJ725h",
+  "author": "1SHVgKmpB59kYZSN",
+  "img": "icons/svg/sleep.svg",
+  "scope": "global",
+  "command": "// Set time to Dawn Today\n// game.modules.get(\"wgtgm-mini-calendar\").api.setTime(0, \"dawn\");\n\n// Set time to Dusk Tomorrow\n// game.modules.get(\"wgtgm-mini-calendar\").api.setTime(1, \"dusk\");\n\n// Set time to 2 PM Today\ngame.modules.get(\"wgtgm-mini-calendar\").api.setTime(0, 14);",
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "1SHVgKmpB59kYZSN": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.351",
+    "systemId": "dnd5e",
+    "systemVersion": "5.2.2",
+    "createdTime": 1765309732947,
+    "modifiedTime": 1765309825276,
+    "lastModifiedBy": "1SHVgKmpB59kYZSN"
+  },
+  "_key": "!macros!JhWVz1ZZAfcJ725h"
+}

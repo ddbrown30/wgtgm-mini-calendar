@@ -7,3 +7,4 @@ node_modules/
 
 wgtgm-mini-calendar.lock
 /.vscode
+pnpm-lock.yaml

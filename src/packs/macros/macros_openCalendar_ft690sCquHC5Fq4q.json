@@ -1,0 +1,28 @@
+{
+  "name": "openCalendar",
+  "type": "script",
+  "_id": "ft690sCquHC5Fq4q",
+  "author": "1SHVgKmpB59kYZSN",
+  "img": "icons/svg/hanging-sign.svg",
+  "scope": "global",
+  "command": "// openCalendar(toggle)\n// \n// toggle: Boolean (optional) defaul true\n// \n// true: will toggle the calendar open/close\n// false: will open calendar, or do nothing if open\n// \n\ngame.modules.get(\"wgtgm-mini-calendar\").api.openCalendar()",
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "1SHVgKmpB59kYZSN": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.351",
+    "systemId": "dnd5e",
+    "systemVersion": "5.2.2",
+    "createdTime": 1765857741943,
+    "modifiedTime": 1765857919390,
+    "lastModifiedBy": "1SHVgKmpB59kYZSN"
+  },
+  "_key": "!macros!ft690sCquHC5Fq4q"
+}

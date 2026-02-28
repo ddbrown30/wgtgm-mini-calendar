@@ -1,0 +1,28 @@
+{
+  "name": "Export Player Notes JSON",
+  "type": "script",
+  "_id": "zyLMM9S6anADQQRU",
+  "author": "1SHVgKmpB59kYZSN",
+  "img": "icons/svg/book.svg",
+  "scope": "global",
+  "command": "/**\n * Export Player Notes to JSON\n * \n * This macro fetches all notes stored in the \"Player Notes - Mini Calendar\" journal\n * and exports them as a JSON file download.\n */\n(async () => {\n    const MODULE_NAME = \"wgtgm-mini-calendar\";\n    const JOURNAL_NAME = \"Player Notes - Mini Calendar\";\n\n    const journal = game.journal.getName(JOURNAL_NAME);\n    if (!journal) {\n        ui.notifications.error(`Journal \"${JOURNAL_NAME}\" not found.`);\n        return;\n    }\n\n    let allNotes = [];\n    journal.pages.forEach(page => {\n        const notes = page.flags?.[MODULE_NAME]?.notes;\n        if (Array.isArray(notes)) {\n            allNotes.push(...notes);\n        }\n    });\n\n    if (allNotes.length === 0) {\n        ui.notifications.warn(\"No notes found to export.\");\n        return;\n    }\n\n    const filename = `player-notes-export-${Date.now()}.json`;\n    foundry.utils.saveDataToFile(JSON.stringify(allNotes, null, 2), \"text/json\", filename);\n    ui.notifications.info(`Exported ${allNotes.length} Player notes to ${filename}.`);\n})();",
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "1SHVgKmpB59kYZSN": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.351",
+    "systemId": "dnd5e",
+    "systemVersion": "5.2.4",
+    "createdTime": 1770377972521,
+    "modifiedTime": 1770409342391,
+    "lastModifiedBy": "1SHVgKmpB59kYZSN"
+  },
+  "_key": "!macros!zyLMM9S6anADQQRU"
+}

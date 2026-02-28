@@ -1,0 +1,28 @@
+{
+  "name": "Override Weather - API",
+  "type": "script",
+  "img": "icons/svg/daze.svg",
+  "command": "// overrideWeather(type, temp, dayDelta)\n// type: String (see below)\n// temp: Number (ºF)\n// dayDelta: Number (>=0) Day offset, ie 1 is tomorrow (optional)\n//\n/* VALID WEATHER TYPES:\n * none           - Clear / Sunny\n * partlyCloudy   - Scattered Clouds\n * clouds         - Overcast\n * lightRain      - Light Rain\n * rain           - Rain\n * heavyRain      - Heavy Rain\n * rainStorm      - Storm\n * fog            - Fog\n * hail           — Hail\n * snow           - Heavy Snow\n * lightSnow      — Snow\n * blizzard       - Blizzard\n * leaves         - Windy / Autumn Leaves\n * sandstorm      - Sandstorm\n * heatWave       - Heat Wave\n * aurora         - Aurora (night only)\n * lightWind      - Light Wind with overlay\n */\n\ngame.modules.get('wgtgm-mini-calendar').api.overrideWeather(\"aurora\", 35);",
+  "author": "1SHVgKmpB59kYZSN",
+  "scope": "global",
+  "folder": null,
+  "ownership": {
+    "default": 0,
+    "1SHVgKmpB59kYZSN": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.351",
+    "systemId": "dnd5e",
+    "systemVersion": "5.2.2",
+    "createdTime": 1765072526366,
+    "modifiedTime": 1766188327751,
+    "lastModifiedBy": "1SHVgKmpB59kYZSN"
+  },
+  "_id": "BIVNeE74FUPMVxkk",
+  "sort": 0,
+  "_key": "!macros!BIVNeE74FUPMVxkk"
+}
