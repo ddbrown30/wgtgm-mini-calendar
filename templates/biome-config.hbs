@@ -22,7 +22,7 @@
             <div class="weather-tag-cloud">
                 {{#each weatherTypesWithActive}}
                 <button type="button" class="weather-btn {{this.isActive}}" data-action="setWeather" 
-                        data-type="{{this.id}}" data-icon="{{this.icon}}">
+                        data-type="{{this.id}}" data-icon="{{this.icon}}" data-label="{{this.label}}">
                     <i class="{{this.icon}}"></i> {{this.label}}
                 </button>
                 {{/each}}

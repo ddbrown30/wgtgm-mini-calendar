@@ -137,7 +137,9 @@ Hooks.once("init", async function () {
 
     const templatePaths = [
         `modules/${MODULE_NAME}/templates/wgtgm_calendar.hbs`,
-        `modules/${MODULE_NAME}/templates/wgtgm-calendar-config.hbs`
+        `modules/${MODULE_NAME}/templates/wgtgm-calendar-config.hbs`,
+        `modules/${MODULE_NAME}/templates/add-note.hbs`,
+        `modules/${MODULE_NAME}/templates/view-notes.hbs`
     ];
     foundry.applications.handlebars.loadTemplates(templatePaths);
 });
@@ -189,7 +191,10 @@ Hooks.once("ready", async function () {
         }
     }
 
-    game.wgtngmMiniCalender.weatherEngine.refreshWeather();
+    if (game.wgtngmMiniCalender && canvas.scene) {
+        await game.wgtngmMiniCalender._updateSceneDarkness(game.time.worldTime, { force: true });
+    }
+
 });
 
 Hooks.on("closeCalendarConfig", () => {
@@ -213,7 +218,7 @@ Hooks.on("combatStart", (combat, updateData) => {
         console.log("Mini Calendar | Time advancement paused due to combat.");
         if (calendarApp.rendered) calendarApp.render();
     }
-    if (game.settings.get(MODULE_NAME, "hideHudonCombat")){
+    if (game.settings.get(MODULE_NAME, "hideHudonCombat")) {
         if (game.wgtngmMiniCalender.hud?.rendered) game.wgtngmMiniCalender.hud.close();
     }
 });
@@ -229,7 +234,7 @@ Hooks.on("deleteCombat", (combat, options, userId) => {
         console.log("Mini Calendar | Time advancement resumed after combat.");
         if (calendarApp.rendered) calendarApp.render();
     }
-    if (game.settings.get(MODULE_NAME, "hideHudonCombat")){
+    if (game.settings.get(MODULE_NAME, "hideHudonCombat")) {
         if (!game.wgtngmMiniCalender.hud?.rendered) game.wgtngmMiniCalender.hud.render(true);
     }
 
@@ -237,22 +242,31 @@ Hooks.on("deleteCombat", (combat, options, userId) => {
 
 
 Hooks.on("updateScene", async (scene, changes, options, userId) => {
-    // if (foundry.utils.hasProperty(changes, "weather")){
-    //     if (game.wgtngmMiniCalender.hud.rendered) game.wgtngmMiniCalender.hud.updateWeatherIcon();
-    // }
-    if (foundry.utils.hasProperty(changes, "flags.wgtgm-mini-calendar")) {
-        const myFlags = changes.flags["wgtgm-mini-calendar"];
-        console.log("Mini Calendar flags were updated:", myFlags);
+    const isActivation = changes.active === true;
+    const hasModuleFlags = foundry.utils.hasProperty(changes, `flags.${MODULE_NAME}`);
+    if (!isActivation && !hasModuleFlags) return;
+
+    const isCurrentCanvasScene = canvas.scene?.id === scene.id;
+    if (!isCurrentCanvasScene) return;
+
+    if (isActivation) {
+        if (game.wgtngmMiniCalender) {
+            await game.wgtngmMiniCalender._updateSceneDarkness(game.time.worldTime, { force: true });
+        }
+        WeatherEngine.refreshWeather();
+    }
+
+    if (hasModuleFlags) {
+        const myFlags = changes.flags[MODULE_NAME];
         if (myFlags.enableDarkness !== undefined) {
             if (game.wgtngmMiniCalender) {
-                await game.wgtngmMiniCalender._updateSceneDarkness(game.time.worldTime);
-            } else {
+                await game.wgtngmMiniCalender._updateSceneDarkness(game.time.worldTime, { force: true });
+            } else if (canvas.scene) {
                 await canvas.scene.update(
                     { environment: { darknessLevel: 0 } },
                     { animateDarkness: 1200 }
                 );
             }
-
         }
         if (myFlags.enableWeather !== undefined) {
             if (!myFlags.enableWeather) await game.wgtngmMiniCalender.weatherEngine.disableWeatherEffect();
@@ -263,12 +277,12 @@ Hooks.on("updateScene", async (scene, changes, options, userId) => {
 
 Hooks.on("canvasReady", async (canvas) => {
     if (game.wgtngmMiniCalender) {
-        await game.wgtngmMiniCalender._updateSceneDarkness(game.time.worldTime);
+        await game.wgtngmMiniCalender._updateSceneDarkness(game.time.worldTime, { force: true });
         if (game.wgtngmMiniCalender.weatherEngine)
             game.wgtngmMiniCalender.weatherEngine.refreshWeather();
     }
-    // await WeatherEngine.playWeatherSound(canvas.scene.weather);
 });
+
 
 
 Hooks.on("pauseGame", (paused) => {
@@ -302,6 +316,23 @@ Hooks.on("renderChatMessageHTML", (app, html, data) => {
     handlers.forEach((element) => {
         element.addEventListener("click", handleMPClick);
     });
+    // Macro execute buttons from calendar event whispers
+    html.querySelectorAll('.wgtngm-execute-macro').forEach(btn => {
+        btn.addEventListener('click', async (event) => {
+            event.preventDefault();
+            const macroId = btn.dataset.macroId;
+            const macroUuid = btn.dataset.macroUuid;
+            let macro = null;
+            if (macroUuid) macro = await fromUuid(macroUuid);
+            if (!macro && macroId) macro = game.macros.get(macroId);
+            if (macro) {
+                await macro.execute();
+                ui.notifications.info(`Executed macro: ${macro.name}`);
+            } else {
+                ui.notifications.warn("Macro not found.");
+            }
+        });
+    });
 });
 
 Hooks.on("getSceneControlButtons", (controls) => {
@@ -324,7 +355,7 @@ Hooks.on("getSceneControlButtons", (controls) => {
                 order: 2,
                 title: "Mini Calendar",
                 icon: "fa-solid fa-calendar",
-                visible: !canvas.scene?.environment.darknessLock,
+                visible: true,
                 onChange: () => {
                     openwgtngmMiniCalendarSheet();
                 },
@@ -335,7 +366,7 @@ Hooks.on("getSceneControlButtons", (controls) => {
                 order: 3,
                 title: "Mini Calendar HUD",
                 icon: "fa-solid fa-clock",
-                visible: !canvas.scene?.environment.darknessLock,
+                visible: true,
                 onChange: () => {
                     const hud = game.wgtngmMiniCalender?.hud;
                     if (hud) {
@@ -362,8 +393,6 @@ Hooks.on('renderSceneControls', () => {
         toolElements.querySelector('button[data-tool="wgtngmdummy"]').parentElement.style.display = "none";
     }
 });
-
-
 
 
 

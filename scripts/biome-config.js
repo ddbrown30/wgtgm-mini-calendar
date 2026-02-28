@@ -4,6 +4,25 @@ import { WeatherEngine } from "./weather.js";
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 export class BiomeConfig extends HandlebarsApplicationMixin(ApplicationV2) {
+    static WEATHER_TYPES = [
+        { id: "none",         label: "Clear",              icon: "fas fa-sun" },
+        { id: "partlyCloudy", label: "Partly Cloudy",      icon: "fas fa-cloud-sun" },
+        { id: "clouds",       label: "Overcast",           icon: "fas fa-cloud" },
+        { id: "lightRain",    label: "Light Rain",         icon: "fas fa-cloud-rain" },
+        { id: "rain",         label: "Rain",               icon: "fas fa-cloud-showers-heavy" },
+        { id: "heavyRain",    label: "Heavy Rain",         icon: "fas fa-cloud-showers-heavy" },
+        { id: "rainStorm",    label: "Storm",              icon: "fas fa-bolt" },
+        { id: "fog",          label: "Fog",                icon: "fas fa-smog" },
+        { id: "lightWind",    label: "Windy",              icon: "fas fa-wind" },
+        { id: "sandstorm",    label: "Sandstorm",          icon: "fas fa-wind" },
+        { id: "heatWave",     label: "Heatwave",           icon: "fas fa-sun-haze" },
+        { id: "lightSnow",    label: "Snow",               icon: "fas fa-snowflake" },
+        { id: "snow",         label: "Heavy Snow",         icon: "fas fa-snowflake" },
+        { id: "blizzard",     label: "Blizzard",           icon: "fas fa-snow-blowing" },
+        { id: "hail",         label: "Hail",               icon: "fas fa-cloud-hail" },
+        { id: "aurora",       label: "Aurora",             icon: "fas fa-moon-over-sun" }
+    ];
+
     static DEFAULT_OPTIONS = {
         tag: "form",
         id: "wgtngm-biome-config",
@@ -35,8 +54,8 @@ export class BiomeConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         super(options);
         
         const savedMap = game.settings.get(MODULE_NAME, "customBiomeMap");
-        this.hexMap = !foundry.utils.isEmpty(savedMap) 
-            ? foundry.utils.deepClone(savedMap) 
+        this.hexMap = !foundry.utils.isEmpty(savedMap)
+            ? this.#normalizeHexMap(foundry.utils.deepClone(savedMap))
             : foundry.utils.deepClone(WeatherEngine.DEFAULT_HEX_MAP);
 
         const savedConfig = game.settings.get(MODULE_NAME, "customBiomeConfig");
@@ -51,24 +70,7 @@ export class BiomeConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     async _prepareContext(options) {
-        const weatherTypes = [
-            { id: "none",         label: "Clear",              icon: "fas fa-sun" },
-            { id: "partlyCloudy", label: "Partly Cloudy",      icon: "fas fa-cloud-sun" },
-            { id: "clouds",       label: "Overcast",           icon: "fas fa-cloud" },
-            { id: "lightRain",    label: "Light Rain",         icon: "fas fa-cloud-rain" },
-            { id: "rain",         label: "Rain",               icon: "fas fa-cloud-showers-heavy" },
-            { id: "heavyRain",    label: "Heavy Rain",         icon: "fas fa-cloud-showers-heavy" },
-            { id: "rainStorm",    label: "Storm",              icon: "fas fa-bolt" },
-            { id: "fog",          label: "Fog",                icon: "fas fa-smog" },
-            { id: "lightWind",    label: "Windy",              icon: "fas fa-wind" },
-            { id: "sandstorm",    label: "Sandstorm",          icon: "fas fa-wind" },
-            { id: "heatWave",     label: "Heatwave",           icon: "fas fa-sun-haze" },
-            { id: "lightSnow",    label: "Snow",               icon: "fas fa-snowflake" },
-            { id: "snow",         label: "Heavy Snow",         icon: "fas fa-snowflake" },
-            { id: "blizzard",     label: "Blizzard",           icon: "fas fa-snow-blowing" },
-            { id: "hail",         label: "Hail",               icon: "fas fa-cloud-hail" },
-            { id: "aurora",       label: "Aurora",             icon: "fas fa-moon-over-sun" }
-        ];
+        const weatherTypes = this.constructor.WEATHER_TYPES;
 
         const hexData = [];
         const coords = [
@@ -181,7 +183,7 @@ export class BiomeConfig extends HandlebarsApplicationMixin(ApplicationV2) {
 
                 if (json && json.hexMap && json.customBiome) {
                     // Update the local instance data
-                    this.hexMap = json.hexMap;
+                    this.hexMap = this.#normalizeHexMap(json.hexMap);
                     this.customBiome = json.customBiome;
                     
                     ui.notifications.info("Biome JSON imported. Review settings and click 'Save'.");
@@ -227,10 +229,16 @@ export class BiomeConfig extends HandlebarsApplicationMixin(ApplicationV2) {
       static async #onSetWeather(event, target) {
         const type = target.dataset.type;
         const icon = target.dataset.icon;
+        const selectedWeather = this.constructor.WEATHER_TYPES.find(w => w.id === type);
+        const label = selectedWeather?.label
+            || target.dataset.label
+            || WeatherEngine.DEFAULT_HEX_MAP[this.selectedHex]?.label
+            || "Clear";
         
         if (!this.hexMap[this.selectedHex]) this.hexMap[this.selectedHex] = {};
         this.hexMap[this.selectedHex].type = type;
         this.hexMap[this.selectedHex].icon = icon;
+        this.hexMap[this.selectedHex].label = label;
 
         const activeHex = this.element.querySelector(`.hex-cell[data-id="${this.selectedHex}"]`);
         if (activeHex) {
@@ -243,6 +251,24 @@ export class BiomeConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         const allButtons = this.element.querySelectorAll(".weather-btn");
         allButtons.forEach(btn => btn.classList.remove("active"));
         target.classList.add("active");
+    }
+
+    #normalizeHexMap(map) {
+        const normalizedMap = foundry.utils.deepClone(map ?? {});
+        const typeToLabel = this.constructor.WEATHER_TYPES.reduce((acc, weatherType) => {
+            acc[weatherType.id] = weatherType.label;
+            return acc;
+        }, {});
+
+        for (const [cellId, cell] of Object.entries(normalizedMap)) {
+            if (!cell || typeof cell !== "object") continue;
+
+            if (!cell.label) {
+                cell.label = typeToLabel[cell.type] || WeatherEngine.DEFAULT_HEX_MAP[cellId]?.label || "Clear";
+            }
+        }
+
+        return normalizedMap;
     }
 
     static async #onReset(event, target) {
@@ -285,7 +311,7 @@ static async #onSaveAndClose(event, target) {
         const val = parseFloat(tempInput?.value) || 0;
         
         this.customBiome.tempOffset = useCelsius ? Math.round(val * 1.8) : val;
-        
+        this.hexMap = this.#normalizeHexMap(this.hexMap);
         await game.settings.set(MODULE_NAME, "customBiomeMap", this.hexMap);
 
         const currentConfig = game.settings.get(MODULE_NAME, "customBiomeConfig") || {};

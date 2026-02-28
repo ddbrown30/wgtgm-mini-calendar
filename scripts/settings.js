@@ -6,7 +6,7 @@ import { WeatherConfig } from "./weather-config.js";
 import { CalendarMaker } from "./calendar-maker.js";
 export default async function minicalendarSettings() {
     game.settings.register(MODULE_NAME, "runonlyonce", {
-        name: "Welcome message",
+        name: "Welcome message Disabled",
         hint: "Disable to see the Welcome Message",
         scope: "world",
         config: true,
@@ -91,7 +91,7 @@ export default async function minicalendarSettings() {
         scope: "client",
         config: false,
         type: Boolean,
-        default: true
+        default: false
     });
 
     game.settings.register(MODULE_NAME, "startMinimized", {
@@ -259,8 +259,17 @@ export default async function minicalendarSettings() {
         scope: "world",
         config: true,
         type: Boolean,
-        default: false
+        default: false,
+        onChange: () => {
+            if (game.wgtngmMiniCalender?.hud?.rendered) {
+                game.wgtngmMiniCalender.hud.render();
+            }
+            if (game.wgtngmMiniCalender?.rendered) {
+                game.wgtngmMiniCalender.render();
+            }
+        }
     });
+
 
 
     game.settings.register(MODULE_NAME, "enableDarknessActive", {
@@ -366,6 +375,23 @@ export default async function minicalendarSettings() {
         config: true,
         type: Boolean,
         default: false
+    });
+    
+    game.settings.register(MODULE_NAME, "showOnlyTodayWeatherPlayer", {
+        name: "Show Only Today's Weather to Players",
+        hint: "If enabled, players only see weather for the current in-game day.",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: false,
+        onChange: () => {
+            if (game.wgtngmMiniCalender && game.wgtngmMiniCalender.rendered) {
+                game.wgtngmMiniCalender.render();
+            }
+            if (game.wgtngmMiniCalender?.hud?.rendered) {
+                game.wgtngmMiniCalender.hud.render();
+            }
+        }
     });
 
 

@@ -1,3 +1,13 @@
+#4.2
+- some darkness max logic to set illumination threshold to 0.95 if it's at 1 to enable darkness
+- New view notes dialog
+- New add notes dialog
+- Custom Biome fix
+- Weather fix
+- Player view only today weather setting
+- Darkness controlls in header and hud
+
+
 #3.6
 - Scroll on weather config
 - pf2e change time fix
