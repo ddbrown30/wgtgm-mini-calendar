@@ -243,7 +243,7 @@ export const weatherEffects = {
         //         tint: [0.1, 1.0, 0.4],
         //         offset: 125.0
         //     }
-        // }, 
+        // },
         //     {
         //     id: "auroraPurple",
         //     effectClass: foundry.canvas.rendering.shaders.WeatherShaderEffect,
@@ -1015,7 +1015,7 @@ export class WeatherEngine {
          * @param {number} dayDelta - (Optional) Days from now (ignored if contextDate is set).
          * @param {object} contextDate - (Optional) {year, month, day} to force specific date.
          */
-    static async setWeatherOverride(type, temp, dayDelta = 0, contextDate = null, variations = null) {
+    async setWeatherOverride(type, temp, dayDelta = 0, contextDate = null, variations = null) {
         if (!game.user.isGM) {
             ui.notifications.warn("Only the GM can override weather.");
             return;
