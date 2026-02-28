@@ -1,173 +1,181 @@
-<div class="form-group">
-    <label>Title:</label>
-    <input type="text" name="title" value="{{title}}" autofocus/>
-</div>
-<div class="form-group">
-    <label>Icon:</label>
-    <div style="display:flex; align-items:center; gap:10px; flex:1;">
-        <input type="text" name="icon" value="{{currentIcon}}" list="icon-list-dialog" style="flex:1;" placeholder="fas fa-book"/>
-        <datalist id="icon-list-dialog">
-            {{#each pinTypes}}
-            <option value="{{this.key}}">{{this.label}}</option>
-            {{/each}}
-        </datalist>
-        <i id="icon-preview" class="{{#if currentIcon}}{{currentIcon}}{{else}}fas fa-book{{/if}}" style="font-size: 1.5em; width: 30px; text-align: center;"></i>
-    </div>
-</div>
-
-<div class="form-group">
-    <label>Note:</label>
-    <textarea name="content" style="width:100%; height:100px;">{{content}}</textarea>
-</div>
-<div class="form-group">
-    <label style="flex:initial;">Player Visible:</label>
-    <input type="checkbox" name="playerVisible" {{checked playerVisible}} />
-    <label style="flex:1;margin-left: 15px;text-align: right;">Extended Options:</label>
-    <input type="checkbox" name="useAdvanced" id="use-advanced-check" {{checked hasAdvanced}} style="flex:0;">
-</div>
-
-<div class="form-group repeat-standard" style="{{#if hasAdvanced}}display:none;{{/if}}">
-    <label style="flex:0;">Repeat:</label>
-    <input type="number" name="repeatCount" value="{{repeatCount}}" min="0" placeholder="∞" title="0 = Infinite">
-    <label style="flex:1; margin-left: 5px;"> every </label>
-    <input type="number" name="repeatInterval" value="{{repeatInterval}}" min="1">
-    <select name="repeatUnit" style="flex: 2 2 20%;">
-        {{selectOptions repeatUnits selected=selectedRepeatUnit valueAttr="value" labelAttr="label"}}
-    </select>
-</div>
-
-
-<div id="advanced-options-container" style="{{#if hasAdvanced}}display:block;{{else}}display:none;{{/if}}">
-    <div class="form-group">
-        <label >Rule Type:</label>
-        <select name="advancedRule" id="adv-rule-select">
-            <option value="none">-- Select Rule --</option>
-            {{selectOptions advancedRules selected=selectedAdvancedRule valueAttr="value" labelAttr="label"}}
-        </select>
-    </div>
-
-    <div class="adv-subgroup" data-type="lunar" style="display:none;">
+<div class="wgtgm-note-editor">
+    <section class="wgtgm-note-editor__section">
         <div class="form-group">
-            <label>Moon:</label>
-            <select name="adv_moonIndex">
-                 {{selectOptions moonOptions selected=advParams.moonIndex valueAttr="index" labelAttr="name"}}
-            </select>
+            <label for="wgtgm-note-title">Title:</label>
+            <input id="wgtgm-note-title" type="text" name="title" value="{{title}}" autofocus placeholder="Festival of Embers" />
         </div>
+
         <div class="form-group">
-            <label>Phase:</label>
-            <select name="adv_phaseIndex" id="adv-phase-select">
+            <label for="wgtgm-note-icon">Icon:</label>
+            <div class="wgtgm-note-editor__icon-row">
+                <input id="wgtgm-note-icon" type="text" name="icon" value="{{currentIcon}}" list="icon-list-dialog"
+                    placeholder="fas fa-book" />
+                <datalist id="icon-list-dialog">
+                    {{#each pinTypes}}
+                    <option value="{{this.key}}">{{this.label}}</option>
+                    {{/each}}
+                </datalist>
+                <i id="icon-preview" class="wgtgm-note-editor__icon-preview {{#if currentIcon}}{{currentIcon}}{{else}}fas fa-book{{/if}}"></i>
+            </div>
+        </div>
+
+        <div class="form-group form-group--stacked">
+            <!-- <label for="wgtgm-note-content">Note:</label> -->
+            <textarea id="wgtgm-note-content" name="content" class="wgtgm-note-editor__content"
+                placeholder="Describe the event...">{{content}}</textarea>
+        </div>
+    </section>
+
+    <section class="wgtgm-note-editor__section">
+        <div class="form-group wgtgm-note-editor__toggles">
+            <label for="wgtgm-player-visible">Player Visible:</label>
+            <input id="wgtgm-player-visible" type="checkbox" name="playerVisible" {{checked playerVisible}} />
+            <label for="use-advanced-check" class="wgtgm-note-editor__toggles-label">Advanced:</label>
+            <input type="checkbox" name="useAdvanced" id="use-advanced-check" {{checked hasAdvanced}}>
+        </div>
+
+        <div class="form-group repeat-standard {{#if hasAdvanced}}is-hidden{{/if}}">
+            <label>Repeat:</label>
+            <div class="wgtgm-note-editor__repeat-row">
+                <input type="number" name="repeatCount" value="{{repeatCount}}" min="0" placeholder="∞" title="0 = Infinite">
+                <span>every</span>
+                <input type="number" name="repeatInterval" value="{{repeatInterval}}" min="1">
+                <select name="repeatUnit">
+                    {{selectOptions repeatUnits selected=selectedRepeatUnit valueAttr="value" labelAttr="label"}}
                 </select>
+            </div>
         </div>
-        <div class="form-group">
-            <label>Start Month:</label>
-            <select name="adv_lunarStartMonth">
-                 {{selectOptions monthOptions selected=advParams.lunarStartMonth valueAttr="index" labelAttr="name"}}
-            </select>
-        </div>
-        <div class="form-group">
-            <label>End Month:</label>
-            <select name="adv_lunarEndMonth">
-                 {{selectOptions monthOptions selected=advParams.lunarEndMonth valueAttr="index" labelAttr="name"}}
-            </select>
-        </div>
-    </div>
 
-    <div class="adv-subgroup" data-type="weekday" style="display:none;">
-        <div class="form-group">
-            <label>On the:</label>
-            <select name="adv_ordinal">
-                 {{selectOptions ordinalOptions selected=advParams.ordinal valueAttr="value" labelAttr="label"}}
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Day:</label>
-            <select name="adv_weekdayIndex">
-                 {{selectOptions weekdayOptions selected=advParams.weekdayIndex valueAttr="index" labelAttr="name"}}
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Of:</label>
-            <select name="adv_monthIndex_wk">
-                <option value="-1">Every Month</option>
-                 {{selectOptions monthOptions selected=advParams.monthIndex_wk valueAttr="index" labelAttr="name"}}
-            </select>
-        </div>
-    </div>
+        <div id="advanced-options-container" class="{{#unless hasAdvanced}}is-hidden{{/unless}}">
+            <div class="form-group">
+                <label for="adv-rule-select">Rule Type:</label>
+                <select name="advancedRule" id="adv-rule-select">
+                    <option value="none">-- Select Rule --</option>
+                    {{selectOptions advancedRules selected=selectedAdvancedRule valueAttr="value" labelAttr="label"}}
+                </select>
+            </div>
 
-    <div class="adv-subgroup" data-type="week_index" style="display:none;">
-        <div class="form-group">
-            <label>Week #:</label>
-            <input type="number" name="adv_weekNum" value="{{advParams.weekNum}}" min="1">
-        </div>
-        <div class="form-group">
-            <label>Day:</label>
-             <select name="adv_dayNum">
-                 {{selectOptions weekdayOptions selected=advParams.dayNum valueAttr="index" labelAttr="name"}}
-            </select>
-        </div>
-        <p class="notes">Week 1 is the first row of the month.</p>
-    </div>
+            <div class="adv-subgroup" data-type="lunar" style="display:none;">
+                <div class="form-group">
+                    <label>Moon:</label>
+                    <select name="adv_moonIndex">
+                        {{selectOptions moonOptions selected=advParams.moonIndex valueAttr="index" labelAttr="name"}}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Phase:</label>
+                    <select name="adv_phaseIndex" id="adv-phase-select"></select>
+                </div>
+                <div class="form-group">
+                    <label>Start Month:</label>
+                    <select name="adv_lunarStartMonth">
+                        {{selectOptions monthOptions selected=advParams.lunarStartMonth valueAttr="index" labelAttr="name"}}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>End Month:</label>
+                    <select name="adv_lunarEndMonth">
+                        {{selectOptions monthOptions selected=advParams.lunarEndMonth valueAttr="index" labelAttr="name"}}
+                    </select>
+                </div>
+            </div>
 
-    <div class="adv-subgroup" data-type="random" style="display:none;">
-        <div class="form-group">
-            <label>Occurrences:</label>
-            <input type="number" name="adv_count" value="{{advParams.count}}" min="1">
+            <div class="adv-subgroup" data-type="weekday" style="display:none;">
+                <div class="form-group">
+                    <label>On the:</label>
+                    <select name="adv_ordinal">
+                        {{selectOptions ordinalOptions selected=advParams.ordinal valueAttr="value" labelAttr="label"}}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Day:</label>
+                    <select name="adv_weekdayIndex">
+                        {{selectOptions weekdayOptions selected=advParams.weekdayIndex valueAttr="index" labelAttr="name"}}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Of:</label>
+                    <select name="adv_monthIndex_wk">
+                        <option value="-1">Every Month</option>
+                        {{selectOptions monthOptions selected=advParams.monthIndex_wk valueAttr="index" labelAttr="name"}}
+                    </select>
+                </div>
+            </div>
+
+            <div class="adv-subgroup" data-type="week_index" style="display:none;">
+                <div class="form-group">
+                    <label>Week #:</label>
+                    <input type="number" name="adv_weekNum" value="{{advParams.weekNum}}" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Day:</label>
+                    <select name="adv_dayNum">
+                        {{selectOptions weekdayOptions selected=advParams.dayNum valueAttr="index" labelAttr="name"}}
+                    </select>
+                </div>
+                <p class="notes">Week 1 is the first row of the month.</p>
+            </div>
+
+            <div class="adv-subgroup" data-type="random" style="display:none;">
+                <div class="form-group">
+                    <label>Occurrences:</label>
+                    <input type="number" name="adv_count" value="{{advParams.count}}" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Start Month:</label>
+                    <select name="adv_startMonth" id="adv_startMonth">
+                        {{selectOptions monthOptions selected=advParams.startMonth valueAttr="index" labelAttr="name"}}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>End Month:</label>
+                    <select name="adv_endMonth" id="adv_endMonth">
+                        {{selectOptions monthOptions selected=advParams.endMonth valueAttr="index" labelAttr="name"}}
+                    </select>
+                </div>
+            </div>
         </div>
+
         <div class="form-group">
-            <label>Start Month:</label>
-            <select name="adv_startMonth" id="adv_startMonth">
-                 {{selectOptions monthOptions selected=advParams.startMonth valueAttr="index" labelAttr="name"}}
-            </select>
+            <label>Time:</label>
+            <div class="wgtgm-note-editor__time-block">
+                <div class="wgtgm-note-editor__all-day">
+                    <input type="checkbox" name="allDay" id="note-all-day" {{checked allDay}}>
+                    <label for="note-all-day">All Day</label>
+                </div>
+                <div id="note-time-container" class="wgtgm-note-editor__time-row {{#if allDay}}is-hidden{{/if}}">
+                    <select name="hour">
+                        {{selectOptions hourOptions selected=selectedHour valueAttr="value" labelAttr="label"}}
+                    </select>
+                    <span>:</span>
+                    <select name="minute">
+                        {{selectOptions minuteOptions selected=selectedMinute valueAttr="value" labelAttr="label"}}
+                    </select>
+                </div>
+            </div>
         </div>
+
+        {{#if isEditing}}
         <div class="form-group">
-            <label>End Month:</label>
-            <select name="adv_endMonth" id="adv_endMonth">
-                 {{selectOptions monthOptions selected=advParams.endMonth valueAttr="index" labelAttr="name"}}
-            </select>
+            <label>Date:</label>
+            <div class="wgtgm-note-editor__date-row">
+                <select name="editDay">
+                    {{#each dayOptions}}
+                    <option value="{{this.value}}" {{#if (eq this.value ../editDate.day)}}selected{{/if}}>{{this.label}}</option>
+                    {{/each}}
+                </select>
+                <select name="editMonth">
+                    {{#each monthOptions}}
+                    <option value="{{this.index}}" {{#if (eq this.index ../editDate.month)}}selected{{/if}}>{{this.name}}</option>
+                    {{/each}}
+                </select>
+                <select name="editYear">
+                    {{#each yearOptions}}
+                    <option value="{{this.value}}" {{#if (eq this.value ../editDate.year)}}selected{{/if}}>{{this.value}}</option>
+                    {{/each}}
+                </select>
+            </div>
         </div>
-    </div>
+        {{/if}}
+    </section>
 </div>
-
-<div class="form-group">
-    <label>Time:</label>
-        <div style="display: flex; align-items: center; gap: 5px; flex:0">
-        <input type="checkbox" name="allDay" id="note-all-day" {{checked allDay}}>
-        <label for="note-all-day">All Day</label>
-    </div>
-    <div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
-        <div id="note-time-container" style="display: {{timeDisplay}}; align-items: center; gap: 5px;">
-            <select name="hour">
-                 {{selectOptions hourOptions selected=selectedHour valueAttr="value" labelAttr="label"}}
-            </select>
-            <span>:</span>
-            <select name="minute">
-                 {{selectOptions minuteOptions selected=selectedMinute valueAttr="value" labelAttr="label"}}
-            </select>
-        </div>
-    </div>
-</div>
-
-{{#if isEditing}}
-<div class="form-group">
-    <label>Date:</label>
-    <div style="display: flex; gap: 5px;">
-        <select name="editDay">
-            {{#each dayOptions}}
-            <option value="{{this.value}}" {{#if (eq this.value ../editDate.day)}}selected{{/if}}>{{this.label}}</option>
-            {{/each}}
-        </select>
-        <select name="editMonth">
-            {{#each monthOptions}}
-            <option value="{{this.index}}" {{#if (eq this.index ../editDate.month)}}selected{{/if}}>{{this.name}}</option>
-            {{/each}}
-        </select>
-        <select name="editYear">
-            {{#each yearOptions}}
-            <option value="{{this.value}}" {{#if (eq this.value ../editDate.year)}}selected{{/if}}>{{this.value}}</option>
-            {{/each}}
-        </select>
-
-    </div>
-</div>
-{{/if}}
-

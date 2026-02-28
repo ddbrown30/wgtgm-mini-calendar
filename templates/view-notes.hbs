@@ -1,0 +1,293 @@
+<div class="vn-container">
+    <div class="vn-sidebar">
+        <div class="vn-card-list">
+            {{#if notes.length}}
+            {{#each notes}}
+            <div class="vn-card {{#if this.active}}active{{/if}}" data-note-id="{{this.id}}" data-action="select-note">
+                <div class="vn-card-icon">
+                    <i class="{{#if this.icon}}{{this.icon}}{{else}}fas fa-book{{/if}}"></i>
+                </div>
+                <div class="vn-card-info">
+                    <span class="vn-card-title">{{this.title}}</span>
+                    <span class="vn-card-meta">
+                        {{#if this.timeStr}}<i class="fas fa-clock"></i> {{this.timeStr}}{{/if}}
+                        {{#if this.isRepeating}}<i class="fas fa-repeat" title="Repeating"></i>{{/if}}
+                        {{#unless this.playerVisible}}<i class="fas fa-eye-slash" title="Hidden"></i>{{/unless}}
+                        {{#if this.isPlayerNote}}<i class="fas fa-user" title="Player Note"></i>{{/if}}
+                    </span>
+                </div>
+            </div>
+            {{/each}}
+            {{else}}
+            <p class="vn-no-notes"><em>No notes for this day.</em></p>
+            {{/if}}
+        </div>
+        {{#if canAddNote}}
+        <button class="vn-add-note" data-action="add-note" type="button">
+            <i class="fas fa-calendar-plus"></i> Add Note
+        </button>
+        {{/if}}
+    </div>
+
+    <div class="vn-detail">
+        {{#if selectedNote}}
+        <div class="vn-detail-header">
+            {{#if canEdit}}
+            <div class="vn-detail-title-row vn-editable-header">
+                <i id="vn-icon-preview"
+                    class="{{#if selectedNote.icon}}{{selectedNote.icon}}{{else}}fas fa-book{{/if}} vn-icon-clickable"
+                    title="Click to change icon"></i>
+                <input type="text" name="noteTitle" class="vn-title-input" value="{{selectedNote.title}}"
+                    data-note-id="{{selectedNote.id}}" placeholder="Note title..." />
+            </div>
+            <div class="vn-header-fields is-hidden">
+                <input type="text" name="noteIcon" class="vn-icon-input" value="{{selectedNote.icon}}"
+                    list="vn-icon-list" placeholder="fas fa-book" data-note-id="{{selectedNote.id}}" />
+                <datalist id="vn-icon-list">
+                    {{#each pinTypes}}
+                    <option value="{{this.key}}">{{this.label}}</option>
+                    {{/each}}
+                </datalist>
+            </div>
+            {{else}}
+            <div class="vn-detail-title-row">
+                <i class="{{#if selectedNote.icon}}{{selectedNote.icon}}{{else}}fas fa-book{{/if}}"></i>
+                <h3>{{selectedNote.title}}</h3>
+            </div>
+            {{/if}}
+            <div class="vn-detail-meta">
+                {{#if selectedNote.timeStr}}<span class="vn-tag"><i class="fas fa-clock"></i>
+                    {{selectedNote.timeStr}}</span>{{/if}}
+                {{#if selectedNote.isRepeating}}<span class="vn-tag"><i class="fas fa-repeat"></i>
+                    Repeating</span>{{/if}}
+                {{#unless selectedNote.playerVisible}}<span class="vn-tag vn-tag-hidden"><i
+                        class="fas fa-eye-slash"></i> Hidden</span>{{/unless}}
+                {{#if selectedNote.isPlayerNote}}<span class="vn-tag"><i class="fas fa-user"></i> Player
+                    Note</span>{{/if}}
+            </div>
+        </div>
+
+        <div class="vn-detail-body">
+            <div class="vn-editor-container" data-note-id="{{selectedNote.id}}">
+                {{#if canEdit}}
+                <prose-mirror name="noteContent" value="{{{ selectedNote.escapedContent }}}" toggled compact>{{{
+                    selectedNote.enrichedContent }}}</prose-mirror>
+                {{else}}
+                <div class="editor editor-content">{{{ selectedNote.enrichedContent }}}</div>
+                {{/if}}
+            </div>
+        </div>
+
+        <div class="vn-detail-footer">
+            {{#if canEdit}}
+            <div class="vn-settings-section">
+                <details class="vn-settings-details" {{#if noteSettingsOpen}}open{{/if}}>
+                    <summary><i class="fas fa-sliders"></i> Note Settings</summary>
+                    <div class="vn-settings-fields">
+                        <!--                         <div class="form-group">
+                            <label>Player Visible:</label>
+                            <input type="checkbox" name="playerVisible" {{checked selectedNote.playerVisible}} data-note-id="{{selectedNote.id}}" />
+                        </div> -->
+
+                        <div class="form-group">
+                            <label>Time:</label>
+                            <div class="vn-time-row">
+                                <input type="checkbox" name="allDay" id="vn-note-all-day" {{checked
+                                    selectedNote.isAllDay}} data-note-id="{{selectedNote.id}}">
+                                <label for="vn-note-all-day">All Day</label>
+                                <div id="vn-note-time-container"
+                                    class="vn-note-time-container {{#if selectedNote.isAllDay}}is-hidden{{/if}}">
+                                    <select name="hour" data-note-id="{{selectedNote.id}}">
+                                        {{selectOptions hourOptions selected=selectedNote.selectedHour valueAttr="value"
+                                        labelAttr="label"}}
+                                    </select>
+                                    <span>:</span>
+                                    <select name="minute" data-note-id="{{selectedNote.id}}">
+                                        {{selectOptions minuteOptions selected=selectedNote.selectedMinute
+                                        valueAttr="value" labelAttr="label"}}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Advanced:</label>
+                            <input type="checkbox" name="useAdvanced" id="vn-use-advanced-check" {{checked
+                                selectedNote.hasAdvanced}}>
+                        </div>
+
+                        <div class="form-group repeat-standard {{#if selectedNote.hasAdvanced}}is-hidden{{/if}}">
+                            <label>Repeat:</label>
+                            <input type="number" name="repeatCount" value="{{selectedNote.repeatCount}}" min="0"
+                                placeholder="∞" title="0 = Infinite" data-note-id="{{selectedNote.id}}">
+                            <span class="vn-inline-label">every</span>
+                            <input type="number" name="repeatInterval" value="{{selectedNote.repeatInterval}}" min="1"
+                                data-note-id="{{selectedNote.id}}">
+                            <select name="repeatUnit" data-note-id="{{selectedNote.id}}">
+                                {{selectOptions repeatUnits selected=selectedNote.selectedRepeatUnit valueAttr="value"
+                                labelAttr="label"}}
+                            </select>
+                        </div>
+
+                        <div id="vn-advanced-options-container"
+                            class="{{#unless selectedNote.hasAdvanced}}is-hidden{{/unless}}">
+                            <div class="form-group">
+                                <label>Rule Type:</label>
+                                <select name="advancedRule" id="vn-adv-rule-select" data-note-id="{{selectedNote.id}}">
+                                    <option value="none">-- Select Rule --</option>
+                                    {{selectOptions advancedRules selected=selectedNote.selectedAdvancedRule
+                                    valueAttr="value" labelAttr="label"}}
+                                </select>
+                            </div>
+
+                            <div class="adv-subgroup" data-type="lunar" style="display:none;">
+                                <div class="form-group">
+                                    <label>Moon:</label>
+                                    <select name="adv_moonIndex" data-note-id="{{selectedNote.id}}">
+                                        {{selectOptions moonOptions selected=selectedNote.advMoonIndex valueAttr="index"
+                                        labelAttr="name"}}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Phase:</label>
+                                    <select name="adv_phaseIndex" id="vn-adv-phase-select"
+                                        data-note-id="{{selectedNote.id}}"></select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Start Month:</label>
+                                    <select name="adv_lunarStartMonth" data-note-id="{{selectedNote.id}}">
+                                        {{selectOptions calendarMonthOptions selected=selectedNote.advLunarStartMonth
+                                        valueAttr="index" labelAttr="name"}}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>End Month:</label>
+                                    <select name="adv_lunarEndMonth" data-note-id="{{selectedNote.id}}">
+                                        {{selectOptions calendarMonthOptions selected=selectedNote.advLunarEndMonth
+                                        valueAttr="index" labelAttr="name"}}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="adv-subgroup" data-type="weekday" style="display:none;">
+                                <div class="form-group">
+                                    <label>On the:</label>
+                                    <select name="adv_ordinal" data-note-id="{{selectedNote.id}}">
+                                        {{selectOptions ordinalOptions selected=selectedNote.advOrdinal
+                                        valueAttr="value" labelAttr="label"}}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Day:</label>
+                                    <select name="adv_weekdayIndex" data-note-id="{{selectedNote.id}}">
+                                        {{selectOptions weekdayOptions selected=selectedNote.advWeekdayIndex
+                                        valueAttr="index" labelAttr="name"}}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Of:</label>
+                                    <select name="adv_monthIndex_wk" data-note-id="{{selectedNote.id}}">
+                                        <option value="-1">Every Month</option>
+                                        {{selectOptions calendarMonthOptions selected=selectedNote.advMonthIndexWk
+                                        valueAttr="index" labelAttr="name"}}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="adv-subgroup" data-type="week_index" style="display:none;">
+                                <div class="form-group">
+                                    <label>Week #:</label>
+                                    <input type="number" name="adv_weekNum" value="{{selectedNote.advWeekNum}}" min="1"
+                                        data-note-id="{{selectedNote.id}}">
+                                </div>
+                                <div class="form-group">
+                                    <label>Day:</label>
+                                    <select name="adv_dayNum" data-note-id="{{selectedNote.id}}">
+                                        {{selectOptions weekdayOptions selected=selectedNote.advDayNum valueAttr="index"
+                                        labelAttr="name"}}
+                                    </select>
+                                </div>
+                                <p class="notes">Week 1 is the first row of the month.</p>
+                            </div>
+
+                            <div class="adv-subgroup" data-type="random" style="display:none;">
+                                <div class="form-group">
+                                    <label>Occurrences:</label>
+                                    <input type="number" name="adv_count" value="{{selectedNote.advCount}}" min="1"
+                                        data-note-id="{{selectedNote.id}}">
+                                </div>
+                                <div class="form-group">
+                                    <label>Start Month:</label>
+                                    <select name="adv_startMonth" data-note-id="{{selectedNote.id}}">
+                                        {{selectOptions calendarMonthOptions selected=selectedNote.advStartMonth
+                                        valueAttr="index" labelAttr="name"}}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>End Month:</label>
+                                    <select name="adv_endMonth" data-note-id="{{selectedNote.id}}">
+                                        {{selectOptions calendarMonthOptions selected=selectedNote.advEndMonth
+                                        valueAttr="index" labelAttr="name"}}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+            </div>
+            {{/if}}
+            <div class="vn-links-section-wrapper">
+                <div class="vn-links-section {{#if canEdit}}vn-droppable{{/if}}" data-note-id="{{selectedNote.id}}">
+                    <div class="vn-links-header"><i class="fas fa-link"></i> Linked Items</div>
+                    <div class="vn-chips vn-all-chips" data-note-id="{{selectedNote.id}}">
+                        {{#each selectedNote.linkedMacroData}}
+                        <span class="vn-chip vn-chip-macro" data-macro-key="{{this.key}}" title="{{this.name}}">
+                            <i class="fas fa-terminal"></i> {{this.name}}
+                            {{#if ../canEdit}}<i class="fas fa-xmark vn-chip-remove" data-action="remove-macro"
+                                data-macro-key="{{this.key}}"></i>{{/if}}
+                        </span>
+                        {{/each}}
+                        {{#each selectedNote.linkedDocData}}
+                        <span class="vn-chip vn-chip-doc" data-doc-type="{{this.type}}" data-doc-uuid="{{this.uuid}}"
+                            title="{{this.name}}" data-action="open-document">
+                            <i class="{{this.icon}}"></i> {{this.name}}
+                            {{#if ../canEdit}}<i class="fas fa-xmark vn-chip-remove" data-action="remove-document"
+                                data-doc-type="{{this.type}}" data-doc-uuid="{{this.uuid}}"></i>{{/if}}
+                        </span>
+                        {{/each}}
+                        {{#if canEdit}}
+                        {{#unless selectedNote.hasLinkedItems}}
+                        <span class="vn-drop-hint"><i class="fas fa-plus"></i> Drop macros, journals, actors, or items
+                            here</span>
+                        {{/unless}}
+                        {{/if}}
+                    </div>
+                </div>
+            </div>
+            {{#if canEdit}}
+            <div class="vn-actions">
+                <button class="vn-btn vn-btn-visibility" data-action="toggle-visibility"
+                    data-note-id="{{selectedNote.id}}" type="button">
+                    <i class="fas fa-eye{{#unless selectedNote.playerVisible}}-slash{{/unless}}"></i>
+                    {{#if selectedNote.playerVisible}}Hide{{else}}Show{{/if}}
+                </button>
+                <button class="vn-btn vn-btn-chat" data-action="send-to-chat" data-note-id="{{selectedNote.id}}"
+                    type="button">
+                    <i class="fas fa-comment"></i> Chat
+                </button>
+                <button class="vn-btn vn-btn-delete" data-action="delete-note" data-note-id="{{selectedNote.id}}"
+                    type="button">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </div>
+            {{/if}}
+        </div>
+
+        {{else}}
+        <div class="vn-empty-detail">
+            <i class="fas fa-calendar-day"></i>
+            <p>Select an event to view details</p>
+        </div>
+        {{/if}}
+    </div>
+</div>
