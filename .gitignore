@@ -1,2 +1,9 @@
 .DS_Store
 .vscode/launch.json
+Thumbs.db
+
+node_modules/
+/packs
+
+wgtgm-mini-calendar.lock
+/.vscode
