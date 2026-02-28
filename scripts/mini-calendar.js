@@ -845,7 +845,14 @@ export class wgtngmMiniCalender extends wgtngmcal {
       }
     }
 
-    const weekdayNames = calendar.days.values.map((d) => game.i18n.localize(d.abbreviation) || game.i18n.localize(d.name).substring(0, 3));
+    function getWeekdayName(day) {
+      return {
+        name: game.i18n.localize(day.name),
+        abbrev: game.i18n.localize(day.abbreviation) || game.i18n.localize(day.name).substring(0, 3),
+      };
+    }
+
+    const weekdayNames = calendar.days.values.map(getWeekdayName);
 
     const daysInWeek = calendar.days.values.length;
 
