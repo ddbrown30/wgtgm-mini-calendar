@@ -838,7 +838,11 @@ export class wgtngmMiniCalender extends wgtngmcal {
         const weatherTooltip = weather ? this._getWeatherTooltip(weather) : "";
 
         const isTodayCell = isCurrentGameMonthAndYear && dayOfMonth === nowComponents.dayOfMonth;
-        const showWeatherForDay = showWeather && (!playerTodayOnlyWeather || isTodayCell);
+        const isTodayOrPast = isTodayCell ||
+                              dayOfMonth <= nowComponents.dayOfMonth ||
+                              this.#viewMonth < nowComponents.month ||
+                              this.#viewYear < nowComponents.year;
+        const showWeatherForDay = showWeather && (!playerTodayOnlyWeather || isTodayOrPast);
 
         days.push({
           isBlank: false,
