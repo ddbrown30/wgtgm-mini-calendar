@@ -94,7 +94,7 @@ export class WeatherConfig extends HandlebarsApplicationMixin(ApplicationV2) {
             this.render(true);
         });
 
-        this.element.querySelector('select[id="hist-location"]').addEventListener("change", async event => {
+        this.element.querySelector('select[id="hist-location"]')?.addEventListener("change", async event => {
             this.selectedHistoricalLocation = this.historicalLocations.find(h => h.id == event.target.selectedOptions[0].value);
             this.render();
         });
